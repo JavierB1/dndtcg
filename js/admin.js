@@ -83,7 +83,7 @@ const saveCardBtn = document.getElementById('saveCardBtn');
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Esta es la declaración correcta
+const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Declaración única y correcta
 const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
@@ -534,7 +534,7 @@ async function saveCard() {
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-// const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // REMOVED DUPLICATE DECLARATION
+// La declaración duplicada de addSealedProductBtn ha sido eliminada de aquí.
 const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
@@ -658,8 +658,8 @@ function updateAdminSealedPaginationControls(totalProductsCount) {
     const totalPages = Math.ceil(totalProductsCount / adminSealedProductsPerPage);
     adminSealedPageInfo.textContent = `Página ${adminSealedCurrentPage} de ${totalPages || 1}`;
 
-    adminSealedPrevPageBtn.disabled = currentSealedPage === 1;
-    adminSealedNextPageBtn.disabled = currentSealedPage === totalPages || totalPages === 0;
+    adminSealedPrevPageBtn.disabled = adminSealedCurrentPage === 1; // Corregido: Usar adminSealedCurrentPage
+    adminSealedNextPageBtn.disabled = adminSealedCurrentPage === totalPages || totalPages === 0; // Corregido: Usar adminSealedCurrentPage
 }
 
 function attachSealedProductActionListeners() {
