@@ -9,14 +9,13 @@ body {
 }
 
 .admin-container {
-    display: none; /* ¡IMPORTANTE! Oculta el panel por defecto */
+    display: flex; /* Ahora visible por defecto */
     width: 100%;
     /* max-width: 1200px; */ /* Comentado para permitir que ocupe todo el ancho si es necesario */
     /* height: 90vh; */ /* Comentado para permitir que el alto se ajuste al contenido */
     background-color: #fff;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    /* display: flex; */ /* Esto será activado por JavaScript cuando el usuario se autentique */
     overflow: hidden;
 }
 
