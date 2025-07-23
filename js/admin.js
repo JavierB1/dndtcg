@@ -84,7 +84,7 @@ const saveCardBtn = document.getElementById('saveCardBtn');
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
 const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Declaración única y correcta
-const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); // Declaración única y correcta
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
 const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
@@ -534,8 +534,8 @@ async function saveCard() {
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-// La declaración duplicada de addSealedProductBtn ha sido eliminada de aquí.
-const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
+const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Declaración única y correcta
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); // Declaración única y correcta
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
 const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
