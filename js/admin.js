@@ -83,7 +83,7 @@ const saveCardBtn = document.getElementById('saveCardBtn');
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn');
+const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Esta es la declaración correcta
 const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
@@ -534,7 +534,7 @@ async function saveCard() {
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn');
+// const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // REMOVED DUPLICATE DECLARATION
 const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
@@ -576,7 +576,7 @@ async function loadAdminSealedProducts() {
         applyAdminSealedFilters();
     } catch (error) {
         console.error("Error cargando productos sellados para el admin:", error);
-        showCustomMessageModal("Error", "Error cargando productos sellados. Por favor, revisa la consola.", true); // Usar modal personalizado
+        showCustomMessageModal("Error", "No se pudieron cargar los productos sellados. Inténtalo de nuevo más tarde.");
     }
 }
 
@@ -658,8 +658,8 @@ function updateAdminSealedPaginationControls(totalProductsCount) {
     const totalPages = Math.ceil(totalProductsCount / adminSealedProductsPerPage);
     adminSealedPageInfo.textContent = `Página ${adminSealedCurrentPage} de ${totalPages || 1}`;
 
-    adminSealedPrevPageBtn.disabled = adminSealedCurrentPage === 1;
-    adminSealedNextPageBtn.disabled = adminSealedCurrentPage === totalPages || totalPages === 0;
+    adminSealedPrevPageBtn.disabled = currentSealedPage === 1;
+    adminSealedNextPageBtn.disabled = currentSealedPage === totalPages || totalPages === 0;
 }
 
 function attachSealedProductActionListeners() {
