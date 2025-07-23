@@ -435,13 +435,20 @@ async function saveCard() {
 
     try {
         let response;
+        // DEBUG: Log the ID value before the conditional check
+        console.log(`DEBUG: ID value before check: '${id}'`);
+
         if (id) {
+            // DEBUG: Log that a PUT operation is being attempted
+            console.log(`DEBUG: Attempting PUT operation for card ID: ${id}`);
             response = await fetch(`${SHEETDB_CARDS_API_URL}/id/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: cardData })
             });
         } else {
+            // DEBUG: Log that a POST operation is being attempted and a new ID is generated
+            console.log(`DEBUG: Attempting POST operation. Generating new ID.`);
             cardData.id = `card_${Date.now()}`; 
             response = await fetch(SHEETDB_CARDS_API_URL, {
                 method: 'POST',
@@ -610,8 +617,8 @@ async function editSealedProduct(productId) {
         sealedProductNameInput.value = product.producto;
         sealedProductImageInput.value = product.imagen;
         sealedProductTypeInput.value = product.tipo_producto || '';
-        sealedProductPriceInput.value = parseFloat(product.precio);
-        sealedProductStockInput.value = parseInt(product.stock);
+        sealedProductPriceInput.value = parseFloat(sealedProductPriceInput.value);
+        sealedProductStockInput.value = parseInt(sealedProductStockInput.value);
     } else {
         showCustomMessageModal("Error", "Producto sellado no encontrado.", true); // Usar modal personalizado
     }
@@ -639,10 +646,17 @@ async function saveSealedProduct() {
         let targetUrl;
         let method;
 
+        // DEBUG: Log the ID value before the conditional check
+        console.log(`DEBUG: ID de producto antes de la comprobación: '${id_producto}'`);
+
         if (id_producto) {
+            // DEBUG: Log that a PUT operation is being attempted
+            console.log(`DEBUG: Intentando operación PUT para ID de producto: ${id_producto}`);
             targetUrl = `${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${id_producto}`;
             method = 'PUT';
         } else {
+            // DEBUG: Log that a POST operation is being attempted and a new ID is generated
+            console.log(`DEBUG: Intentando operación POST. Generando nuevo ID de producto.`);
             id_producto = `sealed_${Date.now()}`;
             productData.id_producto = id_producto;
             targetUrl = SHEETDB_SEALED_PRODUCTS_API_URL;
