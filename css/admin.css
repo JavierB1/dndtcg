@@ -226,8 +226,8 @@ table td img {
     vertical-align: middle;
 }
 
-/* Botones de Acción en Tablas (reutilizados para productos sellados) */
-.action-buttons { /* MODIFICADO: Añadido display flex para alineación horizontal */
+/* Botones de Acción en Tablas (Estilos Generales para todos los botones de acción) */
+.action-buttons { /* Añadido display flex para alineación horizontal */
     display: flex;
     align-items: center;
     gap: 5px; /* Espacio entre los botones */
@@ -243,21 +243,57 @@ table td img {
     transition: background-color 0.2s ease;
 }
 
-.action-buttons button.edit-button {
+/* Estilos Específicos para Botones de la Tabla de Cartas */
+#cardsTable .action-buttons button.edit-button {
     background-color: #ffc107 !important; /* Amarillo para editar */
 }
 
-.action-buttons button.edit-button:hover {
+#cardsTable .action-buttons button.edit-button:hover {
     background-color: #e0a800 !important; /* Tono más oscuro de amarillo al pasar el ratón */
 }
 
-.action-buttons button.delete-button {
+#cardsTable .action-buttons button.delete-button {
     background-color: #dc3545 !important; /* Rojo para eliminar */
 }
 
-.action-buttons button.delete-button:hover {
+#cardsTable .action-buttons button.delete-button:hover {
     background-color: #c82333 !important; /* Tono más oscuro de rojo al pasar el ratón */
 }
+
+/* Estilos Específicos para Botones de la Tabla de Productos Sellados */
+#sealedProductsTable .action-buttons button.edit-sealed-product-button { /* MODIFICADO: Selector de clase específico */
+    background-color: #ffc107 !important; /* Amarillo para editar */
+}
+
+#sealedProductsTable .action-buttons button.edit-sealed-product-button:hover { /* MODIFICADO: Selector de clase específico */
+    background-color: #e0a800 !important; /* Tono más oscuro de amarillo al pasar el ratón */
+}
+
+#sealedProductsTable .action-buttons button.delete-sealed-product-button { /* MODIFICADO: Selector de clase específico */
+    background-color: #dc3545 !important; /* Rojo para eliminar */
+}
+
+#sealedProductsTable .action-buttons button.delete-sealed-product-button:hover { /* MODIFICADO: Selector de clase específico */
+    background-color: #c82333 !important; /* Tono más oscuro de rojo al pasar el ratón */
+}
+
+/* Estilos Específicos para Botones de la Tabla de Categorías */
+#categoriesTable .action-buttons button.edit-category-button { /* MODIFICADO: Selector de clase específico */
+    background-color: #ffc107 !important; /* Amarillo para editar */
+}
+
+#categoriesTable .action-buttons button.edit-category-button:hover { /* MODIFICADO: Selector de clase específico */
+    background-color: #e0a800 !important; /* Tono más oscuro de amarillo al pasar el ratón */
+}
+
+#categoriesTable .action-buttons button.delete-category-button { /* MODIFICADO: Selector de clase específico */
+    background-color: #dc3545 !important; /* Rojo para eliminar */
+}
+
+#categoriesTable .action-buttons button.delete-category-button:hover { /* MODIFICADO: Selector de clase específico */
+    background-color: #c82333 !important; /* Tono más oscuro de rojo al pasar el ratón */
+}
+
 
 /* Controles de Paginación (reutilizados para productos sellados) */
 .pagination-controls {
