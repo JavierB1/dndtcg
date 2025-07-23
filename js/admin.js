@@ -449,7 +449,8 @@ async function saveCard() {
         } else {
             // DEBUG: Log that a POST operation is being attempted and a new ID is generated
             console.log(`DEBUG: Attempting POST operation. Generating new ID.`);
-            cardData.id = `card_${Date.now()}`; 
+            // MODIFICADO: Nuevo formato de ID para cartas
+            cardData.id = `C-${Date.now().toString(36)}`; 
             response = await fetch(SHEETDB_CARDS_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -657,7 +658,8 @@ async function saveSealedProduct() {
         } else {
             // DEBUG: Log that a POST operation is being attempted and a new ID is generated
             console.log(`DEBUG: Intentando operación POST. Generando nuevo ID de producto.`);
-            id_producto = `sealed_${Date.now()}`;
+            // MODIFICADO: Nuevo formato de ID para productos sellados
+            id_producto = `P-${Date.now().toString(36)}`;
             productData.id_producto = id_producto;
             targetUrl = SHEETDB_SEALED_PRODUCTS_API_URL;
             method = 'POST';
