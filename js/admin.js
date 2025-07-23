@@ -1,44 +1,6 @@
-// Importar las funciones necesarias de Firebase
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-
-console.log("admin.js: Script de admin.js cargado."); // Mensaje de depuración
-
 // Constantes para las APIs de SheetDB
 const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau"; // URL para tus cartas
 const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp"; // URL para tu hoja 'producto_sellado'
-
-// ===============================================
-// CONFIGURACIÓN DE FIREBASE
-// ===============================================
-const firebaseConfig = {
-    apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
-    authDomain: "dndtcgadmin.firebaseapp.com",
-    projectId: "dndtcgadmin",
-    storageBucket: "dndtcgadmin.firebasestorage.app",
-    messagingSenderId: "754642671504",
-    appId: "1:754642671504:web:c087cc703862cf8c228515",
-    measurementId: "G-T8KRZX5S7R"
-};
-
-// Inicializar Firebase
-let app;
-let auth;
-let analytics;
-
-try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    analytics = getAnalytics(app); // Inicializar Analytics
-    console.log("admin.js: Firebase inicializado correctamente.");
-} catch (error) {
-    console.error("admin.js: Error al inicializar Firebase:", error);
-    // Mostrar un mensaje de error visible para el usuario si Firebase no se inicializa
-    document.body.innerHTML = '<div style="text-align: center; margin-top: 50px; color: red;"><h1>Error Crítico</h1><p>No se pudo iniciar el panel de administración. Por favor, revisa la consola del navegador para más detalles y asegúrate de que Firebase esté configurado correctamente.</p></div>';
-    throw error; // Relanzar el error para que se detenga la ejecución si es un error crítico
-}
-
 
 // ===============================================
 // ELEMENTOS DEL DOM - NAVEGACIÓN Y SECCIONES
@@ -83,8 +45,8 @@ const saveCardBtn = document.getElementById('saveCardBtn');
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Declaración única y correcta
-const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); // Declaración única y correcta
+const addSealedProductBtn = document.getElementById('addSealedProductBtn'); 
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); 
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
 const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
@@ -128,14 +90,14 @@ const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
 // ===============================================
-// ELEMENTOS DEL DOM - MODAL DE LOGIN
+// ELEMENTOS DEL DOM - MODAL DE LOGIN (Ya no existe en esta versión)
 // ===============================================
-const loginModal = document.getElementById('loginModal');
-const loginForm = document.getElementById('loginForm');
-const usernameInput = document.getElementById('username');
-const passwordInput = document.getElementById('password');
-const loginMessage = document.getElementById('loginMessage');
-const loginBtn = document.getElementById('loginBtn');
+// const loginModal = document.getElementById('loginModal'); // REMOVED
+// const loginForm = document.getElementById('loginForm'); // REMOVED
+// const usernameInput = document.getElementById('username'); // REMOVED
+// const passwordInput = document.getElementById('password'); // REMOVED
+// const loginMessage = document.getElementById('loginMessage'); // REMOVED
+// const loginBtn = document.getElementById('loginBtn'); // REMOVED
 
 // Botón de refrescar panel
 const refreshAdminPageBtn = document.getElementById('refreshAdminPageBtn');
@@ -166,7 +128,7 @@ const adminSealedProductsPerPage = 10;
 let allCategories = [];
 let allProductTypes = [];
 
-let isAuthenticated = false; // Manejado por Firebase ahora
+// let isAuthenticated = false; // REMOVED: No longer managed by Firebase
 
 // ===============================================
 // FUNCIÓN PARA MOSTRAR MENSAJES PERSONALIZADOS
@@ -189,12 +151,7 @@ function showCustomMessageModal(title, message, isError = false) {
 // GESTIÓN DE LA NAVEGACIÓN ENTRE SECCIONES
 // ===============================================
 function showSection(sectionToShow) {
-    // Asegurarse de que el usuario esté autenticado antes de mostrar secciones
-    if (!isAuthenticated) {
-        showLoginModal();
-        return;
-    }
-
+    // Ya no se requiere autenticación para mostrar secciones
     const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
     sections.forEach(section => {
         if (section === sectionToShow) {
@@ -205,7 +162,8 @@ function showSection(sectionToShow) {
     });
 
     document.querySelectorAll('.admin-modal').forEach(modal => {
-        if (modal !== loginModal && modal !== customMessageModal) { // Excluir customMessageModal
+        // Excluir customMessageModal para que no se oculte si está activo
+        if (modal !== customMessageModal) { 
             modal.style.display = 'none';
         }
     });
@@ -243,23 +201,17 @@ navCategories.addEventListener('click', (e) => {
     loadCategories();
 });
 
-navLogout.addEventListener('click', async (e) => {
+navLogout.addEventListener('click', (e) => {
     e.preventDefault();
-    try {
-        await signOut(auth); // Usar directamente signOut
-        showCustomMessageModal("Sesión Cerrada", "Has cerrado sesión correctamente.");
-        document.querySelector('.user-info span').textContent = "Invitado";
-        showLoginModal(); // Mostrar modal de login después de cerrar sesión
-    } catch (error) {
-        console.error("Error al cerrar sesión:", error);
-        showCustomMessageModal("Error", `Error al cerrar sesión: ${error.message}`, true);
-    }
+    showCustomMessageModal("Sesión Cerrada", "Has 'cerrado sesión' (funcionalidad de logout deshabilitada sin Firebase).");
+    document.querySelector('.user-info span').textContent = "Invitado";
+    // En un entorno real sin Firebase, aquí podrías redirigir a una página de login estática
+    // o simplemente mostrar un mensaje.
 });
 
 // Listener para el botón de refrescar el panel
 refreshAdminPageBtn.addEventListener('click', () => {
-    if (!isAuthenticated) { showLoginModal(); return; }
-
+    // Ya no se requiere autenticación para refrescar
     // Determinar la sección activa y recargar solo esa sección
     if (dashboardSection.classList.contains('active')) {
         updateDashboardStats();
@@ -274,69 +226,12 @@ refreshAdminPageBtn.addEventListener('click', () => {
 
 
 // ===============================================
-// LÓGICA DE AUTENTICACIÓN (AHORA CON FIREBASE)
+// LÓGICA DE AUTENTICACIÓN (REMOVIDA)
 // ===============================================
-function showLoginModal() {
-    console.log("showLoginModal: Mostrando modal de login."); // Mensaje de depuración
-    adminContainer.style.display = 'none'; // Ocultar el contenido del panel
-    loginModal.style.display = 'flex'; // Asegurarse de que el modal de login se muestre
-    loginMessage.textContent = '';
-    loginForm.reset();
-    usernameInput.focus();
-}
-
-function hideLoginModal() {
-    console.log("hideLoginModal: Ocultando modal de login y mostrando panel."); // Mensaje de depuración
-    adminContainer.style.display = 'flex'; // Mostrar el contenido del panel
-    loginModal.style.display = 'none';
-}
-
-loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = usernameInput.value; // Usaremos 'email' para Firebase
-    const password = passwordInput.value;
-
-    try {
-        await signInWithEmailAndPassword(auth, email, password); // Usar directamente signInWithEmailAndPassword
-        // onAuthStateChanged manejará el estado isAuthenticated y la UI
-    } catch (error) {
-        console.error("Error de inicio de sesión de Firebase:", error);
-        let errorMessage = "Error de inicio de sesión. ";
-        switch (error.code) {
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-                errorMessage += "Usuario o contraseña incorrectos.";
-                break;
-            case 'auth/invalid-email':
-                errorMessage += "Formato de email inválido.";
-                break;
-            case 'auth/too-many-requests':
-                errorMessage += "Demasiados intentos fallidos. Intenta de nuevo más tarde.";
-                break;
-            default:
-                errorMessage += "Ha ocurrido un error inesperado.";
-        }
-        loginMessage.textContent = errorMessage;
-    }
-});
-
-// Listener del estado de autenticación de Firebase
-onAuthStateChanged(auth, (user) => { // Usar directamente onAuthStateChanged
-    console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user); // Mensaje de depuración
-    if (user) {
-        // Usuario autenticado
-        isAuthenticated = true;
-        document.querySelector('.user-info span').textContent = user.email; // Mostrar email del usuario
-        hideLoginModal();
-        showSection(dashboardSection); // Mostrar el dashboard
-        updateDashboardStats();
-    } else {
-        // Usuario no autenticado
-        isAuthenticated = false;
-        document.querySelector('.user-info span').textContent = "Invitado";
-        showLoginModal(); // Asegurarse de que el modal de login esté visible
-    }
-});
+// showLoginModal() REMOVED
+// hideLoginModal() REMOVED
+// loginForm.addEventListener('submit', ...) REMOVED
+// onAuthStateChanged(auth, ...) REMOVED
 
 
 // ===============================================
@@ -344,7 +239,6 @@ onAuthStateChanged(auth, (user) => { // Usar directamente onAuthStateChanged
 // ===============================================
 
 async function loadAdminCards() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     try {
         const response = await fetch(SHEETDB_CARDS_API_URL);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -459,7 +353,6 @@ saveCardBtn.addEventListener('click', (e) => {
 });
 
 function openCardModalForAdd() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     cardModal.style.display = 'flex';
     cardModalTitle.textContent = 'Añadir Nueva Carta';
     cardForm.reset();
@@ -467,7 +360,6 @@ function openCardModalForAdd() {
 }
 
 async function editCard(cardId) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     const card = allAdminCards.find(c => c.id === cardId);
     if (card) {
         cardModal.style.display = 'flex';
@@ -484,7 +376,6 @@ async function editCard(cardId) {
 }
 
 async function saveCard() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     const id = cardIdInput.value;
     const name = cardNameInput.value;
     const image = cardImageInput.value;
@@ -534,8 +425,8 @@ async function saveCard() {
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn'); // Declaración única y correcta
-const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); // Declaración única y correcta
+const addSealedProductBtn = document.getElementById('addSealedProductBtn'); 
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); 
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
 const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
@@ -560,7 +451,6 @@ const saveSealedProductBtn = document.getElementById('saveSealedProductBtn');
 // LÓGICA DE GESTIÓN DE PRODUCTOS SELLADOS (FRONTEND TIENDA)
 // ===============================================
 async function loadAdminSealedProducts() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     if (SHEETDB_SEALED_PRODUCTS_API_URL.includes("YOUR_SEALED_PRODUCTS_SHEETDB_ID")) {
         console.warn("ADVERTENCIA: La URL de la API para productos sellados no ha sido configurada en admin.js. Reemplaza 'YOUR_SEALED_PRODUCTS_SHEETDB_ID' con tu ID real de SheetDB.");
         sealedProductsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error: URL de API para Productos Sellados no configurada.</td></tr>';
@@ -658,8 +548,8 @@ function updateAdminSealedPaginationControls(totalProductsCount) {
     const totalPages = Math.ceil(totalProductsCount / adminSealedProductsPerPage);
     adminSealedPageInfo.textContent = `Página ${adminSealedCurrentPage} de ${totalPages || 1}`;
 
-    adminSealedPrevPageBtn.disabled = adminSealedCurrentPage === 1; // Corregido: Usar adminSealedCurrentPage
-    adminSealedNextPageBtn.disabled = adminSealedCurrentPage === totalPages || totalPages === 0; // Corregido: Usar adminSealedCurrentPage
+    adminSealedPrevPageBtn.disabled = adminSealedCurrentPage === 1; 
+    adminSealedNextPageBtn.disabled = adminSealedCurrentPage === totalPages || totalPages === 0; 
 }
 
 function attachSealedProductActionListeners() {
@@ -685,7 +575,6 @@ saveSealedProductBtn.addEventListener('click', (e) => {
 });
 
 function openSealedProductModalForAdd() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     sealedProductModal.style.display = 'flex';
     sealedProductModalTitle.textContent = 'Añadir Nuevo Producto Sellado';
     sealedProductForm.reset();
@@ -693,7 +582,6 @@ function openSealedProductModalForAdd() {
 }
 
 async function editSealedProduct(productId) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     const product = allAdminSealedProducts.find(p => p.id_producto === productId);
     if (product) {
         sealedProductModal.style.display = 'flex';
@@ -710,7 +598,6 @@ async function editSealedProduct(productId) {
 }
 
 async function saveSealedProduct() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     let id_producto = sealedProductIdInput.value;
     const producto = sealedProductNameInput.value;
     const imagen = sealedProductImageInput.value;
@@ -776,7 +663,6 @@ async function saveSealedProduct() {
 // ===============================================
 
 function loadCategories() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     renderCategoriesTable();
 }
 
@@ -825,7 +711,6 @@ saveCategoryBtn.addEventListener('click', (e) => {
 });
 
 function openCategoryModalForAdd() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     categoryModal.style.display = 'flex';
     categoryModalTitle.textContent = 'Añadir Nueva Categoría';
     categoryForm.reset();
@@ -833,7 +718,6 @@ function openCategoryModalForAdd() {
 }
 
 function openCategoryModalForEdit(categoryName) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     categoryModal.style.display = 'flex';
     categoryModalTitle.textContent = `Editar Categoría: ${categoryName}`;
     categoryIdInput.value = categoryName;
@@ -841,7 +725,6 @@ function openCategoryModalForEdit(categoryName) {
 }
 
 async function saveCategory() {
-    if (!isAuthenticated) { showLoginModal(); return; }
     const originalCategoryName = categoryIdInput.value;
     const newCategoryName = categoryNameInput.value.trim();
 
@@ -885,7 +768,6 @@ let itemToDeleteType = null;
 let itemToDeleteId = null;
 
 function confirmDeletion(type, id) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     itemToDeleteType = type;
     itemToDeleteId = id;
     
@@ -918,7 +800,6 @@ function confirmDeletion(type, id) {
 
 
 async function deleteCard(cardId) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     try {
         // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
         console.log(`DEBUG: Intentando eliminar carta desde URL: ${SHEETDB_CARDS_API_URL}/id/${cardId} con método: DELETE`);
@@ -937,7 +818,6 @@ async function deleteCard(cardId) {
 }
 
 async function deleteSealedProduct(productId) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     try {
         // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
         console.log(`DEBUG: Intentando eliminar producto sellado desde URL: ${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${productId} con método: DELETE`);
@@ -955,7 +835,6 @@ async function deleteSealedProduct(productId) {
 }
 
 async function deleteCategory(categoryName) {
-    if (!isAuthenticated) { showLoginModal(); return; }
     allCategories = allCategories.filter(cat => cat !== categoryName);
     showCustomMessageModal("Éxito", `Categoría "${categoryName}" eliminada de la lista del panel.\n(Las cartas con esta categoría NO se han modificado en la API).`); // Usar modal personalizado
     renderCategoriesTable();
@@ -966,13 +845,7 @@ async function deleteCategory(categoryName) {
 // LÓGICA DE ESTADÍSTICAS DEL DASHBOARD
 // ===============================================
 function updateDashboardStats() {
-    if (!isAuthenticated) {
-        document.getElementById('totalCardsCount').textContent = 'N/A';
-        document.getElementById('totalSealedProductsCount').textContent = 'N/A';
-        document.getElementById('outOfStockCount').textContent = 'N/A';
-        document.getElementById('uniqueCategoriesCount').textContent = 'N/A';
-        return;
-    }
+    // Ya no se requiere autenticación para actualizar estadísticas
     // Para asegurar que los datos del dashboard estén frescos, recargamos las cartas y productos sellados
     // antes de actualizar las estadísticas. Esto asegura que 'allAdminCards' y 'allAdminSealedProducts'
     // contengan la información más reciente al calcular las estadísticas.
@@ -1020,9 +893,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.admin-modal .close-button').forEach(button => {
         button.addEventListener('click', (e) => {
             const modal = e.target.closest('.admin-modal');
-            if (modal.id === 'loginModal' && !isAuthenticated) {
-                return;
-            }
             modal.style.display = 'none';
         });
     });
@@ -1030,9 +900,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener para cerrar modales al hacer clic fuera
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('admin-modal')) {
-            if (e.target.id === 'loginModal' && !isAuthenticated) {
-                return;
-            }
             // Asegurarse de que el click fuera no cierre el modal de confirmación
             // a menos que sea el mismo modal de confirmación clickeado directamente
             if (e.target.id === 'confirmModal' && (customMessageOkBtn.textContent === 'Aceptar' || customMessageOkBtn.textContent === 'Eliminar')) {
@@ -1047,7 +914,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     adminPrevPageBtn.addEventListener('click', () => {
-        if (!isAuthenticated) { showLoginModal(); return; }
         if (adminCurrentPage > 1) {
             adminCurrentPage--;
             renderAdminCardsTable(filteredAdminCards);
@@ -1055,7 +921,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     adminNextPageBtn.addEventListener('click', () => {
-        if (!isAuthenticated) { showLoginModal(); return; }
         const totalPages = Math.ceil(filteredAdminCards.length / adminCardsPerPage);
         if (adminCurrentPage < totalPages) {
             adminCurrentPage++;
@@ -1064,7 +929,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     adminSealedPrevPageBtn.addEventListener('click', () => {
-        if (!isAuthenticated) { showLoginModal(); return; }
         if (adminSealedCurrentPage > 1) {
             adminSealedCurrentPage--;
             renderAdminSealedProductsTable(filteredAdminSealedProducts);
@@ -1072,7 +936,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     adminSealedNextPageBtn.addEventListener('click', () => {
-        if (!isAuthenticated) { showLoginModal(); return; }
         const totalPages = Math.ceil(filteredAdminSealedProducts.length / adminSealedProductsPerPage);
         if (adminSealedCurrentPage < totalPages) {
             adminSealedCurrentPage++;
@@ -1085,4 +948,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     adminSealedSearchInput.addEventListener('input', applyAdminSealedFilters);
     adminSealedTypeFilter.addEventListener('change', applyAdminSealedFilters);
+    
+    // Al cargar el DOM, mostrar el dashboard por defecto (sin necesidad de login)
+    showSection(dashboardSection);
+    updateDashboardStats();
 });
