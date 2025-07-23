@@ -9,7 +9,7 @@ body {
 }
 
 .admin-container {
-    display: flex; /* Ahora visible por defecto */
+    display: none; /* Inicialmente oculto, JavaScript lo hará visible tras el login */
     width: 100%;
     /* max-width: 1200px; */ /* Comentado para permitir que ocupe todo el ancho si es necesario */
     /* height: 90vh; */ /* Comentado para permitir que el alto se ajuste al contenido */
