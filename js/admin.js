@@ -1,6 +1,44 @@
+// Importar las funciones necesarias de Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+
+console.log("admin.js: Script de admin.js cargado."); // Mensaje de depuración
+
 // Constantes para las APIs de SheetDB
 const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau"; // URL para tus cartas
 const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp"; // URL para tu hoja 'producto_sellado'
+
+// ===============================================
+// CONFIGURACIÓN DE FIREBASE
+// ===============================================
+const firebaseConfig = {
+    apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
+    authDomain: "dndtcgadmin.firebaseapp.com",
+    projectId: "dndtcgadmin",
+    storageBucket: "dndtcgadmin.firebasestorage.app",
+    messagingSenderId: "754642671504",
+    appId: "1:754642671504:web:c087cc703862cf8c228515",
+    measurementId: "G-T8KRZX5S7R"
+};
+
+// Inicializar Firebase
+let app;
+let auth;
+let analytics;
+
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    analytics = getAnalytics(app); // Inicializar Analytics
+    console.log("admin.js: Firebase inicializado correctamente.");
+} catch (error) {
+    console.error("admin.js: Error al inicializar Firebase:", error);
+    // Mostrar un mensaje de error visible para el usuario si Firebase no se inicializa
+    document.body.innerHTML = '<div style="text-align: center; margin-top: 50px; color: red;"><h1>Error Crítico</h1><p>No se pudo iniciar el panel de administración. Por favor, revisa la consola del navegador para más detalles y asegúrate de que Firebase esté configurado correctamente.</p></div>';
+    throw error; // Relanzar el error para que se detenga la ejecución si es un error crítico
+}
+
 
 // ===============================================
 // ELEMENTOS DEL DOM - NAVEGACIÓN Y SECCIONES
@@ -11,6 +49,7 @@ const navSealedProducts = document.getElementById('nav-sealed-products');
 const navCategories = document.getElementById('nav-categories');
 const navLogout = document.getElementById('nav-logout');
 
+const adminContainer = document.querySelector('.admin-container'); // Referencia al contenedor principal
 const dashboardSection = document.getElementById('dashboard-section');
 const cardsSection = document.getElementById('cards-section');
 const sealedProductsSection = document.getElementById('sealed-products-section');
@@ -127,7 +166,7 @@ const adminSealedProductsPerPage = 10;
 let allCategories = [];
 let allProductTypes = [];
 
-let isAuthenticated = false;
+let isAuthenticated = false; // Manejado por Firebase ahora
 
 // ===============================================
 // FUNCIÓN PARA MOSTRAR MENSAJES PERSONALIZADOS
@@ -150,7 +189,8 @@ function showCustomMessageModal(title, message, isError = false) {
 // GESTIÓN DE LA NAVEGACIÓN ENTRE SECCIONES
 // ===============================================
 function showSection(sectionToShow) {
-    if (!isAuthenticated && sectionToShow !== loginModal) {
+    // Asegurarse de que el usuario esté autenticado antes de mostrar secciones
+    if (!isAuthenticated) {
         showLoginModal();
         return;
     }
@@ -203,13 +243,17 @@ navCategories.addEventListener('click', (e) => {
     loadCategories();
 });
 
-navLogout.addEventListener('click', (e) => {
+navLogout.addEventListener('click', async (e) => {
     e.preventDefault();
-    isAuthenticated = false;
-    showCustomMessageModal("Sesión Cerrada", "Has cerrado sesión correctamente."); // Usar modal personalizado
-    document.querySelector('.user-info span').textContent = "Invitado";
-    showLoginModal();
-    console.log("Cerrar Sesión Clicked");
+    try {
+        await signOut(auth); // Usar directamente signOut
+        showCustomMessageModal("Sesión Cerrada", "Has cerrado sesión correctamente.");
+        document.querySelector('.user-info span').textContent = "Invitado";
+        showLoginModal(); // Mostrar modal de login después de cerrar sesión
+    } catch (error) {
+        console.error("Error al cerrar sesión:", error);
+        showCustomMessageModal("Error", `Error al cerrar sesión: ${error.message}`, true);
+    }
 });
 
 // Listener para el botón de refrescar el panel
@@ -230,50 +274,69 @@ refreshAdminPageBtn.addEventListener('click', () => {
 
 
 // ===============================================
-// LÓGICA DE AUTENTICACIÓN (Simple para demostración)
+// LÓGICA DE AUTENTICACIÓN (AHORA CON FIREBASE)
 // ===============================================
-const ADMIN_USERNAME = "dndadmin";
-const ADMIN_PASSWORD = "Blarias616";
-
 function showLoginModal() {
-    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
-    sections.forEach(section => section.classList.remove('active'));
-
-    loginModal.style.display = 'flex';
+    console.log("showLoginModal: Mostrando modal de login."); // Mensaje de depuración
+    adminContainer.style.display = 'none'; // Ocultar el contenido del panel
+    loginModal.style.display = 'flex'; // Asegurarse de que el modal de login se muestre
     loginMessage.textContent = '';
     loginForm.reset();
     usernameInput.focus();
 }
 
 function hideLoginModal() {
+    console.log("hideLoginModal: Ocultando modal de login y mostrando panel."); // Mensaje de depuración
+    adminContainer.style.display = 'flex'; // Mostrar el contenido del panel
     loginModal.style.display = 'none';
 }
 
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = usernameInput.value;
+    const email = usernameInput.value; // Usaremos 'email' para Firebase
     const password = passwordInput.value;
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        isAuthenticated = true;
-        document.querySelector('.user-info span').textContent = username;
-        hideLoginModal();
-        showSection(dashboardSection);
-        updateDashboardStats();
-    } else {
-        loginMessage.textContent = "Usuario o contraseña incorrectos.";
+    try {
+        await signInWithEmailAndPassword(auth, email, password); // Usar directamente signInWithEmailAndPassword
+        // onAuthStateChanged manejará el estado isAuthenticated y la UI
+    } catch (error) {
+        console.error("Error de inicio de sesión de Firebase:", error);
+        let errorMessage = "Error de inicio de sesión. ";
+        switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+                errorMessage += "Usuario o contraseña incorrectos.";
+                break;
+            case 'auth/invalid-email':
+                errorMessage += "Formato de email inválido.";
+                break;
+            case 'auth/too-many-requests':
+                errorMessage += "Demasiados intentos fallidos. Intenta de nuevo más tarde.";
+                break;
+            default:
+                errorMessage += "Ha ocurrido un error inesperado.";
+        }
+        loginMessage.textContent = errorMessage;
     }
 });
 
-
-function checkAuth() {
-    if (!isAuthenticated) {
-        showLoginModal();
-    } else {
-        showSection(dashboardSection);
+// Listener del estado de autenticación de Firebase
+onAuthStateChanged(auth, (user) => { // Usar directamente onAuthStateChanged
+    console.log("onAuthStateChanged: Estado de autenticación cambiado. Usuario:", user); // Mensaje de depuración
+    if (user) {
+        // Usuario autenticado
+        isAuthenticated = true;
+        document.querySelector('.user-info span').textContent = user.email; // Mostrar email del usuario
+        hideLoginModal();
+        showSection(dashboardSection); // Mostrar el dashboard
         updateDashboardStats();
+    } else {
+        // Usuario no autenticado
+        isAuthenticated = false;
+        document.querySelector('.user-info span').textContent = "Invitado";
+        showLoginModal(); // Asegurarse de que el modal de login esté visible
     }
-}
+});
 
 
 // ===============================================
@@ -305,8 +368,6 @@ function populateCategoryFilter(cards) {
     const sortedCategories = Array.from(categories).sort();
 
     adminCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
-    categoryOptionsDatalist.innerHTML = '';
-
     sortedCategories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -463,28 +524,50 @@ async function saveCard() {
         cardModal.style.display = 'none';
         showCustomMessageModal("Éxito", "Carta guardada exitosamente."); // Usar modal personalizado
         loadAdminCards();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error guardando carta:", error);
         showCustomMessageModal("Error", `Error al guardar carta: ${error.message}. Revisa la consola.`, true); // Usar modal personalizado
     }
 }
 
 // ===============================================
-// LÓGICA DE GESTIÓN DE PRODUCTOS SELLADOS
+// ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
+const addSealedProductBtn = document.getElementById('addSealedProductBtn');
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
+const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
+const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
+const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
 
+const adminSealedPrevPageBtn = document.getElementById('adminSealedPrevPageBtn');
+const adminSealedNextPageBtn = document.getElementById('adminSealedNextPageBtn');
+const adminSealedPageInfo = document.getElementById('adminSealedPageInfo');
+
+// Modales y Formularios de Productos Sellados
+const sealedProductModal = document.getElementById('sealedProductModal');
+const sealedProductModalTitle = document.getElementById('sealedProductModalTitle');
+const sealedProductForm = document.getElementById('sealedProductForm');
+const sealedProductIdInput = document.getElementById('sealedProductId');
+const sealedProductNameInput = document.getElementById('sealedProductName'); // Corresponde a 'producto'
+const sealedProductImageInput = document.getElementById('sealedProductImage'); // Corresponde a 'imagen'
+const sealedProductTypeInput = document.getElementById('sealedProductType'); // Corresponde a 'tipo_producto'
+const sealedProductPriceInput = document.getElementById('sealedProductPrice');
+const sealedProductStockInput = document.getElementById('sealedProductStock');
+const saveSealedProductBtn = document.getElementById('saveSealedProductBtn');
+
+// ===============================================
+// LÓGICA DE GESTIÓN DE PRODUCTOS SELLADOS (FRONTEND TIENDA)
+// ===============================================
 async function loadAdminSealedProducts() {
     if (!isAuthenticated) { showLoginModal(); return; }
-    // Este if está correcto, advierte si la URL no ha sido cambiada del placeholder
     if (SHEETDB_SEALED_PRODUCTS_API_URL.includes("YOUR_SEALED_PRODUCTS_SHEETDB_ID")) {
-        console.warn("ADVERTENCIA: La URL de la API para productos sellados no ha sido configurada. Reemplaza 'YOUR_SEALED_PRODUCTS_SHEETDB_ID' con tu ID real de SheetDB.");
-        sealedProductsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error: URL de API para Productos Sellados no configurada.</td></tr>'; // Colspan ajustado
+        console.warn("ADVERTENCIA: La URL de la API para productos sellados no ha sido configurada en admin.js. Reemplaza 'YOUR_SEALED_PRODUCTS_SHEETDB_ID' con tu ID real de SheetDB.");
+        sealedProductsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error: URL de API para Productos Sellados no configurada.</td></tr>';
         return;
     }
 
     try {
-        // Añadido para depuración: muestra la URL de carga
-        console.log(`DEBUG: Intentando cargar productos sellados desde URL: ${SHEETDB_SEALED_PRODUCTS_API_URL}`);
         const response = await fetch(SHEETDB_SEALED_PRODUCTS_API_URL);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         allAdminSealedProducts = await response.json();
@@ -504,12 +587,12 @@ function populateSealedProductTypeFilter(products) {
             types.add(product.tipo_producto.trim());
         }
     });
-    allProductTypes = Array.from(types).sort();
+    const sortedTypes = Array.from(types).sort();
 
     adminSealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
     sealedProductTypeOptionsDatalist.innerHTML = '';
 
-    allProductTypes.forEach(type => {
+    sortedTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type;
         option.textContent = type;
@@ -529,12 +612,13 @@ function applyAdminSealedFilters() {
     filteredAdminSealedProducts = allAdminSealedProducts.filter(product => {
         const matchesSearch = (product.producto && product.producto.toLowerCase().includes(searchTerm)) || 
                               (product.id_producto && product.id_producto.toLowerCase().includes(searchTerm));
-        const matchesType = selectedType === "" || (product.tipo_producto && product.tipo_producto === selectedType);
+        const matchesType = selectedType === "" || (product.tipo_producto && product.tipo_producto === selectedType); 
+        
         return matchesSearch && matchesType;
     });
 
     adminSealedCurrentPage = 1;
-    renderAdminSealedProductsTable(filteredAdminSealedProducts);
+    renderSealedProductsTable(filteredAdminSealedProducts);
 }
 
 function renderAdminSealedProductsTable(productsToRender) {
@@ -549,7 +633,7 @@ function renderAdminSealedProductsTable(productsToRender) {
     }
 
     paginatedProducts.forEach(product => {
-        const row = sealedProductsTableBody.insertRow();
+        const row = sealedProductsTableBody.insertRow(); // Usar insertRow para tablas
         row.dataset.productId = product.id_producto;
 
         row.innerHTML = `
@@ -618,8 +702,8 @@ async function editSealedProduct(productId) {
         sealedProductNameInput.value = product.producto;
         sealedProductImageInput.value = product.imagen;
         sealedProductTypeInput.value = product.tipo_producto || '';
-        sealedProductPriceInput.value = parseFloat(sealedProductPriceInput.value);
-        sealedProductStockInput.value = parseInt(sealedProductStockInput.value);
+        sealedProductPriceInput.value = parseFloat(product.precio);
+        sealedProductStockInput.value = parseInt(product.stock);
     } else {
         showCustomMessageModal("Error", "Producto sellado no encontrado.", true); // Usar modal personalizado
     }
@@ -930,7 +1014,7 @@ function updateDashboardStats() {
 // INICIALIZACIÓN
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+    console.log("DOMContentLoaded: El DOM ha sido completamente cargado."); // Mensaje de depuración
 
     // Event listeners para los botones de cierre de modales
     document.querySelectorAll('.admin-modal .close-button').forEach(button => {

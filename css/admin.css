@@ -9,8 +9,15 @@ body {
 }
 
 .admin-container {
-    display: flex;
+    display: none; /* ¡IMPORTANTE! Oculta el panel por defecto */
     width: 100%;
+    /* max-width: 1200px; */ /* Comentado para permitir que ocupe todo el ancho si es necesario */
+    /* height: 90vh; */ /* Comentado para permitir que el alto se ajuste al contenido */
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    /* display: flex; */ /* Esto será activado por JavaScript cuando el usuario se autentique */
+    overflow: hidden;
 }
 
 /* Sidebar (Barra Lateral) */
@@ -85,6 +92,35 @@ body {
     font-weight: bold;
     color: #3498db;
 }
+
+/* Estilos para el botón de refrescar */
+.refresh-button {
+    background-color: #007bff; /* Azul primario */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px; /* Ajustado para un mejor tamaño */
+    font-size: 1.1em; /* Tamaño del icono */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
+    display: flex; /* Para centrar el icono */
+    align-items: center;
+    justify-content: center;
+    width: 45px; /* Ancho fijo para que sea un cuadrado */
+    height: 45px; /* Alto fijo para que sea un cuadrado */
+    margin-right: 15px; /* Espacio a la derecha del botón */
+}
+
+.refresh-button:hover {
+    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
+    transform: translateY(-2px); /* Pequeño efecto de elevación */
+}
+
+.refresh-button i {
+    font-size: 1.2em; /* Asegura que el icono sea visible */
+}
+
 
 /* Secciones de Contenido */
 .admin-section {
