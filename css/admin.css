@@ -1,57 +1,58 @@
 /* Estilos Globales para el Panel de Administración */
+/* Estos estilos se aplican a todas las resoluciones a menos que sean sobrescritos */
 * {
-    box-sizing: border-box; /* Añadido para un modelo de caja consistente */
+    box-sizing: border-box;
 }
 html, body {
-    height: 100%; /* Asegura que html y body tomen la altura completa del viewport */
+    height: 100%;
 }
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    background-color: #f4f7f6; /* Fondo ligero para el admin */
+    background-color: #f4f7f6;
     color: #333;
-    display: flex; /* Mantener flex para la estructura principal */
+    display: flex;
     min-height: 100vh;
-    flex-direction: column; /* Apilar elementos verticalmente en el body */
+    flex-direction: column;
 }
 
 .admin-container {
     display: flex;
     width: 100%;
-    flex-grow: 1; /* Permite que el contenedor crezca y empuje el footer hacia abajo */
+    flex-grow: 1;
 }
 
-/* Sidebar (Barra Lateral) - Mobile-first (por defecto: dropdown oculto para móvil) */
+/* ==========================================================================
+   ESTILOS PARA ESCRITORIO (APLICADOS POR DEFECTO Y PARA PANTALLAS GRANDES)
+   ========================================================================== */
+
+/* Sidebar (Barra Lateral) */
 .sidebar {
-    background-color: #2c3e50; /* Azul oscuro */
+    background-color: #2c3e50;
     color: white;
     padding: 20px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
     
-    /* Estilos para el menú desplegable en móvil (aplicados por defecto) */
-    position: fixed;
-    top: 60px; /* Debajo del header */
-    left: 0;
-    width: 100%; /* Ocupa todo el ancho en móvil */
-    max-height: 0; /* Oculto por defecto */
-    overflow: hidden; /* Oculta el contenido cuando max-height es 0 */
-    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-    z-index: 999; /* Asegura que esté por encima del contenido principal */
-    box-sizing: border-box;
-}
-
-/* Estado activo del menú desplegable (para móvil) */
-.sidebar.active {
-    max-height: 500px; /* Valor suficientemente grande para mostrar todo el contenido */
-    padding-bottom: 20px; /* Asegura padding inferior cuando está activo */
+    position: static; /* Fija a la izquierda en el flujo del documento */
+    width: 250px;
+    height: auto; /* Altura se ajusta al contenido */
+    transform: translateX(0); /* Visible */
+    z-index: auto; /* Z-index normal */
+    max-height: none; /* Sin límite de altura */
+    overflow: visible; /* Contenido visible */
+    flex-shrink: 0; /* Evita que la sidebar se encoja */
+    flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
+    transition: none; /* ¡Importante! Deshabilita la transición para escritorio */
 }
 
 .sidebar-header {
     text-align: center;
-    margin-bottom: 20px; /* Ajustado para el desplegable */
-    display: none; /* Ocultar el encabezado de la sidebar en el desplegable móvil */
+    margin-bottom: 30px;
+    display: flex; /* Visible en escritorio */
+    justify-content: space-between;
+    align-items: center;
 }
 
 .sidebar-header h3 {
@@ -60,24 +61,19 @@ body {
     color: #ecf0f1;
 }
 
-/* Botón para cerrar la sidebar en móvil (oculto, ya no es necesario para un desplegable simple) */
-.close-sidebar-btn {
-    display: none;
-}
-
 .sidebar-nav ul {
     list-style: none;
     padding: 0;
 }
 
 .sidebar-nav li {
-    margin-bottom: 10px; /* Ajustado para el desplegable */
+    margin-bottom: 15px;
 }
 
 .sidebar-nav a {
     color: white;
     text-decoration: none;
-    padding: 12px 15px; /* Ajustado para mejor toque en móvil */
+    padding: 10px 15px;
     display: block;
     border-radius: 8px;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -85,51 +81,40 @@ body {
 
 .sidebar-nav a:hover,
 .sidebar-nav a.active {
-    background-color: #34495e; /* Un tono más claro al pasar el ratón o si está activo */
-    color: #4ad8ca; /* Color de acento */
+    background-color: #34495e;
+    color: #4ad8ca;
 }
 
-/* Overlay para el menú desplegable en móvil (oculto por defecto) */
-.sidebar-overlay {
+/* Overlay y botón de cerrar (ocultos en escritorio) */
+.sidebar-overlay,
+.close-sidebar-btn,
+.sidebar-toggle-btn {
     display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 900; /* Detrás del menú desplegable, pero delante del contenido */
 }
 
-/* Contenido Principal - Mobile-first (sin margen izquierdo por defecto) */
+/* Contenido Principal */
 .main-content {
-    flex-grow: 1;
-    padding: 30px; /* Padding original */
-    background-color: #ecf0f1;
-    margin-left: 0; /* Sin margen izquierdo por defecto (para móvil) */
+    flex-grow: 1; /* ¡Modificado! Permite que ocupe el espacio restante */
+    padding: 30px;
+    background-color: #f4f7f6;
+    margin-left: 0; /* ¡Modificado! Elimina el margen izquierdo para escritorio */
     transition: margin-left 0.3s ease-in-out;
-    width: 100%; /* Ocupa todo el ancho disponible en móvil */
-    /* Padding-top para compensar el header fijo en móvil */
-    padding-top: calc(60px + 30px); /* Altura mínima del header + padding original */
+    width: auto; /* ¡Modificado! Deja que flex-grow determine el ancho */
+    padding-top: 30px; /* Padding-top original */
 }
 
 .main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 60px; /* Asegura una altura mínima para el header */
+    min-height: 60px;
     
-    /* Header fijo en móvil */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #f4f7f6; /* Fondo del header */
-    z-index: 1000; /* Asegura que esté por encima de todo */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
-    padding: 15px 30px; /* Padding para el header fijo */
-    margin-bottom: 0; /* Elimina el margen inferior cuando es fijo */
-    border-bottom: 1px solid #ddd; /* Borde inferior para el header */
+    position: static; /* Header estático en escritorio */
+    background-color: transparent; /* Fondo transparente */
+    box-shadow: none; /* Sin sombra */
+    padding: 15px 30px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #ddd;
 }
 
 .main-header h1 {
@@ -137,10 +122,9 @@ body {
     color: #2c3e50;
     margin: 0;
     flex-grow: 1;
-    text-align: center; /* Centra el título en móvil */
+    text-align: left;
 }
 
-/* Contenedor para el botón de refrescar y la información del usuario */
 .header-right-controls {
     display: flex;
     align-items: center;
@@ -152,7 +136,6 @@ body {
     color: #3498db;
 }
 
-/* Estilos para el botón de refrescar */
 .refresh-button {
     background-color: #007bff;
     color: white;
@@ -179,14 +162,14 @@ body {
     font-size: 1.2em;
 }
 
-/* Secciones de Contenido */
+/* Secciones de Contenido General */
 .admin-section {
     background-color: white;
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     margin-bottom: 30px;
-    display: none;
+    display: none; /* Controlado por JavaScript */
 }
 
 .admin-section.active {
@@ -244,7 +227,60 @@ body {
     width: 100%;
 }
 
-/* Nuevo estilo para contenedores de tabla responsivos */
+/* Botones Generales */
+.add-button {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+    margin-bottom: 20px;
+    display: inline-block; /* Asegura el formato de botón */
+}
+
+.add-button:hover {
+    background-color: #218838;
+}
+
+/* Inputs de búsqueda y filtros */
+.admin-search-input,
+.admin-select-filter {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95em;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    transition: border-color 0.2s ease;
+}
+.admin-search-input:focus,
+.admin-select-filter:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+    outline: none;
+}
+
+/* Estilos específicos para el select (flecha personalizada) */
+.admin-select-filter {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 24px;
+    cursor: pointer;
+    padding-right: 40px;
+}
+
+/* Contenedor de tabla responsivo */
 .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -253,10 +289,10 @@ body {
     border: 1px solid #eee;
 }
 
-/* Tablas (reutilizados para productos sellados) */
+/* Tablas */
 table {
     width: 100%;
-    min-width: 600px; /* Asegura que la tabla tenga un ancho mínimo para que se desplace */
+    min-width: 600px;
     border-collapse: collapse;
     background-color: white;
     border-radius: 8px;
@@ -273,7 +309,7 @@ table th,
 table td {
     padding: 12px 15px;
     border-bottom: 1px solid #ddd;
-    white-space: nowrap; /* Evita que el contenido de la celda se envuelva */
+    white-space: nowrap;
 }
 
 table tbody tr:nth-child(even) {
@@ -291,7 +327,7 @@ table td img {
     vertical-align: middle;
 }
 
-/* Botones de Acción en Tablas (Estilos Generales para todos los botones de acción) */
+/* Botones de Acción en Tablas */
 .action-buttons {
     display: flex;
     align-items: center;
@@ -308,58 +344,31 @@ table td img {
     transition: background-color 0.2s ease;
 }
 
-/* Estilos Específicos para Botones de la Tabla de Cartas */
-#cardsTable .action-buttons button.edit-button {
-    background-color: #ffc107;
-}
-
-#cardsTable .action-buttons button.edit-button:hover {
-    background-color: #e0a800;
-}
-
-#cardsTable .action-buttons button.delete-button {
-    background-color: #dc3545;
-}
-
-#cardsTable .action-buttons button.delete-button:hover {
-    background-color: #c82333;
-}
-
-/* Estilos Específicos para Botones de la Tabla de Productos Sellados */
-#sealedProductsTable .action-buttons button.edit-sealed-product-button {
-    background-color: #ffc107;
-}
-
-#sealedProductsTable .action-buttons button.edit-sealed-product-button:hover {
-    background-color: #e0a800;
-}
-
-#sealedProductsTable .action-buttons button.delete-sealed-product-button {
-    background-color: #dc3545;
-}
-
-#sealedProductsTable .action-buttons button.delete-sealed-product-button:hover {
-    background-color: #c82333;
-}
-
-/* Estilos Específicos para Botones de la Tabla de Categorías */
+#cardsTable .action-buttons button.edit-button,
+#sealedProductsTable .action-buttons button.edit-sealed-product-button,
 #categoriesTable .action-buttons button.edit-category-button {
     background-color: #ffc107;
 }
 
+#cardsTable .action-buttons button.edit-button:hover,
+#sealedProductsTable .action-buttons button.edit-sealed-product-button:hover,
 #categoriesTable .action-buttons button.edit-category-button:hover {
     background-color: #e0a800;
 }
 
+#cardsTable .action-buttons button.delete-button,
+#sealedProductsTable .action-buttons button.delete-sealed-product-button,
 #categoriesTable .action-buttons button.delete-category-button {
     background-color: #dc3545;
 }
 
+#cardsTable .action-buttons button.delete-button:hover,
+#sealedProductsTable .action-buttons button.delete-sealed-product-button:hover,
 #categoriesTable .action-buttons button.delete-category-button:hover {
     background-color: #c82333;
 }
 
-/* Controles de Paginación (reutilizados para productos sellados) */
+/* Controles de Paginación */
 .pagination-controls {
     text-align: center;
     margin-top: 20px;
@@ -389,7 +398,7 @@ table td img {
     margin: 0 10px;
 }
 
-/* Modales del Panel de Administración (reutilizados para productos sellados) */
+/* Modales del Panel de Administración */
 .admin-modal {
     display: none;
     position: fixed;
@@ -515,109 +524,79 @@ table td img {
     background-color: #c82333;
 }
 
-/* Media Queries para responsividad del Panel Admin */
-@media (min-width: 769px) { /* Estilos para escritorio */
-    .admin-container {
-        flex-direction: row; /* La barra lateral y el contenido principal se muestran en fila */
-        align-items: flex-start; /* Alinea los elementos al inicio del contenedor flex */
-    }
-    .sidebar {
-        /* Sobrescribe los estilos de móvil para que sea una barra lateral fija */
-        position: static; /* Vuelve a ser parte del flujo normal del documento */
-        width: 250px;
-        height: auto; /* La altura se ajusta al contenido */
-        transform: translateX(0); /* Asegura que esté visible */
-        z-index: auto;
-        max-height: none; /* Elimina la restricción de altura */
-        overflow: visible; /* Contenido visible */
-        flex-shrink: 0; /* Evita que la sidebar se encoja */
-        flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
-        padding-top: 20px; /* Restaura el padding superior */
-        padding-bottom: 20px; /* Restaura el padding inferior */
-        transition: none; /* ¡Importante! Deshabilita la transición para escritorio */
-        top: auto; /* ¡Importante! Restablece la posición superior */
-        left: auto; /* ¡Importante! Restablece la posición izquierda */
-    }
-    .sidebar-header {
-        display: flex; /* Muestra el encabezado de la sidebar en escritorio */
-    }
-    .main-content {
-        margin-left: 250px; /* Margen para hacer espacio a la sidebar en escritorio */
-        width: auto; /* Ancho automático para flex-grow */
-        padding-top: 30px; /* Restaura el padding-top original para escritorio */
-    }
-    .sidebar-toggle-btn,
-    .close-sidebar-btn,
-    .sidebar-overlay {
-        display: none; /* Oculta los elementos de control móvil en escritorio */
-    }
-    .main-header {
-        position: static; /* Header es estático en escritorio */
-        padding: 15px 30px; /* Restaura el padding original para escritorio */
-        box-shadow: none; /* Elimina la sombra para header estático */
-        background-color: transparent; /* Elimina el fondo para header estático */
-        margin-bottom: 30px; /* Restaura el margin-bottom original para header estático */
-    }
-    .main-header h1 {
-        text-align: left; /* Alinea el título a la izquierda en escritorio */
-    }
 
-    /* Asegurar que los botones de añadir tengan su formato en escritorio */
-    .add-button {
-        display: inline-block; /* O block, según se necesite para el flujo */
-    }
-}
-
-@media (max-width: 768px) { /* Estilos para móvil */
+/* ==========================================================================
+   MEDIA QUERIES PARA MÓVIL (SOBRESCRITURA DE ESTILOS DE ESCRITORIO)
+   ========================================================================== */
+@media (max-width: 768px) {
     .admin-container {
         flex-direction: column;
     }
-    /* .sidebar ya tiene los estilos para ser un desplegable oculto por defecto */
-    
+
+    /* Sidebar como menú desplegable en móvil */
+    .sidebar {
+        position: fixed;
+        top: 60px; /* Debajo del header fijo */
+        left: 0;
+        width: 100%;
+        max-height: 0; /* Oculto por defecto */
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out; /* ¡Añadida transición aquí! */
+        z-index: 999;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
     .sidebar.active {
         max-height: 500px; /* Muestra el menú desplegable */
     }
 
     .sidebar-header {
-        display: none; /* Oculta el encabezado de la sidebar en el desplegable móvil */
+        display: none; /* Oculta el encabezado en el menú desplegable móvil */
     }
 
-    .close-sidebar-btn {
-        display: none; /* No es necesario para un desplegable simple */
+    .sidebar-nav li {
+        margin-bottom: 10px;
     }
 
+    .sidebar-nav a {
+        padding: 12px 15px;
+    }
+
+    /* Overlay y botón de alternar (visibles en móvil) */
     .sidebar-overlay.active {
-        display: block; /* Muestra el overlay cuando el menú desplegable está activo */
+        display: block;
     }
 
+    .sidebar-toggle-btn {
+        display: block; /* Muestra el botón de hamburguesa */
+        margin-right: 15px;
+    }
+
+    /* Contenido Principal en móvil */
     .main-content {
-        padding: 20px 15px;
-        width: 100%; /* Ocupa todo el ancho disponible */
-        margin-left: 0; /* Asegura que no haya margen izquierdo en móvil */
+        margin-left: 0; /* Sin margen izquierdo en móvil */
+        padding: 20px 15px; /* Ajuste de padding para móvil */
+        width: 100%; /* Ocupa todo el ancho disponible en móvil */
         /* Padding-top para compensar el header fijo en móvil */
-        padding-top: calc(60px + 20px); /* Altura mínima del header + padding original de móvil */
+        padding-top: calc(60px + 20px);
     }
 
+    /* Header fijo en móvil */
     .main-header {
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        /* Header fijo para móvil */
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
-        background-color: #f4f7f6; /* Fondo del header */
-        z-index: 1000; /* Asegura que esté por encima de todo */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
-        padding: 15px 15px; /* Padding para el header fijo en móvil */
-        margin-bottom: 0; /* Elimina el margen inferior cuando es fijo */
-        border-bottom: 1px solid #ddd; /* Borde inferior para el header */
-    }
-
-    .sidebar-toggle-btn {
-        display: block; /* Muestra el botón de alternar sidebar */
-        margin-right: 15px;
+        background-color: #f4f7f6;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 15px 15px;
+        margin-bottom: 0;
+        border-bottom: 1px solid #ddd;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
     }
 
     .main-header h1 {
@@ -631,8 +610,9 @@ table td img {
         gap: 10px;
     }
 
+    /* Ajustes para elementos dentro de secciones en móvil */
     .dashboard-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Una columna para las tarjetas en móvil */
     }
     table th, table td {
         padding: 8px 10px;
