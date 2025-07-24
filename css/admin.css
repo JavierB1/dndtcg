@@ -315,6 +315,7 @@ table td {
     padding: 12px 15px;
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
+    vertical-align: middle; /* Alinea el contenido de la celda verticalmente */
 }
 
 table tbody tr:nth-child(even) {
@@ -337,6 +338,7 @@ table td img {
     display: flex;
     align-items: center;
     gap: 5px;
+    height: 100%; /* ¡Modificado! Asegura que el contenedor flex ocupe toda la altura de la celda */
 }
 
 .action-buttons button {
