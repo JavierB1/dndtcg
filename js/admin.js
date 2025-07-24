@@ -128,7 +128,7 @@ const adminSealedProductsPerPage = 10;
 let allCategories = [];
 let allProductTypes = [];
 
-let isAuthenticated = false; // Manejado por JavaScript ahora
+let isAuthenticated = false;
 
 // ===============================================
 // FUNCIÓN PARA MOSTRAR MENSAJES PERSONALIZADOS
@@ -151,8 +151,7 @@ function showCustomMessageModal(title, message, isError = false) {
 // GESTIÓN DE LA NAVEGACIÓN ENTRE SECCIONES
 // ===============================================
 function showSection(sectionToShow) {
-    // Asegurarse de que el usuario esté autenticado antes de mostrar secciones
-    if (!isAuthenticated) {
+    if (!isAuthenticated && sectionToShow !== loginModal) {
         showLoginModal();
         return;
     }
@@ -208,13 +207,12 @@ navCategories.addEventListener('click', (e) => {
 navLogout.addEventListener('click', (e) => {
     e.preventDefault();
     isAuthenticated = false;
+    showCustomMessageModal("Sesión Cerrada", "Has cerrado sesión correctamente."); // Usar modal personalizado
     document.querySelector('.user-info span').textContent = "Invitado";
-    showCustomMessageModal("Sesión Cerrada", "Has cerrado sesión correctamente.");
-    showLoginModal(); // Mostrar modal de login después de cerrar sesión
+    showLoginModal();
 });
 
 // Listener para el botón de refrescar el panel
-const refreshAdminPageBtn = document.getElementById('refreshAdminPageBtn'); // Asegurarse de que esté declarado si no lo está ya
 refreshAdminPageBtn.addEventListener('click', () => {
     if (!isAuthenticated) { showLoginModal(); return; }
 
@@ -232,42 +230,62 @@ refreshAdminPageBtn.addEventListener('click', () => {
 
 
 // ===============================================
-// LÓGICA DE AUTENTICACIÓN (AHORA CON JAVASCRIPT BÁSICO)
+// LÓGICA DE AUTENTICACIÓN (Simple para demostración)
 // ===============================================
+const ADMIN_USERNAME = "dndadmin";
+const ADMIN_PASSWORD = "Blarias616";
+
 function showLoginModal() {
-    console.log("showLoginModal: Mostrando modal de login.");
-    adminContainer.style.display = 'none'; // Ocultar el contenido del panel
-    loginModal.style.display = 'flex'; // Asegurarse de que el modal de login se muestre
+    // Ocultar el contenedor principal del admin antes de mostrar el login
+    // Esto se maneja ahora principalmente con el style="display: none;" en admin.html
+    // pero lo mantenemos aquí para consistencia y seguridad.
+    if (adminContainer) {
+        adminContainer.style.display = 'none';
+    }
+    // Asegurarse de que todas las secciones estén inactivas
+    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
+    sections.forEach(section => section.classList.remove('active'));
+
+    loginModal.style.display = 'flex';
     loginMessage.textContent = '';
     loginForm.reset();
     usernameInput.focus();
 }
 
 function hideLoginModal() {
-    console.log("hideLoginModal: Ocultando modal de login y mostrando panel.");
-    adminContainer.style.display = 'flex'; // Mostrar el contenido del panel
     loginModal.style.display = 'none';
+    // Hacer visible el contenedor principal del admin después de ocultar el login
+    if (adminContainer) {
+        adminContainer.style.display = 'flex';
+    }
 }
 
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const username = usernameInput.value;
-    const password = passwordInput.value;
+    const password = password.value;
 
-    // Credenciales hardcodeadas para demostración
-    const validUsername = "admin@example.com";
-    const validPassword = "password123";
-
-    if (username === validUsername && password === validPassword) {
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         isAuthenticated = true;
         document.querySelector('.user-info span').textContent = username;
         hideLoginModal();
-        showSection(dashboardSection); // Mostrar el dashboard
+        showSection(dashboardSection);
         updateDashboardStats();
     } else {
         loginMessage.textContent = "Usuario o contraseña incorrectos.";
     }
 });
+
+
+function checkAuth() {
+    if (!isAuthenticated) {
+        showLoginModal();
+    } else {
+        hideLoginModal(); // Asegura que el contenedor principal se haga visible
+        showSection(dashboardSection);
+        updateDashboardStats();
+    }
+}
 
 
 // ===============================================
@@ -299,6 +317,8 @@ function populateCategoryFilter(cards) {
     const sortedCategories = Array.from(categories).sort();
 
     adminCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+    categoryOptionsDatalist.innerHTML = '';
+
     sortedCategories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -427,22 +447,14 @@ async function saveCard() {
 
     try {
         let response;
-        // DEBUG: Log the ID value before the conditional check
-        console.log(`DEBUG: ID value before check: '${id}'`);
-
         if (id) {
-            // DEBUG: Log that a PUT operation is being attempted
-            console.log(`DEBUG: Attempting PUT operation for card ID: ${id}`);
             response = await fetch(`${SHEETDB_CARDS_API_URL}/id/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: cardData })
             });
         } else {
-            // DEBUG: Log that a POST operation is being attempted and a new ID is generated
-            console.log(`DEBUG: Attempting POST operation. Generating new ID.`);
-            // MODIFICADO: Nuevo formato de ID para cartas
-            cardData.id = `C-${Date.now().toString(36)}`; 
+            cardData.id = `card_${Date.now()}`; 
             response = await fetch(SHEETDB_CARDS_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -455,46 +467,22 @@ async function saveCard() {
         cardModal.style.display = 'none';
         showCustomMessageModal("Éxito", "Carta guardada exitosamente."); // Usar modal personalizado
         loadAdminCards();
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error guardando carta:", error);
         showCustomMessageModal("Error", `Error al guardar carta: ${error.message}. Revisa la consola.`, true); // Usar modal personalizado
     }
 }
 
 // ===============================================
-// ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
+// LÓGICA DE GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn'); 
-const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); 
-const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
-const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
-const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
 
-const adminSealedPrevPageBtn = document.getElementById('adminSealedPrevPageBtn');
-const adminSealedNextPageBtn = document.getElementById('adminSealedNextPageBtn');
-const adminSealedPageInfo = document.getElementById('adminSealedPageInfo');
-
-// Modales y Formularios de Productos Sellados
-const sealedProductModal = document.getElementById('sealedProductModal');
-const sealedProductModalTitle = document.getElementById('sealedProductModalTitle');
-const sealedProductForm = document.getElementById('sealedProductForm');
-const sealedProductIdInput = document.getElementById('sealedProductId');
-const sealedProductNameInput = document.getElementById('sealedProductName'); // Corresponde a 'producto'
-const sealedProductImageInput = document.getElementById('sealedProductImage'); // Corresponde a 'imagen'
-const sealedProductTypeInput = document.getElementById('sealedProductType'); // Corresponde a 'tipo_producto'
-const sealedProductPriceInput = document.getElementById('sealedProductPrice');
-const sealedProductStockInput = document.getElementById('sealedProductStock');
-const saveSealedProductBtn = document.getElementById('saveSealedProductBtn');
-
-// ===============================================
-// LÓGICA DE GESTIÓN DE PRODUCTOS SELLADOS (FRONTEND TIENDA)
-// ===============================================
 async function loadAdminSealedProducts() {
     if (!isAuthenticated) { showLoginModal(); return; }
+    // Este if está correcto, advierte si la URL no ha sido cambiada del placeholder
     if (SHEETDB_SEALED_PRODUCTS_API_URL.includes("YOUR_SEALED_PRODUCTS_SHEETDB_ID")) {
-        console.warn("ADVERTENCIA: La URL de la API para productos sellados no ha sido configurada en admin.js. Reemplaza 'YOUR_SEALED_PRODUCTS_SHEETDB_ID' con tu ID real de SheetDB.");
-        sealedProductsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error: URL de API para Productos Sellados no configurada.</td></tr>';
+        console.warn("ADVERTENCIA: La URL de la API para productos sellados no ha sido configurada. Reemplaza 'YOUR_SEALED_PRODUCTS_SHEETDB_ID' con tu ID real de SheetDB.");
+        sealedProductsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">Error: URL de API para Productos Sellados no configurada.</td></tr>'; // Colspan ajustado
         return;
     }
 
@@ -507,7 +495,7 @@ async function loadAdminSealedProducts() {
         applyAdminSealedFilters();
     } catch (error) {
         console.error("Error cargando productos sellados para el admin:", error);
-        showCustomMessageModal("Error", "No se pudieron cargar los productos sellados. Inténtalo de nuevo más tarde.");
+        showCustomMessageModal("Error", "Error cargando productos sellados. Por favor, revisa la consola.", true); // Usar modal personalizado
     }
 }
 
@@ -518,12 +506,12 @@ function populateSealedProductTypeFilter(products) {
             types.add(product.tipo_producto.trim());
         }
     });
-    const sortedTypes = Array.from(types).sort();
+    allProductTypes = Array.from(types).sort();
 
     adminSealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
     sealedProductTypeOptionsDatalist.innerHTML = '';
 
-    sortedTypes.forEach(type => {
+    allProductTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type;
         option.textContent = type;
@@ -543,13 +531,12 @@ function applyAdminSealedFilters() {
     filteredAdminSealedProducts = allAdminSealedProducts.filter(product => {
         const matchesSearch = (product.producto && product.producto.toLowerCase().includes(searchTerm)) || 
                               (product.id_producto && product.id_producto.toLowerCase().includes(searchTerm));
-        const matchesType = selectedType === "" || (product.tipo_producto && product.tipo_producto === selectedType); 
-        
+        const matchesType = selectedType === "" || (product.tipo_producto && product.tipo_producto === selectedType);
         return matchesSearch && matchesType;
     });
 
     adminSealedCurrentPage = 1;
-    renderSealedProductsTable(filteredAdminSealedProducts);
+    renderAdminSealedProductsTable(filteredAdminSealedProducts);
 }
 
 function renderAdminSealedProductsTable(productsToRender) {
@@ -564,7 +551,7 @@ function renderAdminSealedProductsTable(productsToRender) {
     }
 
     paginatedProducts.forEach(product => {
-        const row = sealedProductsTableBody.insertRow(); // Usar insertRow para tablas
+        const row = sealedProductsTableBody.insertRow();
         row.dataset.productId = product.id_producto;
 
         row.innerHTML = `
@@ -589,8 +576,8 @@ function updateAdminSealedPaginationControls(totalProductsCount) {
     const totalPages = Math.ceil(totalProductsCount / adminSealedProductsPerPage);
     adminSealedPageInfo.textContent = `Página ${adminSealedCurrentPage} de ${totalPages || 1}`;
 
-    adminSealedPrevPageBtn.disabled = adminSealedCurrentPage === 1; 
-    adminSealedNextPageBtn.disabled = adminSealedCurrentPage === totalPages || totalPages === 0; 
+    adminSealedPrevPageBtn.disabled = adminSealedCurrentPage === 1;
+    adminSealedNextPageBtn.disabled = adminSealedCurrentPage === totalPages || totalPages === 0;
 }
 
 function attachSealedProductActionListeners() {
@@ -662,27 +649,15 @@ async function saveSealedProduct() {
         let targetUrl;
         let method;
 
-        // DEBUG: Log the ID value before the conditional check
-        console.log(`DEBUG: ID de producto antes de la comprobación: '${id_producto}'`);
-
         if (id_producto) {
-            // DEBUG: Log that a PUT operation is being attempted
-            console.log(`DEBUG: Intentando operación PUT para ID de producto: ${id_producto}`);
             targetUrl = `${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${id_producto}`;
             method = 'PUT';
         } else {
-            // DEBUG: Log that a POST operation is being attempted and a new ID is generated
-            console.log(`DEBUG: Intentando operación POST. Generando nuevo ID de producto.`);
-            // MODIFICADO: Nuevo formato de ID para productos sellados
-            id_producto = `P-${Date.now().toString(36)}`;
+            id_producto = `sealed_${Date.now()}`;
             productData.id_producto = id_producto;
             targetUrl = SHEETDB_SEALED_PRODUCTS_API_URL;
             method = 'POST';
         }
-
-        // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
-        // Corregido el mensaje para que diga "guardar" en lugar de "eliminar"
-        console.log(`DEBUG: Intentando GUARDAR producto sellado en URL: ${targetUrl} con método: ${method}`);
 
         const response = await fetch(targetUrl, {
             method: method,
@@ -851,9 +826,6 @@ function confirmDeletion(type, id) {
 async function deleteCard(cardId) {
     if (!isAuthenticated) { showLoginModal(); return; }
     try {
-        // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
-        console.log(`DEBUG: Intentando eliminar carta desde URL: ${SHEETDB_CARDS_API_URL}/id/${cardId} con método: DELETE`);
-
         const response = await fetch(`${SHEETDB_CARDS_API_URL}/id/${cardId}`, {
             method: 'DELETE'
         });
@@ -870,9 +842,6 @@ async function deleteCard(cardId) {
 async function deleteSealedProduct(productId) {
     if (!isAuthenticated) { showLoginModal(); return; }
     try {
-        // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
-        console.log(`DEBUG: Intentando eliminar producto sellado desde URL: ${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${productId} con método: DELETE`);
-
         const response = await fetch(`${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${productId}`, {
             method: 'DELETE'
         });
@@ -945,14 +914,13 @@ function updateDashboardStats() {
 // INICIALIZACIÓN
 // ===============================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOMContentLoaded: El DOM ha sido completamente cargado."); // Mensaje de depuración
+    checkAuth();
 
     // Event listeners para los botones de cierre de modales
     document.querySelectorAll('.admin-modal .close-button').forEach(button => {
         button.addEventListener('click', (e) => {
             const modal = e.target.closest('.admin-modal');
             if (modal.id === 'loginModal' && !isAuthenticated) {
-                // Prevenir cierre del modal de login si no está autenticado
                 return;
             }
             modal.style.display = 'none';
@@ -963,7 +931,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('admin-modal')) {
             if (e.target.id === 'loginModal' && !isAuthenticated) {
-                // Prevenir cierre del modal de login si no está autenticado
                 return;
             }
             // Asegurarse de que el click fuera no cierre el modal de confirmación
@@ -1018,7 +985,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     adminSealedSearchInput.addEventListener('input', applyAdminSealedFilters);
     adminSealedTypeFilter.addEventListener('change', applyAdminSealedFilters);
-    
-    // Al cargar el DOM, mostrar el modal de login
-    showLoginModal();
 });
