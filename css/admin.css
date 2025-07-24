@@ -94,13 +94,13 @@ body {
 
 /* Contenido Principal */
 .main-content {
-    flex-grow: 1; /* ¡Modificado! Permite que ocupe el espacio restante */
+    flex-grow: 1;
     padding: 30px;
     background-color: #f4f7f6;
-    margin-left: 0; /* ¡Modificado! Elimina el margen izquierdo para escritorio */
+    margin-left: 0;
     transition: margin-left 0.3s ease-in-out;
-    width: auto; /* ¡Modificado! Deja que flex-grow determine el ancho */
-    padding-top: 30px; /* Padding-top original */
+    width: auto;
+    padding-top: 30px; /* Padding-top original para escritorio */
 }
 
 .main-header {
@@ -579,7 +579,7 @@ table td img {
         padding: 20px 15px; /* Ajuste de padding para móvil */
         width: 100%; /* Ocupa todo el ancho disponible en móvil */
         /* Padding-top para compensar el header fijo en móvil */
-        padding-top: calc(60px + 20px);
+        padding-top: calc(90px + 20px); /* ¡Modificado! 90px es la altura real del header fijo */
     }
 
     /* Header fijo en móvil */
@@ -591,12 +591,14 @@ table td img {
         background-color: #f4f7f6;
         z-index: 1000;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        padding: 15px 15px;
+        padding: 15px 15px; /* Padding para el header fijo en móvil */
         margin-bottom: 0;
         border-bottom: 1px solid #ddd;
         flex-direction: row;
         justify-content: flex-start;
         align-items: center;
+        /* Aseguramos que la altura del header sea consistente */
+        height: 90px; /* min-height (60px) + padding vertical (15px * 2) */
     }
 
     .main-header h1 {
