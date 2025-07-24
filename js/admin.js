@@ -22,8 +22,7 @@ let userId = null; // Se establecerá después de la autenticación
 const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb'; // Reemplaza con tu dominio Netlify
 
 // Contraseña de administrador para las funciones (¡Debe coincidir con la configurada en Netlify!)
-// ¡IMPORTANTE! Reemplaza 'TU_CONTRASEÑA_REAL_DE_ADMIN' con la contraseña que configuraste en Netlify.
-// Esta contraseña será visible en el código del navegador, por lo que esta es una solución TEMPORAL.
+// ¡IMPORTANTE! Esta contraseña será visible en el código del navegador, por lo que esta es una solución TEMPORAL.
 // Para seguridad en producción, se recomienda Firebase Authentication.
 const ADMIN_FUNCTION_PASSWORD = 'Blarias.DND.616!'; 
 
