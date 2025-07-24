@@ -89,7 +89,7 @@ body {
 .sidebar-overlay,
 .close-sidebar-btn,
 .sidebar-toggle-btn {
-    display: none;
+    display: none; /* Oculto por defecto en escritorio */
 }
 
 /* Contenido Principal */
@@ -123,6 +123,11 @@ body {
     margin: 0;
     flex-grow: 1;
     text-align: left;
+}
+
+/* Asegura que la parte "al Panel de Administración" sea visible en escritorio */
+.main-header h1 .desktop-only-title {
+    display: inline; /* O inline-block, según se necesite */
 }
 
 .header-right-controls {
@@ -571,7 +576,28 @@ table td img {
     .sidebar-toggle-btn {
         display: block; /* Muestra el botón de hamburguesa */
         margin-right: 15px;
+        /* Estilos de diseño para el botón de hamburguesa */
+        background-color: #007bff; /* Azul primario */
+        color: white;
+        border: none;
+        border-radius: 8px; /* Bordes redondeados */
+        padding: 10px 15px; /* Espaciado interno */
+        font-size: 1.2em; /* Tamaño del icono */
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
+        display: flex; /* Para centrar el icono */
+        align-items: center;
+        justify-content: center;
+        width: 45px; /* Ancho fijo para que sea un cuadrado */
+        height: 45px; /* Alto fijo para que sea un cuadrado */
     }
+
+    .sidebar-toggle-btn:hover {
+        background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
+        transform: translateY(-2px); /* Pequeño efecto de elevación */
+    }
+
 
     /* Contenido Principal en móvil */
     .main-content {
@@ -579,7 +605,7 @@ table td img {
         padding: 20px 15px; /* Ajuste de padding para móvil */
         width: 100%; /* Ocupa todo el ancho disponible en móvil */
         /* Padding-top para compensar el header fijo en móvil */
-        padding-top: calc(90px + 20px); /* ¡Modificado! 90px es la altura real del header fijo */
+        padding-top: calc(90px + 20px); /* 90px es la altura real del header fijo */
     }
 
     /* Header fijo en móvil */
@@ -597,14 +623,18 @@ table td img {
         flex-direction: row;
         justify-content: flex-start;
         align-items: center;
-        /* Aseguramos que la altura del header sea consistente */
-        height: 90px; /* min-height (60px) + padding vertical (15px * 2) */
+        height: 90px; /* Aseguramos que la altura del header sea consistente */
     }
 
     .main-header h1 {
         font-size: 1.5em;
         margin-bottom: 0;
         text-align: left;
+    }
+
+    /* Oculta la parte "al Panel de Administración" en móvil */
+    .main-header h1 .desktop-only-title {
+        display: none;
     }
 
     .header-right-controls {
