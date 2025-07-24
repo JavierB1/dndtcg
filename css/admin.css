@@ -21,7 +21,7 @@ body {
     flex-grow: 1; /* Permite que el contenedor crezca y empuje el footer hacia abajo */
 }
 
-/* Sidebar (Barra Lateral) / Menú Desplegable en Móvil */
+/* Sidebar (Barra Lateral) - Estilos por defecto (para escritorio) */
 .sidebar {
     width: 250px;
     background-color: #2c3e50; /* Azul oscuro */
@@ -30,28 +30,22 @@ body {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    /* Por defecto, en móvil, será un desplegable oculto */
-    position: fixed; /* Fijo para que se superponga */
-    top: 60px; /* Debajo del header (asumiendo altura de header de 60px) */
-    left: 0;
-    width: 100%; /* Ocupa todo el ancho en móvil */
-    max-height: 0; /* Oculto por defecto */
-    overflow: hidden; /* Oculta el contenido cuando max-height es 0 */
-    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out; /* Transición para el despliegue */
-    z-index: 999; /* Asegura que esté por encima del contenido principal, pero debajo del overlay */
-    box-sizing: border-box; /* Para que el padding no afecte el ancho/alto */
-}
-
-/* Estado activo del menú desplegable */
-.sidebar.active {
-    max-height: 500px; /* Valor suficientemente grande para mostrar todo el contenido */
-    padding-bottom: 20px; /* Asegura padding inferior cuando está activo */
+    position: static; /* Por defecto, estática en el flujo del documento (escritorio) */
+    height: auto; /* Altura se ajusta al contenido */
+    transform: translateX(0); /* Visible por defecto */
+    z-index: auto; /* Z-index normal para escritorio */
+    max-height: none; /* Sin límite de altura en escritorio */
+    overflow: visible; /* Contenido visible en escritorio */
+    flex-shrink: 0; /* Evita que la sidebar se encoja */
+    flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
 }
 
 .sidebar-header {
     text-align: center;
-    margin-bottom: 20px; /* Ajustado para el desplegable */
-    display: none; /* Ocultar el encabezado de la sidebar en el desplegable móvil */
+    margin-bottom: 30px;
+    display: flex; /* Visible por defecto en escritorio */
+    justify-content: space-between;
+    align-items: center;
 }
 
 .sidebar-header h3 {
@@ -60,7 +54,7 @@ body {
     color: #ecf0f1;
 }
 
-/* Botón para cerrar la sidebar en móvil (ya no es necesario para un desplegable simple) */
+/* Botón para cerrar la sidebar en móvil (oculto por defecto) */
 .close-sidebar-btn {
     display: none;
 }
@@ -71,13 +65,13 @@ body {
 }
 
 .sidebar-nav li {
-    margin-bottom: 10px; /* Ajustado para el desplegable */
+    margin-bottom: 15px;
 }
 
 .sidebar-nav a {
     color: white;
     text-decoration: none;
-    padding: 12px 15px; /* Ajustado para mejor toque en móvil */
+    padding: 10px 15px;
     display: block;
     border-radius: 8px;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -89,16 +83,16 @@ body {
     color: #4ad8ca; /* Color de acento */
 }
 
-/* Overlay para el menú desplegable en móvil */
+/* Overlay para el menú desplegable en móvil (oculto por defecto) */
 .sidebar-overlay {
-    display: none; /* Oculto por defecto */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 900; /* Detrás del menú desplegable, pero delante del contenido */
+    z-index: 900;
 }
 
 /* Contenido Principal */
@@ -106,9 +100,9 @@ body {
     flex-grow: 1;
     padding: 30px;
     background-color: #ecf0f1;
-    margin-left: 0; /* Por defecto, sin margen en móvil */
-    transition: margin-left 0.3s ease-in-out; /* Transición para el margen */
-    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+    margin-left: 250px; /* Margen para hacer espacio a la sidebar en escritorio */
+    transition: margin-left 0.3s ease-in-out;
+    width: auto; /* Ancho automático para flex-grow */
 }
 
 .main-header {
@@ -118,12 +112,12 @@ body {
     margin-bottom: 30px;
     padding-bottom: 15px;
     border-bottom: 1px solid #ddd;
-    min-height: 60px; /* Asegura una altura mínima para el header */
+    min-height: 60px;
 }
 
-/* Botón de alternar sidebar (visible solo en móvil) */
+/* Botón de alternar sidebar (oculto por defecto en escritorio) */
 .sidebar-toggle-btn {
-    display: block; /* Visible por defecto en móvil */
+    display: none;
     background-color: #007bff;
     color: white;
     border: none;
@@ -138,20 +132,19 @@ body {
     background-color: #0056b3;
 }
 
-
 .main-header h1 {
     font-size: 2em;
     color: #2c3e50;
     margin: 0;
-    flex-grow: 1; /* Permite que el título ocupe el espacio restante */
-    text-align: center; /* Centra el título */
+    flex-grow: 1;
+    text-align: left; /* Alinea el título a la izquierda en escritorio */
 }
 
 /* Contenedor para el botón de refrescar y la información del usuario */
 .header-right-controls {
-    display: flex; /* Habilitar flexbox */
-    align-items: center; /* Alinear verticalmente al centro */
-    gap: 15px; /* Espacio entre el botón y la info del usuario */
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .user-info span {
@@ -161,31 +154,30 @@ body {
 
 /* Estilos para el botón de refrescar */
 .refresh-button {
-    background-color: #007bff; /* Azul primario */
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 8px;
-    padding: 10px 15px; /* Ajustado para un mejor tamaño */
-    font-size: 1.1em; /* Tamaño del icono */
+    padding: 10px 15px;
+    font-size: 1.1em;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
-    display: flex; /* Para centrar el icono */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 45px; /* Ancho fijo para que sea un cuadrado */
-    height: 45px; /* Alto fijo para que sea un cuadrado */
+    width: 45px;
+    height: 45px;
 }
 
 .refresh-button:hover {
-    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
-    transform: translateY(-2px); /* Pequeño efecto de elevación */
+    background-color: #0056b3;
+    transform: translateY(-2px);
 }
 
 .refresh-button i {
-    font-size: 1.2em; /* Asegura que el icono sea visible */
+    font-size: 1.2em;
 }
-
 
 /* Secciones de Contenido */
 .admin-section {
@@ -194,7 +186,7 @@ body {
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     margin-bottom: 30px;
-    display: none; /* Oculto por defecto, JavaScript lo hará visible */
+    display: none;
 }
 
 .admin-section.active {
@@ -220,56 +212,55 @@ body {
     background-color: #f0f0f0;
     padding: 20px;
     border-radius: 8px;
-    text-align: center; /* Alinea el contenido de la tarjeta al centro */
+    text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex; /* Habilitar flexbox */
-    flex-direction: column; /* Apilar elementos verticalmente */
-    justify-content: space-between; /* Distribuye espacio entre h3 y p */
-    align-items: center; /* Alinea el contenido al centro horizontalmente */
-    height: 120px; /* Altura fija para las tarjetas para una alineación consistente */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 120px;
 }
 
 .stat-card h3 {
     margin-top: 0;
     color: #3498db;
     font-size: 1.1em;
-    margin-bottom: 0; /* Asegura que no haya margen inferior extra en el h3 */
-    text-align: center; /* Alinea el texto del h3 al centro */
-    width: 100%; /* Asegura que ocupe todo el ancho disponible */
-    min-height: 2.2em; /* Aproximadamente 2 líneas de texto (1.1em * 2) */
-    display: flex; /* Para centrar verticalmente el texto si es de una línea */
-    align-items: center; /* Centra verticalmente el texto dentro del h3 */
-    justify-content: center; /* Centra horizontalmente el texto dentro del h3 */
+    margin-bottom: 0;
+    text-align: center;
+    width: 100%;
+    min-height: 2.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .stat-card p {
     font-size: 1.8em;
     font-weight: bold;
     color: #2c3e50;
-    margin: 0; /* Eliminar margen superior para que flexbox lo maneje */
-    padding-top: 10px; /* Pequeño padding para separar del título si es necesario */
-    text-align: center; /* Alinea el texto del p al centro */
-    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+    margin: 0;
+    padding-top: 10px;
+    text-align: center;
+    width: 100%;
 }
 
 /* Nuevo estilo para contenedores de tabla responsivos */
 .table-responsive {
-    overflow-x: auto; /* Permite desplazamiento horizontal si el contenido es demasiado ancho */
-    -webkit-overflow-scrolling: touch; /* Mejora el desplazamiento en iOS */
-    margin-bottom: 20px; /* Espacio debajo de la tabla */
-    border-radius: 8px; /* Bordes redondeados para el contenedor */
-    border: 1px solid #eee; /* Borde sutil */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #eee;
 }
 
 /* Tablas (reutilizados para productos sellados) */
 table {
     width: 100%;
-    min-width: 600px; /* Añadido: Asegura que la tabla tenga un ancho mínimo para que se desplace */
+    min-width: 600px;
     border-collapse: collapse;
-    /* margin-bottom: 20px; */ /* Movido al .table-responsive */
     background-color: white;
     border-radius: 8px;
-    overflow: hidden; /* Para que los bordes redondeados se apliquen a los thead/tbody */
+    overflow: hidden;
 }
 
 table thead tr {
@@ -282,7 +273,7 @@ table th,
 table td {
     padding: 12px 15px;
     border-bottom: 1px solid #ddd;
-    white-space: nowrap; /* Evita que el contenido de la celda se envuelva */
+    white-space: nowrap;
 }
 
 table tbody tr:nth-child(even) {
@@ -301,10 +292,10 @@ table td img {
 }
 
 /* Botones de Acción en Tablas (Estilos Generales para todos los botones de acción) */
-.action-buttons { /* Añadido display flex para alineación horizontal */
+.action-buttons {
     display: flex;
     align-items: center;
-    gap: 5px; /* Espacio entre los botones */
+    gap: 5px;
 }
 
 .action-buttons button {
@@ -319,55 +310,54 @@ table td img {
 
 /* Estilos Específicos para Botones de la Tabla de Cartas */
 #cardsTable .action-buttons button.edit-button {
-    background-color: #ffc107; /* Amarillo para editar */
+    background-color: #ffc107;
 }
 
 #cardsTable .action-buttons button.edit-button:hover {
-    background-color: #e0a800; /* Tono más oscuro de amarillo al pasar el ratón */
+    background-color: #e0a800;
 }
 
 #cardsTable .action-buttons button.delete-button {
-    background-color: #dc3545; /* Rojo para eliminar */
+    background-color: #dc3545;
 }
 
 #cardsTable .action-buttons button.delete-button:hover {
-    background-color: #c82333; /* Tono más oscuro de rojo al pasar el ratón */
+    background-color: #c82333;
 }
 
 /* Estilos Específicos para Botones de la Tabla de Productos Sellados */
 #sealedProductsTable .action-buttons button.edit-sealed-product-button {
-    background-color: #ffc107; /* Amarillo para editar */
+    background-color: #ffc107;
 }
 
 #sealedProductsTable .action-buttons button.edit-sealed-product-button:hover {
-    background-color: #e0a800; /* Tono más oscuro de amarillo al pasar el ratón */
+    background-color: #e0a800;
 }
 
 #sealedProductsTable .action-buttons button.delete-sealed-product-button {
-    background-color: #dc3545; /* Rojo para eliminar */
+    background-color: #dc3545;
 }
 
 #sealedProductsTable .action-buttons button.delete-sealed-product-button:hover {
-    background-color: #c82333; /* Tono más oscuro de rojo al pasar el ratón */
+    background-color: #c82333;
 }
 
 /* Estilos Específicos para Botones de la Tabla de Categorías */
 #categoriesTable .action-buttons button.edit-category-button {
-    background-color: #ffc107; /* Amarillo para editar */
+    background-color: #ffc107;
 }
 
 #categoriesTable .action-buttons button.edit-category-button:hover {
-    background-color: #e0a800; /* Tono más oscuro de amarillo al pasar el ratón */
+    background-color: #e0a800;
 }
 
 #categoriesTable .action-buttons button.delete-category-button {
-    background-color: #dc3545; /* Rojo para eliminar */
+    background-color: #dc3545;
 }
 
 #categoriesTable .action-buttons button.delete-category-button:hover {
-    background-color: #c82333; /* Tono más oscuro de rojo al pasar el ratón */
+    background-color: #c82333;
 }
-
 
 /* Controles de Paginación (reutilizados para productos sellados) */
 .pagination-controls {
@@ -401,7 +391,7 @@ table td img {
 
 /* Modales del Panel de Administración (reutilizados para productos sellados) */
 .admin-modal {
-    display: none; /* Oculto por defecto */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0; top: 0;
@@ -466,7 +456,7 @@ table td img {
 .admin-modal-content form input[type="number"],
 .admin-modal-content form input[type="password"],
 .admin-modal-content form input[list] {
-    width: calc(100% - 22px); /* Ancho del input menos padding y borde */
+    width: calc(100% - 22px);
     padding: 10px;
     margin-bottom: 15px;
     border: 1px solid #ccc;
@@ -526,46 +516,22 @@ table td img {
 }
 
 /* Media Queries para responsividad del Panel Admin */
-@media (min-width: 769px) { /* Estilos para escritorio */
-    .admin-container {
-        flex-direction: row; /* La barra lateral y el contenido principal se muestran en fila */
-        align-items: flex-start; /* Alinea los elementos al inicio del contenedor flex */
-    }
-    .sidebar {
-        position: static; /* La barra lateral vuelve a ser parte del flujo del documento */
-        transform: translateX(0); /* Asegura que esté visible */
-        width: 250px; /* Mantiene su ancho fijo */
-        height: auto; /* La altura se ajusta al contenido */
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Sombra para separación */
-        max-height: none; /* Elimina la restricción de altura */
-        padding-top: 20px; /* Restaura el padding superior */
-        padding-bottom: 20px; /* Restaura el padding inferior */
-        flex-shrink: 0; /* Evita que la sidebar se encoja */
-        flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
-    }
-    .sidebar-header {
-        display: flex; /* Muestra el encabezado de la sidebar en escritorio */
-    }
-    .main-content {
-        margin-left: 0; /* Elimina cualquier margen izquierdo que pueda estar causando problemas */
-        flex-grow: 1; /* Permite que el contenido principal ocupe el espacio restante */
-    }
-    .sidebar-toggle-btn,
-    .close-sidebar-btn,
-    .sidebar-overlay {
-        display: none; /* Oculta los elementos de control móvil en escritorio */
-    }
-    .main-header h1 {
-        text-align: left; /* Alinea el título a la izquierda en escritorio */
-    }
-}
-
 @media (max-width: 768px) { /* Estilos para móvil */
     .admin-container {
-        flex-direction: column; /* La barra lateral y el contenido principal se apilan */
+        flex-direction: column;
     }
-    /* .sidebar ya tiene los estilos para ser un desplegable oculto por defecto */
-    
+    .sidebar {
+        position: fixed; /* Fijo para que se superponga */
+        top: 60px; /* Debajo del header */
+        left: 0;
+        width: 100%; /* Ocupa todo el ancho en móvil */
+        max-height: 0; /* Oculto por defecto */
+        overflow: hidden; /* Oculta el contenido cuando max-height es 0 */
+        z-index: 999; /* Asegura que esté por encima del contenido principal */
+        padding-top: 20px; /* Asegura padding superior cuando está activo */
+        padding-bottom: 20px; /* Asegura padding inferior cuando está activo */
+    }
+
     .sidebar.active {
         max-height: 500px; /* Muestra el menú desplegable */
     }
@@ -589,8 +555,8 @@ table td img {
     }
 
     .main-header {
-        flex-direction: row; /* Mantener en fila */
-        justify-content: flex-start; /* Alinear elementos al inicio */
+        flex-direction: row;
+        justify-content: flex-start;
         align-items: center;
         padding-bottom: 15px;
         border-bottom: 1px solid #ddd;
@@ -598,18 +564,18 @@ table td img {
 
     .sidebar-toggle-btn {
         display: block; /* Muestra el botón de alternar sidebar */
-        margin-right: 15px; /* Espacio entre el botón y el título */
+        margin-right: 15px;
     }
 
     .main-header h1 {
         font-size: 1.5em;
-        margin-bottom: 0; /* Eliminar margen inferior */
-        text-align: left; /* Alinea el título a la izquierda */
+        margin-bottom: 0;
+        text-align: left;
     }
 
     .header-right-controls {
-        margin-left: auto; /* Empuja los controles a la derecha */
-        gap: 10px; /* Espacio más pequeño */
+        margin-left: auto;
+        gap: 10px;
     }
 
     .dashboard-stats {
@@ -632,6 +598,6 @@ table td img {
     }
     .admin-search-input,
     .admin-select-filter {
-        max-width: 100%; /* Ocupar todo el ancho disponible en móvil */
+        max-width: 100%;
     }
 }
