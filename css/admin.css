@@ -1,19 +1,27 @@
 /* Estilos Globales para el Panel de Administración */
+* {
+    box-sizing: border-box; /* Añadido para un modelo de caja consistente */
+}
+html, body {
+    height: 100%; /* Asegura que html y body tomen la altura completa del viewport */
+}
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     background-color: #f4f7f6; /* Fondo ligero para el admin */
     color: #333;
-    display: flex;
+    display: flex; /* Mantener flex para la estructura principal */
     min-height: 100vh;
+    flex-direction: column; /* Apilar elementos verticalmente en el body */
 }
 
 .admin-container {
     display: flex;
     width: 100%;
+    flex-grow: 1; /* Permite que el contenedor crezca y empuje el footer hacia abajo */
 }
 
-/* Sidebar (Barra Lateral) */
+/* Sidebar (Barra Lateral) - Estilos base (oculta por defecto, fija) */
 .sidebar {
     width: 250px;
     background-color: #2c3e50; /* Azul oscuro */
@@ -22,9 +30,13 @@ body {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    /* Transición para el efecto de deslizamiento */
-    transition: transform 0.3s ease-in-out;
-    z-index: 100; /* Asegura que esté por encima del contenido principal */
+    position: fixed; /* Siempre fija */
+    top: 0;          /* Siempre en la parte superior */
+    left: 0;         /* Siempre en la parte izquierda */
+    height: 100%;    /* Siempre de altura completa */
+    transform: translateX(-100%); /* Oculta por defecto (desplazada a la izquierda por su propio ancho) */
+    transition: transform 0.3s ease-in-out; /* Transición para el efecto de deslizamiento */
+    z-index: 1000; /* Asegura que esté por encima de todo lo demás */
 }
 
 .sidebar-header {
@@ -85,7 +97,7 @@ body {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 90; /* Detrás de la sidebar, pero delante del contenido */
+    z-index: 900; /* Detrás de la sidebar, pero delante del contenido */
 }
 
 /* Contenido Principal */
@@ -93,6 +105,10 @@ body {
     flex-grow: 1;
     padding: 30px;
     background-color: #ecf0f1;
+    /* En móvil, la sidebar se superpone, no necesitamos margen.
+       En escritorio, sí necesitamos margen para hacer espacio. */
+    margin-left: 0; /* Por defecto, sin margen */
+    transition: margin-left 0.3s ease-in-out; /* Transición para el margen */
 }
 
 .main-header {
@@ -541,25 +557,39 @@ table td img {
 }
 
 /* Media Queries para responsividad del Panel Admin */
-@media (max-width: 768px) {
+@media (min-width: 769px) { /* Estilos para escritorio */
     .admin-container {
-        flex-direction: column;
+        flex-direction: row; /* La barra lateral y el contenido principal se muestran en fila */
     }
     .sidebar {
-        position: fixed; /* Fijo para que se deslice */
-        top: 0;
-        left: -250px; /* Oculto por defecto */
-        height: 100%;
-        width: 250px; /* Ancho de la sidebar */
-        padding: 15px;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.3);
-        z-index: 1000; /* Asegura que esté por encima de todo */
-        background-color: #2c3e50; /* Mantener el color de fondo */
-        transform: translateX(0); /* Estado inicial */
+        position: static; /* La barra lateral vuelve a ser parte del flujo del documento */
+        transform: translateX(0); /* Asegura que esté visible */
+        width: 250px; /* Mantiene su ancho fijo */
+        height: auto; /* La altura se ajusta al contenido */
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Sombra para separación */
+    }
+    .main-content {
+        margin-left: 250px; /* Crea espacio a la izquierda para la barra lateral fija */
+    }
+    .sidebar-toggle-btn,
+    .close-sidebar-btn,
+    .sidebar-overlay {
+        display: none; /* Oculta los elementos de control móvil en escritorio */
+    }
+}
+
+@media (max-width: 768px) { /* Estilos para móvil */
+    .admin-container {
+        flex-direction: column; /* La barra lateral y el contenido principal se apilan */
+    }
+    .sidebar {
+        /* Los estilos base (fixed, hidden por transform) ya se aplican.
+           Solo necesitamos activar la visibilidad con la clase 'active'. */
+        transform: translateX(-100%); /* Asegura que esté oculta por defecto en móvil */
     }
 
     .sidebar.active {
-        transform: translateX(250px); /* Muestra la sidebar deslizándola desde la izquierda */
+        transform: translateX(0); /* Muestra la sidebar deslizándola a su posición original */
     }
 
     .sidebar-header {
@@ -571,20 +601,6 @@ table td img {
         display: block; /* Muestra el botón de cerrar en móvil */
     }
 
-    .sidebar-nav ul {
-        flex-direction: column; /* Apilar enlaces verticalmente */
-        align-items: flex-start; /* Alinear enlaces a la izquierda */
-        gap: 0; /* Eliminar el gap horizontal */
-    }
-    .sidebar-nav li {
-        width: 100%; /* Ocupar todo el ancho */
-        margin-bottom: 10px; /* Espacio entre elementos */
-    }
-    .sidebar-nav a {
-        padding: 12px 15px; /* Ajustar padding para mejor toque */
-        font-size: 1em;
-    }
-
     .sidebar-overlay.active {
         display: block; /* Muestra el overlay cuando la sidebar está activa */
     }
@@ -592,6 +608,7 @@ table td img {
     .main-content {
         padding: 20px 15px;
         width: 100%; /* Ocupa todo el ancho disponible */
+        margin-left: 0; /* Asegura que no haya margen izquierdo en móvil */
     }
 
     .main-header {
