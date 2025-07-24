@@ -21,31 +21,37 @@ body {
     flex-grow: 1; /* Permite que el contenedor crezca y empuje el footer hacia abajo */
 }
 
-/* Sidebar (Barra Lateral) - Estilos por defecto (para escritorio) */
+/* Sidebar (Barra Lateral) - Mobile-first (por defecto: dropdown oculto para móvil) */
 .sidebar {
-    width: 250px;
     background-color: #2c3e50; /* Azul oscuro */
     color: white;
     padding: 20px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    position: static; /* Por defecto, estática en el flujo del documento (escritorio) */
-    height: auto; /* Altura se ajusta al contenido */
-    transform: translateX(0); /* Visible por defecto */
-    z-index: auto; /* Z-index normal para escritorio */
-    max-height: none; /* Sin límite de altura en escritorio */
-    overflow: visible; /* Contenido visible en escritorio */
-    flex-shrink: 0; /* Evita que la sidebar se encoja */
-    flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
+    
+    /* Estilos para el menú desplegable en móvil (aplicados por defecto) */
+    position: fixed;
+    top: 60px; /* Debajo del header */
+    left: 0;
+    width: 100%; /* Ocupa todo el ancho en móvil */
+    max-height: 0; /* Oculto por defecto */
+    overflow: hidden; /* Oculta el contenido cuando max-height es 0 */
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    z-index: 999; /* Asegura que esté por encima del contenido principal */
+    box-sizing: border-box;
+}
+
+/* Estado activo del menú desplegable (para móvil) */
+.sidebar.active {
+    max-height: 500px; /* Valor suficientemente grande para mostrar todo el contenido */
+    padding-bottom: 20px; /* Asegura padding inferior cuando está activo */
 }
 
 .sidebar-header {
     text-align: center;
-    margin-bottom: 30px;
-    display: flex; /* Visible por defecto en escritorio */
-    justify-content: space-between;
-    align-items: center;
+    margin-bottom: 20px; /* Ajustado para el desplegable */
+    display: none; /* Ocultar el encabezado de la sidebar en el desplegable móvil */
 }
 
 .sidebar-header h3 {
@@ -54,7 +60,7 @@ body {
     color: #ecf0f1;
 }
 
-/* Botón para cerrar la sidebar en móvil (oculto por defecto) */
+/* Botón para cerrar la sidebar en móvil (oculto, ya no es necesario para un desplegable simple) */
 .close-sidebar-btn {
     display: none;
 }
@@ -65,13 +71,13 @@ body {
 }
 
 .sidebar-nav li {
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Ajustado para el desplegable */
 }
 
 .sidebar-nav a {
     color: white;
     text-decoration: none;
-    padding: 10px 15px;
+    padding: 12px 15px; /* Ajustado para mejor toque en móvil */
     display: block;
     border-radius: 8px;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -92,44 +98,38 @@ body {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 900;
+    z-index: 900; /* Detrás del menú desplegable, pero delante del contenido */
 }
 
-/* Contenido Principal */
+/* Contenido Principal - Mobile-first (sin margen izquierdo por defecto) */
 .main-content {
     flex-grow: 1;
-    padding: 30px;
+    padding: 30px; /* Padding original */
     background-color: #ecf0f1;
-    margin-left: 250px; /* Margen para hacer espacio a la sidebar en escritorio */
+    margin-left: 0; /* Sin margen izquierdo por defecto (para móvil) */
     transition: margin-left 0.3s ease-in-out;
-    width: auto; /* Ancho automático para flex-grow */
+    width: 100%; /* Ocupa todo el ancho disponible en móvil */
+    /* Padding-top para compensar el header fijo en móvil */
+    padding-top: calc(60px + 30px); /* Altura mínima del header + padding original */
 }
 
 .main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #ddd;
-    min-height: 60px;
-}
-
-/* Botón de alternar sidebar (oculto por defecto en escritorio) */
-.sidebar-toggle-btn {
-    display: none;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.sidebar-toggle-btn:hover {
-    background-color: #0056b3;
+    min-height: 60px; /* Asegura una altura mínima para el header */
+    
+    /* Header fijo en móvil */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f4f7f6; /* Fondo del header */
+    z-index: 1000; /* Asegura que esté por encima de todo */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
+    padding: 15px 30px; /* Padding para el header fijo */
+    margin-bottom: 0; /* Elimina el margen inferior cuando es fijo */
+    border-bottom: 1px solid #ddd; /* Borde inferior para el header */
 }
 
 .main-header h1 {
@@ -137,7 +137,7 @@ body {
     color: #2c3e50;
     margin: 0;
     flex-grow: 1;
-    text-align: left; /* Alinea el título a la izquierda en escritorio */
+    text-align: center; /* Centra el título en móvil */
 }
 
 /* Contenedor para el botón de refrescar y la información del usuario */
@@ -256,7 +256,7 @@ body {
 /* Tablas (reutilizados para productos sellados) */
 table {
     width: 100%;
-    min-width: 600px;
+    min-width: 600px; /* Asegura que la tabla tenga un ancho mínimo para que se desplace */
     border-collapse: collapse;
     background-color: white;
     border-radius: 8px;
@@ -273,7 +273,7 @@ table th,
 table td {
     padding: 12px 15px;
     border-bottom: 1px solid #ddd;
-    white-space: nowrap;
+    white-space: nowrap; /* Evita que el contenido de la celda se envuelva */
 }
 
 table tbody tr:nth-child(even) {
@@ -516,22 +516,64 @@ table td img {
 }
 
 /* Media Queries para responsividad del Panel Admin */
+@media (min-width: 769px) { /* Estilos para escritorio */
+    .admin-container {
+        flex-direction: row; /* La barra lateral y el contenido principal se muestran en fila */
+        align-items: flex-start; /* Alinea los elementos al inicio del contenedor flex */
+    }
+    .sidebar {
+        /* Sobrescribe los estilos de móvil para que sea una barra lateral fija */
+        position: static;
+        width: 250px;
+        height: auto;
+        transform: translateX(0); /* Asegura que esté visible */
+        z-index: auto;
+        max-height: none; /* Elimina la restricción de altura */
+        overflow: visible; /* Contenido visible */
+        flex-shrink: 0; /* Evita que la sidebar se encoja */
+        flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
+        padding-top: 20px; /* Restaura el padding superior */
+        padding-bottom: 20px; /* Restaura el padding inferior */
+    }
+    .sidebar-header {
+        display: flex; /* Muestra el encabezado de la sidebar en escritorio */
+    }
+    .main-content {
+        margin-left: 250px; /* Margen para hacer espacio a la sidebar en escritorio */
+        width: auto; /* Ancho automático para flex-grow */
+        padding-top: 30px; /* Restaura el padding-top original para escritorio */
+    }
+    .sidebar-toggle-btn,
+    .close-sidebar-btn,
+    .sidebar-overlay {
+        display: none; /* Oculta los elementos de control móvil en escritorio */
+    }
+    .main-header {
+        position: static; /* Header es estático en escritorio */
+        padding: 15px 30px; /* Restaura el padding original para escritorio */
+        box-shadow: none; /* Elimina la sombra para header estático */
+        background-color: transparent; /* Elimina el fondo para header estático */
+        margin-bottom: 30px; /* Restaura el margin-bottom original para header estático */
+    }
+    .main-header h1 {
+        text-align: left; /* Alinea el título a la izquierda en escritorio */
+    }
+
+    /* Asegurar que los botones de añadir tengan su formato en escritorio */
+    .add-button {
+        display: inline-block; /* O block, según se necesite para el flujo */
+        /* Si hay otros estilos que los estén sobrescribiendo, se pueden añadir aquí
+           con mayor especificidad si fuera necesario, pero lo ideal es que los estilos
+           globales ya los manejen. */
+    }
+}
+
 @media (max-width: 768px) { /* Estilos para móvil */
     .admin-container {
         flex-direction: column;
     }
-    .sidebar {
-        position: fixed; /* Fijo para que se superponga */
-        top: 60px; /* Debajo del header */
-        left: 0;
-        width: 100%; /* Ocupa todo el ancho en móvil */
-        max-height: 0; /* Oculto por defecto */
-        overflow: hidden; /* Oculta el contenido cuando max-height es 0 */
-        z-index: 999; /* Asegura que esté por encima del contenido principal */
-        padding-top: 20px; /* Asegura padding superior cuando está activo */
-        padding-bottom: 20px; /* Asegura padding inferior cuando está activo */
-    }
-
+    /* .sidebar ya tiene los estilos para ser un desplegable oculto por defecto */
+    
     .sidebar.active {
         max-height: 500px; /* Muestra el menú desplegable */
     }
@@ -552,14 +594,25 @@ table td img {
         padding: 20px 15px;
         width: 100%; /* Ocupa todo el ancho disponible */
         margin-left: 0; /* Asegura que no haya margen izquierdo en móvil */
+        /* Padding-top para compensar el header fijo en móvil */
+        padding-top: calc(60px + 20px); /* Altura mínima del header + padding original de móvil */
     }
 
     .main-header {
         flex-direction: row;
         justify-content: flex-start;
         align-items: center;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #ddd;
+        /* Header fijo para móvil */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f4f7f6; /* Fondo del header */
+        z-index: 1000; /* Asegura que esté por encima de todo */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
+        padding: 15px 15px; /* Padding para el header fijo en móvil */
+        margin-bottom: 0; /* Elimina el margen inferior cuando es fijo */
+        border-bottom: 1px solid #ddd; /* Borde inferior para el header */
     }
 
     .sidebar-toggle-btn {
