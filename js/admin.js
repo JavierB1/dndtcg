@@ -25,7 +25,7 @@ const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.ne
 // ¡IMPORTANTE! Reemplaza 'TU_CONTRASEÑA_REAL_DE_ADMIN' con la contraseña que configuraste en Netlify.
 // Esta contraseña será visible en el código del navegador, por lo que esta es una solución TEMPORAL.
 // Para seguridad en producción, se recomienda Firebase Authentication.
-const ADMIN_FUNCTION_PASSWORD = 'TU_CONTRASEÑA_REAL_DE_ADMIN'; 
+const ADMIN_FUNCTION_PASSWORD = 'Blarias.DND.616!'; 
 
 // URLs de SheetDB para LECTURA (estas sí pueden estar en el frontend si solo son para GET)
 // Asegúrate de que estas URLs sean correctas para tu hoja de cálculo
