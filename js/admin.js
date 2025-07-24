@@ -16,6 +16,13 @@ const cardsSection = document.getElementById('cards-section');
 const sealedProductsSection = document.getElementById('sealed-products-section');
 const categoriesSection = document.getElementById('categories-section');
 
+// NUEVOS ELEMENTOS DEL DOM PARA LA NAVEGACIÓN MÓVIL
+const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+const sidebarMenu = document.getElementById('sidebar-menu');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE CARTAS
 // ===============================================
@@ -177,6 +184,12 @@ function showSection(sectionToShow) {
     if (sectionToShow === cardsSection) navCards.classList.add('active');
     if (sectionToShow === sealedProductsSection) navSealedProducts.classList.add('active');
     if (sectionToShow === categoriesSection) navCategories.classList.add('active');
+
+    // Cerrar la sidebar en móvil después de seleccionar una sección
+    if (window.innerWidth <= 768) {
+        sidebarMenu.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+    }
 }
 
 navDashboard.addEventListener('click', (e) => {
@@ -941,6 +954,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.target.style.display = 'none';
             }
         }
+    });
+
+    // NUEVOS EVENT LISTENERS PARA LA BARRA LATERAL MÓVIL
+    sidebarToggleBtn.addEventListener('click', () => {
+        sidebarMenu.classList.add('active');
+        sidebarOverlay.classList.add('active');
+    });
+
+    closeSidebarBtn.addEventListener('click', () => {
+        sidebarMenu.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+    });
+
+    sidebarOverlay.addEventListener('click', () => {
+        sidebarMenu.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
     });
 
 
