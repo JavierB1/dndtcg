@@ -523,9 +523,9 @@ table td img {
     }
     .sidebar {
         /* Sobrescribe los estilos de móvil para que sea una barra lateral fija */
-        position: static;
+        position: static; /* Vuelve a ser parte del flujo normal del documento */
         width: 250px;
-        height: auto;
+        height: auto; /* La altura se ajusta al contenido */
         transform: translateX(0); /* Asegura que esté visible */
         z-index: auto;
         max-height: none; /* Elimina la restricción de altura */
@@ -534,6 +534,9 @@ table td img {
         flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
         padding-top: 20px; /* Restaura el padding superior */
         padding-bottom: 20px; /* Restaura el padding inferior */
+        transition: none; /* ¡Importante! Deshabilita la transición para escritorio */
+        top: auto; /* ¡Importante! Restablece la posición superior */
+        left: auto; /* ¡Importante! Restablece la posición izquierda */
     }
     .sidebar-header {
         display: flex; /* Muestra el encabezado de la sidebar en escritorio */
@@ -562,9 +565,6 @@ table td img {
     /* Asegurar que los botones de añadir tengan su formato en escritorio */
     .add-button {
         display: inline-block; /* O block, según se necesite para el flujo */
-        /* Si hay otros estilos que los estén sobrescribiendo, se pueden añadir aquí
-           con mayor especificidad si fuera necesario, pero lo ideal es que los estilos
-           globales ya los manejen. */
     }
 }
 
