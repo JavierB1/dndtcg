@@ -3,12 +3,12 @@
 // ==========================================================================
 
 // Firebase y Firestore
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js'; // Actualizado a v12.0.0
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js'; // Actualizado a v12.0.0
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js'; // Actualizado a v12.0.0
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Añadido para Analytics
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js'; // Updated to v12.0.0
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js'; // Updated to v12.0.0
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js'; // Updated to v12.0.0
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Added for Analytics
 
-// Tu configuración real de Firebase para dndtcgadmin
+// Your real Firebase configuration for dndtcgadmin
 const firebaseConfig = {
     apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
     authDomain: "dndtcgadmin.firebaseapp.com",
@@ -19,26 +19,26 @@ const firebaseConfig = {
     measurementId: "G-T8KRZX5S7R"
 };
 
-// Inicializa Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const analytics = getAnalytics(app); // Inicializa Analytics
+const analytics = getAnalytics(app); // Initialize Analytics
 
-// ID de la aplicación y del usuario
-const appId = firebaseConfig.projectId; // Ahora podemos usar el projectId directamente
-let userId = null; // Se establecerá después de la autenticación
-let currentAdminUser = null; // Para almacenar el objeto de usuario de Firebase Auth
+// App ID and User ID
+const appId = firebaseConfig.projectId; // Now we can use the projectId directly
+let userId = null; // Will be set after authentication
+let currentAdminUser = null; // To store the Firebase Auth user object
 
-// URL de la función de Netlify (¡IMPORTANTE: Reemplaza con tu URL real después de desplegar!)
-const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb'; // Reemplaza con tu dominio Netlify
+// Netlify Function URL (IMPORTANT: Replace with your actual Netlify domain after deployment!)
+const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb'; // Replace with your Netlify domain
 
-// Las URLs de SheetDB para LECTURA (estas sí pueden estar en el frontend si solo son para GET)
-const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau"; // URL de tus cartas
-const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp"; // URL para tu hoja 'producto_sellado'
+// SheetDB URLs for READ operations (these can be in the frontend for GET requests)
+const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau"; // URL for your cards sheet
+const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp"; // URL for your 'producto_sellado' sheet
 
 
-// Referencias a elementos del DOM
+// DOM element references
 const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
 const sidebarMenu = document.getElementById('sidebar-menu');
 const sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -46,8 +46,8 @@ const mainHeader = document.querySelector('.main-header');
 const loginModal = document.getElementById('loginModal');
 const loginForm = document.getElementById('loginForm');
 const loginMessage = document.getElementById('loginMessage');
-const usernameInput = document.getElementById('username'); // Asegúrate de que este ID exista en tu HTML
-const passwordInput = document.getElementById('password'); // Asegúrate de que este ID exista en tu HTML
+const usernameInput = document.getElementById('username'); // Ensure this ID exists in your HTML
+const passwordInput = document.getElementById('password'); // Ensure this ID exists in your HTML
 
 const navDashboard = document.getElementById('nav-dashboard');
 const navCards = document.getElementById('nav-cards');
@@ -59,7 +59,7 @@ const navLogout = document.getElementById('nav-logout');
 const dashboardSection = document.getElementById('dashboard-section');
 const cardsSection = document.getElementById('cards-section');
 const sealedProductsSection = document.getElementById('sealed-products-section');
-const categoriesSection = document = document.getElementById('categories-section');
+const categoriesSection = document.getElementById('categories-section');
 
 const addCardBtn = document.getElementById('addCardBtn');
 const addSealedProductBtn = document.getElementById('addSealedProductBtn');
@@ -133,7 +133,7 @@ let currentSealedProductsPage = 1;
 let currentDeleteTarget = null;
 
 // ==========================================================================
-// FUNCIONES DE UTILIDAD
+// UTILITY FUNCTIONS
 // ==========================================================================
 
 function showSection(sectionToShow) {
@@ -165,72 +165,72 @@ function clearLoginError() {
 }
 
 /**
- * Realiza una petición a la función de Netlify.
- * Incluye el token de autenticación de Firebase en las cabeceras.
- * @param {string} entityType - El tipo de entidad ('cards', 'sealedProducts').
- * @param {string} action - La acción a realizar ('add', 'update', 'delete').
- * @param {Object} data - Los datos a enviar (para 'add'/'update').
- * @param {string} id - El ID del elemento (para 'update'/'delete').
- * @returns {Promise<Object>} - La respuesta de la función.
+ * Makes a request to the Netlify function.
+ * Includes the Firebase authentication token in the headers.
+ * @param {string} entityType - The entity type ('cards', 'sealedProducts').
+ * @param {string} action - The action to perform ('add', 'update', 'delete').
+ * @param {Object} data - The data to send (for 'add'/'update').
+ * @param {string} id - The ID of the item (for 'update'/'delete').
+ * @returns {Promise<Object>} - The function's response.
  */
 async function callNetlifyFunction(entityType, action, data = {}, id = null) {
     if (!currentAdminUser) {
-        console.error('No hay usuario administrador autenticado.');
-        showLoginError('Por favor, inicia sesión para realizar esta operación.');
+        console.error('No authenticated admin user.');
+        showLoginError('Please log in to perform this operation.');
         openModal(loginModal);
-        throw new Error('No autenticado.');
+        throw new Error('Not authenticated.');
     }
 
     try {
-        const idToken = await currentAdminUser.getIdToken(); // Obtiene el token de Firebase Auth
+        const idToken = await currentAdminUser.getIdToken(); // Get the Firebase Auth token
 
         const response = await fetch(NETLIFY_FUNCTION_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${idToken}` // Envía el token de Firebase en la cabecera Authorization
+                'Authorization': `Bearer ${idToken}` // Send the Firebase token in the Authorization header
             },
             body: JSON.stringify({ entityType, action, data, id })
         });
 
         const result = await response.json();
         if (!response.ok) {
-            throw new Error(result.message || `Error en la función de Netlify: ${response.status}`);
+            throw new Error(result.message || `Error in Netlify function: ${response.status}`);
         }
         return result;
     } catch (error) {
-        console.error('Error al llamar a la función de Netlify:', error);
+        console.error('Error calling Netlify function:', error);
         throw error;
     }
 }
 
 // ==========================================================================
-// FUNCIONES DE AUTENTICACIÓN (AHORA CON FIREBASE AUTH)
+// AUTHENTICATION FUNCTIONS (NOW WITH FIREBASE AUTH)
 // ==========================================================================
 
 async function handleLogin(event) {
     event.preventDefault();
-    const email = usernameInput.value; // Usar email para Firebase Auth
-    const password = passwordInput.value; // Usar password para Firebase Auth
+    const email = usernameInput.value; // Use email for Firebase Auth
+    const password = passwordInput.value; // Use password for Firebase Auth
     clearLoginError();
 
     try {
-        // Iniciar sesión con email y contraseña de Firebase Auth
+        // Log in with email and password from Firebase Auth
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        currentAdminUser = userCredential.user; // Almacena el usuario autenticado
-        userId = currentAdminUser.uid; // Actualiza el userId con el UID de Firebase
+        currentAdminUser = userCredential.user; // Store the authenticated user
+        userId = currentAdminUser.uid; // Update userId with Firebase UID
 
         closeModal(loginModal);
         showSection(dashboardSection);
         loadAllData();
-        console.log('Admin logeado con Firebase Auth. User ID:', userId);
+        console.log('Admin logged in with Firebase Auth. User ID:', userId);
     } catch (error) {
-        console.error('Error al iniciar sesión con Firebase:', error);
-        let errorMessage = 'Error al iniciar sesión. Por favor, inténtalo de nuevo.';
+        console.error('Error logging in with Firebase:', error);
+        let errorMessage = 'Error logging in. Please try again.';
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'Correo electrónico o contraseña incorrectos.';
+            errorMessage = 'Incorrect email or password.';
         } else if (error.code === 'auth/invalid-email') {
-            errorMessage = 'Formato de correo electrónico inválido.';
+            errorMessage = 'Invalid email format.';
         }
         showLoginError(errorMessage);
     }
@@ -238,20 +238,20 @@ async function handleLogin(event) {
 
 async function handleLogout() {
     try {
-        await signOut(auth); // Cerrar sesión de Firebase
+        await signOut(auth); // Log out from Firebase
         userId = null;
-        currentAdminUser = null; // Limpiar el usuario autenticado
+        currentAdminUser = null; // Clear authenticated user
         showSection(loginModal);
         clearLoginError();
-        console.log('Sesión cerrada con Firebase Auth.');
+        console.log('Logged out with Firebase Auth.');
     } catch (error) {
-        console.error('Error al cerrar sesión:', error);
-        alert('Error al cerrar sesión. Por favor, inténtalo de nuevo.');
+        console.error('Error logging out:', error);
+        alert('Error logging out. Please try again.');
     }
 }
 
 // ==========================================================================
-// FUNCIONES DE CARGA DE DATOS (Firestore y SheetDB)
+// DATA LOADING FUNCTIONS (Firestore and SheetDB)
 // ==========================================================================
 
 async function loadCategories() {
@@ -262,7 +262,7 @@ async function loadCategories() {
 
         populateCategoryFilters();
     } catch (error) {
-        console.error('Error al cargar categorías:', error);
+        console.error('Error loading categories:', error);
     }
 }
 
@@ -273,8 +273,8 @@ async function loadCardsData() {
         renderCardsTable();
         updateDashboardStats();
     } catch (error) {
-        console.error('Error al cargar datos de cartas:', error);
-        alert('Error al cargar cartas. Verifica la consola para más detalles.');
+        console.error('Error loading cards data:', error);
+        alert('Error loading cards. Check console for more details.');
     }
 }
 
@@ -285,8 +285,8 @@ async function loadSealedProductsData() {
         renderSealedProductsTable();
         updateDashboardStats();
     } catch (error) {
-        console.error('Error al cargar datos de productos sellados:', error);
-        alert('Error al cargar productos sellados. Verifica la consola para más detalles.');
+        console.error('Error loading sealed products data:', error);
+        alert('Error loading sealed products. Check console for more details.');
     }
 }
 
@@ -299,7 +299,7 @@ async function loadAllData() {
 function populateCategoryFilters() {
     const categories = [...new Set(allCategories.map(cat => cat.name))];
 
-    adminCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+    adminCategoryFilter.innerHTML = '<option value="">All categories</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -307,7 +307,7 @@ function populateCategoryFilters() {
         adminCategoryFilter.appendChild(option);
     });
 
-    adminSealedCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+    adminSealedCategoryFilter.innerHTML = '<option value="">All categories</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -329,7 +329,7 @@ function populateCategoryFilters() {
 }
 
 // ==========================================================================
-// FUNCIONES DE RENDERIZADO DE TABLAS
+// TABLE RENDERING FUNCTIONS
 // ==========================================================================
 
 function renderCardsTable() {
@@ -361,8 +361,8 @@ function renderCardsTable() {
             <td>${card.category}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="edit-button" data-id="${card.id}" data-type="card">Editar</button>
-                    <button class="delete-button" data-id="${card.id}" data-type="card">Eliminar</button>
+                    <button class="edit-button" data-id="${card.id}" data-type="card">Edit</button>
+                    <button class="delete-button" data-id="${card.id}" data-type="card">Delete</button>
                 </div>
             </td>
         `;
@@ -400,8 +400,8 @@ function renderSealedProductsTable() {
             <td>${product.stock}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="edit-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Editar</button>
-                    <button class="delete-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Eliminar</button>
+                    <button class="edit-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Edit</button>
+                    <button class="delete-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Delete</button>
                 </div>
             </td>
         `;
@@ -418,8 +418,8 @@ async function renderCategoriesTable() {
             <td>${category.name}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="edit-category-button" data-id="${category.id}" data-name="${category.name}">Editar</button>
-                    <button class="delete-category-button" data-id="${category.id}" data-name="${category.name}">Eliminar</button>
+                    <button class="edit-category-button" data-id="${category.id}" data-name="${category.name}">Edit</button>
+                    <button class="delete-category-button" data-id="${category.id}" data-name="${category.name}">Delete</button>
                 </div>
             </td>
         `;
@@ -427,7 +427,7 @@ async function renderCategoriesTable() {
 }
 
 function updatePaginationControls(currentPage, totalPages, prevBtn, nextBtn, infoSpan, totalItems) {
-    infoSpan.textContent = `Página ${currentPage} de ${totalPages} (${totalItems} items)`;
+    infoSpan.textContent = `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 }
@@ -440,7 +440,7 @@ function updateDashboardStats() {
 }
 
 // ==========================================================================
-// FUNCIONES DE GESTIÓN DE DATOS (CRUD a través de Netlify Functions)
+// DATA MANAGEMENT FUNCTIONS (CRUD via Netlify Functions)
 // ==========================================================================
 
 async function handleCardFormSubmit(event) {
@@ -465,10 +465,10 @@ async function handleCardFormSubmit(event) {
         console.log(result.message, result.data);
         closeModal(cardModal);
         await loadCardsData();
-        alert(`Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        alert(`Card ${isEditing ? 'updated' : 'added'} successfully.`);
     } catch (error) {
-        console.error('Error al guardar carta:', error);
-        alert(`Error al guardar carta: ${error.message}`);
+        console.error('Error saving card:', error);
+        alert(`Error saving card: ${error.message}`);
     }
 }
 
@@ -494,10 +494,10 @@ async function handleSealedProductFormSubmit(event) {
         console.log(result.message, result.data);
         closeModal(sealedProductModal);
         await loadSealedProductsData();
-        alert(`Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
+        alert(`Sealed product ${isEditing ? 'updated' : 'added'} successfully.`);
     } catch (error) {
-        console.error('Error al guardar producto sellado:', error);
-        alert(`Error al guardar producto sellado: ${error.message}`);
+        console.error('Error saving sealed product:', error);
+        alert(`Error saving sealed product: ${error.message}`);
     }
 }
 
@@ -518,20 +518,20 @@ async function handleCategoryFormSubmit(event) {
             await addDoc(categoriesCol, categoryData);
         }
         
-        console.log(`Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito en Firestore.`);
+        console.log(`Category ${isEditing ? 'updated' : 'added'} successfully in Firestore.`);
         closeModal(categoryModal);
         await loadCategories();
         updateDashboardStats();
-        alert(`Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        alert(`Category ${isEditing ? 'updated' : 'added'} successfully.`);
     } catch (error) {
-        console.error('Error al guardar categoría en Firestore:', error);
-        alert(`Error al guardar categoría: ${error.message}`);
+        console.error('Error saving category to Firestore:', error);
+        alert(`Error saving category: ${error.message}`);
     }
 }
 
 function openConfirmModal(id, type, name = '') {
     currentDeleteTarget = { id, type, name };
-    confirmMessage.textContent = `¿Estás seguro de que quieres eliminar ${name ? '"' + name + '"' : 'este elemento'}?`;
+    confirmMessage.textContent = `Are you sure you want to delete ${name ? '"' + name + '"' : 'this item'}?`;
     openModal(confirmModal);
 }
 
@@ -552,14 +552,14 @@ async function confirmDeletion() {
             await deleteDoc(categoryRef);
             await loadCategories();
             updateDashboardStats();
-            console.log(`Categoría eliminada de Firestore.`);
+            console.log(`Category deleted from Firestore.`);
         }
-        console.log(result.message || `Elemento ${type} eliminado.`);
+        console.log(result.message || `Item ${type} deleted.`);
         closeModal(confirmModal);
-        alert(`Elemento ${type} eliminado con éxito.`);
+        alert(`Item ${type} deleted successfully.`);
     } catch (error) {
-        console.error(`Error al eliminar ${type}:`, error);
-        alert(`Error al eliminar ${type}: ${error.message}`);
+        console.error(`Error deleting ${type}:`, error);
+        alert(`Error deleting ${type}: ${error.message}`);
     } finally {
         currentDeleteTarget = null;
     }
@@ -570,7 +570,7 @@ async function confirmDeletion() {
 // EVENT LISTENERS
 // ==========================================================================
 
-// Autenticación inicial con Firebase: Ahora solo muestra el modal de login si no hay usuario.
+// Initial Firebase authentication: Now only shows the login modal if no user is authenticated.
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentAdminUser = user;
@@ -578,11 +578,11 @@ onAuthStateChanged(auth, async (user) => {
         closeModal(loginModal);
         showSection(dashboardSection);
         await loadAllData();
-        console.log('Usuario autenticado:', userId);
+        console.log('User authenticated:', userId);
     } else {
-        // Si no hay usuario autenticado, siempre muestra el modal de login
+        // If no user is authenticated, always show the login modal
         openModal(loginModal);
-        console.log('No hay usuario autenticado. Mostrando modal de login.');
+        console.log('No authenticated user. Showing login modal.');
     }
 });
 
@@ -636,7 +636,7 @@ navCategories.addEventListener('click', (e) => {
 
 navOrders.addEventListener('click', (e) => {
     e.preventDefault();
-    alert('La gestión de pedidos estará disponible pronto.');
+    alert('Order management will be available soon.');
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
 });
@@ -647,9 +647,9 @@ navLogout.addEventListener('click', (e) => {
 });
 
 document.getElementById('refreshAdminPageBtn').addEventListener('click', async () => {
-    alert('Refrescando datos del panel...');
+    alert('Refreshing admin panel data...');
     await loadAllData();
-    alert('Datos actualizados.');
+    alert('Data updated.');
 });
 
 loginForm.addEventListener('submit', handleLogin);
@@ -666,13 +666,13 @@ window.addEventListener('click', (event) => {
     if (event.target === categoryModal) closeModal(categoryModal);
     if (event.target === confirmModal) closeModal(confirmModal);
     if (event.target === loginModal && loginModal.style.display === 'flex') {
-        // No cerrar el modal de login si está activo y se hace clic fuera
-        // Esto fuerza al usuario a iniciar sesión.
+        // Do not close the login modal if it's active and clicked outside
+        // This forces the user to log in.
     }
 });
 
 addCardBtn.addEventListener('click', () => {
-    cardModalTitle.textContent = 'Añadir Nueva Carta';
+    cardModalTitle.textContent = 'Add New Card';
     cardForm.reset();
     cardId.value = '';
     openModal(cardModal);
@@ -684,7 +684,7 @@ cardsTable.addEventListener('click', (e) => {
         const id = e.target.dataset.id;
         const card = allCards.find(c => c.id === id);
         if (card) {
-            cardModalTitle.textContent = 'Editar Carta';
+            cardModalTitle.textContent = 'Edit Card';
             cardId.value = card.id;
             cardName.value = card.name;
             cardImage.value = card.image;
@@ -696,7 +696,7 @@ cardsTable.addEventListener('click', (e) => {
     } else if (e.target.classList.contains('delete-button')) {
         const id = e.target.dataset.id;
         const card = allCards.find(c => c.id === id);
-        openConfirmModal(id, 'card', card ? card.name : 'esta carta');
+        openConfirmModal(id, 'card', card ? card.name : 'this card');
     }
 });
 
@@ -730,7 +730,7 @@ adminNextPageBtn.addEventListener('click', () => {
 });
 
 addSealedProductBtn.addEventListener('click', () => {
-    sealedProductModalTitle.textContent = 'Añadir Nuevo Producto Sellado';
+    sealedProductModalTitle.textContent = 'Add New Sealed Product';
     sealedProductForm.reset();
     sealedProductId.value = '';
     openModal(sealedProductModal);
@@ -742,7 +742,7 @@ sealedProductsTable.addEventListener('click', (e) => {
         const id = e.target.dataset.id;
         const product = allSealedProducts.find(p => p.id_producto === id);
         if (product) {
-            sealedProductModalTitle.textContent = 'Editar Producto Sellado';
+            sealedProductModalTitle.textContent = 'Edit Sealed Product';
             sealedProductId.value = product.id_producto;
             sealedProductName.value = product.name;
             sealedProductImage.value = product.image;
@@ -754,7 +754,7 @@ sealedProductsTable.addEventListener('click', (e) => {
     } else if (e.target.classList.contains('delete-sealed-product-button')) {
         const id = e.target.dataset.id;
         const product = allSealedProducts.find(p => p.id_producto === id);
-        openConfirmModal(id, 'sealed', product ? product.name : 'este producto sellado');
+        openConfirmModal(id, 'sealed', product ? product.name : 'this sealed product');
     }
 });
 
@@ -788,7 +788,7 @@ adminSealedNextPageBtn.addEventListener('click', () => {
 });
 
 addCategoryBtn.addEventListener('click', () => {
-    categoryModalTitle.textContent = 'Añadir Nueva Categoría';
+    categoryModalTitle.textContent = 'Add New Category';
     categoryForm.reset();
     categoryId.value = '';
     openModal(categoryModal);
@@ -799,7 +799,7 @@ categoriesTable.addEventListener('click', (e) => {
     if (e.target.classList.contains('edit-category-button')) {
         const id = e.target.dataset.id;
         const name = e.target.dataset.name;
-        categoryModalTitle.textContent = 'Editar Categoría';
+        categoryModalTitle.textContent = 'Edit Category';
         categoryId.value = id;
         categoryName.value = name;
         openModal(categoryModal);
@@ -813,4 +813,4 @@ categoriesTable.addEventListener('click', (e) => {
 cancelDeleteBtn.addEventListener('click', () => closeModal(confirmModal));
 confirmDeleteBtn.addEventListener('click', confirmDeletion);
 
-// La carga inicial de datos se realiza después de la autenticación en onAuthStateChanged
+// Initial data loading is done after authentication in onAuthStateChanged
