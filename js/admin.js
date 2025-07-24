@@ -19,7 +19,7 @@ const categoriesSection = document.getElementById('categories-section');
 // NUEVOS ELEMENTOS DEL DOM PARA LA NAVEGACIÓN MÓVIL
 const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
 const sidebarMenu = document.getElementById('sidebar-menu');
-const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+// const closeSidebarBtn = document.getElementById('closeSidebarBtn'); // Ya no es necesario para un desplegable
 const sidebarOverlay = document.getElementById('sidebar-overlay');
 
 
@@ -185,7 +185,7 @@ function showSection(sectionToShow) {
     if (sectionToShow === sealedProductsSection) navSealedProducts.classList.add('active');
     if (sectionToShow === categoriesSection) navCategories.classList.add('active');
 
-    // Cerrar la sidebar en móvil después de seleccionar una sección
+    // Cerrar el menú desplegable en móvil después de seleccionar una sección
     if (window.innerWidth <= 768) {
         sidebarMenu.classList.remove('active');
         sidebarOverlay.classList.remove('active');
@@ -956,16 +956,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // NUEVOS EVENT LISTENERS PARA LA BARRA LATERAL MÓVIL
+    // NUEVOS EVENT LISTENERS PARA EL MENÚ DESPLEGABLE MÓVIL
     sidebarToggleBtn.addEventListener('click', () => {
-        sidebarMenu.classList.add('active');
-        sidebarOverlay.classList.add('active');
+        sidebarMenu.classList.toggle('active'); // Alterna la clase 'active'
+        sidebarOverlay.classList.toggle('active'); // Alterna la clase 'active' del overlay
     });
 
-    closeSidebarBtn.addEventListener('click', () => {
-        sidebarMenu.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-    });
+    // closeSidebarBtn.addEventListener('click', () => { // Ya no es necesario
+    //     sidebarMenu.classList.remove('active');
+    //     sidebarOverlay.classList.remove('active');
+    // });
 
     sidebarOverlay.addEventListener('click', () => {
         sidebarMenu.classList.remove('active');

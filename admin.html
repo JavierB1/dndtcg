@@ -11,12 +11,11 @@
 </head>
 <body>
     <div class="admin-container">
-        <!-- Sidebar (Barra Lateral) -->
+        <!-- Sidebar (Barra Lateral) / Menú Desplegable en Móvil -->
         <aside class="sidebar" id="sidebar-menu">
             <div class="sidebar-header">
                 <h3>Admin DND TCG</h3>
-                <!-- Botón para cerrar la sidebar en móvil -->
-                <button class="close-sidebar-btn" id="closeSidebarBtn">&times;</button>
+                <!-- El botón de cerrar no es necesario para un desplegable, se cierra al seleccionar o hacer clic fuera -->
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -30,13 +29,13 @@
             </nav>
         </aside>
 
-        <!-- Overlay para cuando la sidebar está abierta en móvil -->
+        <!-- Overlay para cuando el menú desplegable está abierto en móvil -->
         <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
         <!-- Contenido Principal del Panel -->
         <main class="main-content">
             <header class="main-header">
-                <!-- Botón para abrir la sidebar en móvil -->
+                <!-- Botón para abrir el menú desplegable en móvil -->
                 <button id="sidebarToggleBtn" class="sidebar-toggle-btn">
                     <i class="fas fa-bars"></i>
                 </button>
