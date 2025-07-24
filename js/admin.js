@@ -3,18 +3,30 @@
 // ==========================================================================
 
 // Firebase y Firestore
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js'; // Actualizado a v12.0.0
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js'; // Actualizado a v12.0.0
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js'; // Actualizado a v12.0.0
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Añadido para Analytics
 
-// Configuración de Firebase (asegúrate de que __firebase_config esté disponible globalmente)
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+// Tu configuración real de Firebase para dndtcgadmin
+const firebaseConfig = {
+    apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
+    authDomain: "dndtcgadmin.firebaseapp.com",
+    projectId: "dndtcgadmin",
+    storageBucket: "dndtcgadmin.firebasestorage.app",
+    messagingSenderId: "754642671504",
+    appId: "1:754642671504:web:c087cc703862cf8c228515",
+    measurementId: "G-T8KRZX5S7R"
+};
+
+// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const analytics = getAnalytics(app); // Inicializa Analytics
 
 // ID de la aplicación y del usuario
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = firebaseConfig.projectId; // Ahora podemos usar el projectId directamente
 let userId = null; // Se establecerá después de la autenticación
 let currentAdminUser = null; // Para almacenar el objeto de usuario de Firebase Auth
 
@@ -22,8 +34,8 @@ let currentAdminUser = null; // Para almacenar el objeto de usuario de Firebase 
 const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb'; // Reemplaza con tu dominio Netlify
 
 // Las URLs de SheetDB para LECTURA (estas sí pueden estar en el frontend si solo son para GET)
-const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau";
-const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp";
+const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau"; // URL de tus cartas
+const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp"; // URL para tu hoja 'producto_sellado'
 
 
 // Referencias a elementos del DOM
@@ -560,7 +572,6 @@ async function confirmDeletion() {
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Usuario autenticado (Firebase Auth)
         currentAdminUser = user;
         userId = user.uid;
         closeModal(loginModal);
@@ -568,8 +579,9 @@ onAuthStateChanged(auth, async (user) => {
         await loadAllData();
         console.log('Usuario autenticado:', userId);
     } else {
-        // No hay usuario autenticado, intenta iniciar sesión anónimamente (para Canvas)
-        // o muestra el modal de login.
+        // En un entorno de producción, aquí se mostraría siempre el modal de login
+        // para forzar la autenticación.
+        // Para el entorno de Canvas, se intenta signInAnonymously si hay token inicial.
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
             try {
                 await signInWithCustomToken(auth, __initial_auth_token);
@@ -579,7 +591,7 @@ onAuthStateChanged(auth, async (user) => {
                     await signInAnonymously(auth);
                 } catch (anonSignInError) {
                     console.error("Error signing in anonymously:", anonSignInError);
-                    openModal(loginModal); // Si la autenticación anónima falla, muestra el login
+                    openModal(loginModal);
                 }
             }
         } else {
@@ -587,7 +599,7 @@ onAuthStateChanged(auth, async (user) => {
                 await signInAnonymously(auth);
             } catch (anonError) {
                 console.error("Error signing in anonymously:", anonError);
-                openModal(loginModal); // Si la autenticación anónima falla, muestra el login
+                openModal(loginModal);
             }
         }
     }
