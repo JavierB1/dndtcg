@@ -463,6 +463,31 @@ async function saveCard() {
 }
 
 // ===============================================
+// ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
+// ===============================================
+const addSealedProductBtn = document.getElementById('addSealedProductBtn'); 
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); 
+const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
+const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
+const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
+
+const adminSealedPrevPageBtn = document.getElementById('adminSealedPrevPageBtn');
+const adminSealedNextPageBtn = document.getElementById('adminSealedNextPageBtn');
+const adminSealedPageInfo = document.getElementById('adminSealedPageInfo');
+
+// Modales y Formularios de Productos Sellados
+const sealedProductModal = document.getElementById('sealedProductModal');
+const sealedProductModalTitle = document.getElementById('sealedProductModalTitle');
+const sealedProductForm = document.getElementById('sealedProductForm');
+const sealedProductIdInput = document.getElementById('sealedProductId');
+const sealedProductNameInput = document.getElementById('sealedProductName'); // Corresponde a 'producto'
+const sealedProductImageInput = document.getElementById('sealedProductImage'); // Corresponde a 'imagen'
+const sealedProductTypeInput = document.getElementById('sealedProductType'); // Corresponde a 'tipo_producto'
+const sealedProductPriceInput = document.getElementById('sealedProductPrice');
+const sealedProductStockInput = document.getElementById('sealedProductStock');
+const saveSealedProductBtn = document.getElementById('saveSealedProductBtn');
+
+// ===============================================
 // LÓGICA DE GESTIÓN DE PRODUCTOS SELLADOS (FRONTEND TIENDA)
 // ===============================================
 async function loadAdminSealedProducts() {
@@ -524,7 +549,7 @@ function applyAdminSealedFilters() {
     });
 
     adminSealedCurrentPage = 1;
-    renderAdminSealedProductsTable(filteredAdminSealedProducts);
+    renderSealedProductsTable(filteredAdminSealedProducts);
 }
 
 function renderAdminSealedProductsTable(productsToRender) {
