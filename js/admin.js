@@ -22,7 +22,10 @@ let userId = null; // Se establecerá después de la autenticación
 const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb'; // Reemplaza con tu dominio Netlify
 
 // Contraseña de administrador para las funciones (¡Debe coincidir con la configurada en Netlify!)
-const ADMIN_FUNCTION_PASSWORD = typeof __admin_function_password !== 'undefined' ? __admin_function_password : 'password_segura_por_defecto'; // Asegúrate de configurar esto en Netlify Environment Variables
+// ¡IMPORTANTE! Reemplaza 'TU_CONTRASEÑA_REAL_DE_ADMIN' con la contraseña que configuraste en Netlify.
+// Esta contraseña será visible en el código del navegador, por lo que esta es una solución TEMPORAL.
+// Para seguridad en producción, se recomienda Firebase Authentication.
+const ADMIN_FUNCTION_PASSWORD = 'TU_CONTRASEÑA_REAL_DE_ADMIN'; 
 
 // URLs de SheetDB para LECTURA (estas sí pueden estar en el frontend si solo son para GET)
 // Asegúrate de que estas URLs sean correctas para tu hoja de cálculo
@@ -539,7 +542,8 @@ async function handleSealedProductFormSubmit(event) {
         closeModal(sealedProductModal);
         await loadSealedProductsData(); // Recargar datos después de la operación
         alert(`Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Error al guardar producto sellado:', error);
         alert(`Error al guardar producto sellado: ${error.message}`);
     }
@@ -643,13 +647,13 @@ onAuthStateChanged(auth, async (user) => {
             try {
                 await signInWithCustomToken(auth, __initial_auth_token);
                 // La función onAuthStateChanged se volverá a disparar con el usuario autenticado
-            } catch (error) {
-                console.error("Error signing in with custom token:", error);
+            } catch (authError) { // Changed 'error' to 'authError' to avoid redeclaration
+                console.error("Error signing in with custom token:", authError);
                 // Fallback to anonymous or show login if custom token fails
                 try {
                     await signInAnonymously(auth);
-                } catch (anonError) {
-                    console.error("Error signing in anonymously:", anonError);
+                } catch (anonSignInError) { // Changed 'anonError' to 'anonSignInError'
+                    console.error("Error signing in anonymously:", anonSignInError);
                     openModal(loginModal);
                 }
             }
