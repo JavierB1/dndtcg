@@ -81,10 +81,46 @@ body {
     margin: 0;
 }
 
+/* Contenedor para el botón de refrescar y la información del usuario */
+.header-right-controls {
+    display: flex; /* Habilitar flexbox */
+    align-items: center; /* Alinear verticalmente al centro */
+    gap: 15px; /* Espacio entre el botón y la info del usuario */
+}
+
 .user-info span {
     font-weight: bold;
     color: #3498db;
 }
+
+/* Estilos para el botón de refrescar */
+.refresh-button {
+    background-color: #007bff; /* Azul primario */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px; /* Ajustado para un mejor tamaño */
+    font-size: 1.1em; /* Tamaño del icono */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
+    display: flex; /* Para centrar el icono */
+    align-items: center;
+    justify-content: center;
+    width: 45px; /* Ancho fijo para que sea un cuadrado */
+    height: 45px; /* Alto fijo para que sea un cuadrado */
+    /* margin-right: 15px; */ /* Eliminado, ahora el 'gap' del padre lo maneja */
+}
+
+.refresh-button:hover {
+    background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
+    transform: translateY(-2px); /* Pequeño efecto de elevación */
+}
+
+.refresh-button i {
+    font-size: 1.2em; /* Asegura que el icono sea visible */
+}
+
 
 /* Secciones de Contenido */
 .admin-section {
@@ -121,6 +157,10 @@ body {
     border-radius: 8px;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex; /* Habilitar flexbox */
+    flex-direction: column; /* Apilar elementos verticalmente */
+    justify-content: space-between; /* Distribuir espacio para empujar el último elemento al final */
+    height: 120px; /* Altura fija para las tarjetas para una alineación consistente */
 }
 
 .stat-card h3 {
@@ -133,7 +173,8 @@ body {
     font-size: 1.8em;
     font-weight: bold;
     color: #2c3e50;
-    margin: 10px 0 0;
+    margin: 0; /* Eliminar margen superior para que flexbox lo maneje */
+    padding-top: 10px; /* Pequeño padding para separar del título si es necesario */
 }
 
 /* Botones Generales */
@@ -226,30 +267,74 @@ table td img {
     vertical-align: middle;
 }
 
-/* Botones de Acción en Tablas (reutilizados para productos sellados) */
+/* Botones de Acción en Tablas (Estilos Generales para todos los botones de acción) */
+.action-buttons { /* Añadido display flex para alineación horizontal */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espacio entre los botones */
+}
+
 .action-buttons button {
-    background-color: #007bff;
     color: white;
     border: none;
     padding: 8px 12px;
     border-radius: 5px;
     cursor: pointer;
-    margin-right: 5px;
     font-size: 0.9em;
     transition: background-color 0.2s ease;
 }
 
-.action-buttons button.edit-button:hover {
-    background-color: #0056b3;
+/* Estilos Específicos para Botones de la Tabla de Cartas */
+#cardsTable .action-buttons button.edit-button {
+    background-color: #ffc107; /* Amarillo para editar */
 }
 
-.action-buttons button.delete-button {
-    background-color: #dc3545;
+#cardsTable .action-buttons button.edit-button:hover {
+    background-color: #e0a800; /* Tono más oscuro de amarillo al pasar el ratón */
 }
 
-.action-buttons button.delete-button:hover {
-    background-color: #c82333;
+#cardsTable .action-buttons button.delete-button {
+    background-color: #dc3545; /* Rojo para eliminar */
 }
+
+#cardsTable .action-buttons button.delete-button:hover {
+    background-color: #c82333; /* Tono más oscuro de rojo al pasar el ratón */
+}
+
+/* Estilos Específicos para Botones de la Tabla de Productos Sellados */
+#sealedProductsTable .action-buttons button.edit-sealed-product-button {
+    background-color: #ffc107; /* Amarillo para editar */
+}
+
+#sealedProductsTable .action-buttons button.edit-sealed-product-button:hover {
+    background-color: #e0a800; /* Tono más oscuro de amarillo al pasar el ratón */
+}
+
+#sealedProductsTable .action-buttons button.delete-sealed-product-button {
+    background-color: #dc3545; /* Rojo para eliminar */
+}
+
+#sealedProductsTable .action-buttons button.delete-sealed-product-button:hover {
+    background-color: #c82333; /* Tono más oscuro de rojo al pasar el ratón */
+}
+
+/* Estilos Específicos para Botones de la Tabla de Categorías */
+#categoriesTable .action-buttons button.edit-category-button {
+    background-color: #ffc107; /* Amarillo para editar */
+}
+
+#categoriesTable .action-buttons button.edit-category-button:hover {
+    background-color: #e0a800; /* Tono más oscuro de amarillo al pasar el ratón */
+}
+
+#categoriesTable .action-buttons button.delete-category-button {
+    background-color: #dc3545; /* Rojo para eliminar */
+}
+
+#categoriesTable .action-buttons button.delete-category-button:hover {
+    background-color: #c82333; /* Tono más oscuro de rojo al pasar el ratón */
+}
+
 
 /* Controles de Paginación (reutilizados para productos sellados) */
 .pagination-controls {
@@ -439,17 +524,25 @@ table td img {
         padding: 20px 15px;
     }
     .main-header {
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: center;
+        flex-direction: column; /* Apilar h1 y header-right-controls verticalmente */
+        align-items: center; /* Centrar horizontalmente cuando están apilados */
+        text-align: center; /* Asegurar que el texto interno esté centrado */
+        padding-bottom: 15px; /* Mantener el padding inferior */
+        border-bottom: 1px solid #ddd; /* Mantener el borde inferior */
     }
     .main-header h1 {
         font-size: 1.5em;
         margin-bottom: 10px;
+        width: 100%; /* Asegurar que ocupe todo el ancho cuando está apilado */
+    }
+    .header-right-controls {
+        width: 100%; /* Asegurar que ocupe todo el ancho cuando está apilado */
+        justify-content: center; /* Centrar sus propios hijos (botón de refrescar e info de usuario) */
+        margin-top: 10px; /* Añadir espacio entre h1 y estos controles */
+        gap: 15px; /* Mantener la distancia entre el botón y la info de usuario */
     }
     .user-info {
-        width: 100%;
-        text-align: center;
+        /* No se necesita un ancho específico aquí, ya que su padre maneja el centrado */
     }
     .dashboard-stats {
         grid-template-columns: 1fr;

@@ -11,7 +11,6 @@ const navSealedProducts = document.getElementById('nav-sealed-products');
 const navCategories = document.getElementById('nav-categories');
 const navLogout = document.getElementById('nav-logout');
 
-const adminContainer = document.querySelector('.admin-container'); // Referencia al contenedor principal
 const dashboardSection = document.getElementById('dashboard-section');
 const cardsSection = document.getElementById('cards-section');
 const sealedProductsSection = document.getElementById('sealed-products-section');
@@ -45,8 +44,8 @@ const saveCardBtn = document.getElementById('saveCardBtn');
 // ===============================================
 // ELEMENTOS DEL DOM - GESTIÓN DE PRODUCTOS SELLADOS
 // ===============================================
-const addSealedProductBtn = document.getElementById('addSealedProductBtn'); 
-const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody'); 
+const addSealedProductBtn = document.getElementById('addSealedProductBtn');
+const sealedProductsTableBody = document.querySelector('#sealedProductsTable tbody');
 const adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
 const adminSealedTypeFilter = document.getElementById('adminSealedTypeFilter');
 const sealedProductTypeOptionsDatalist = document.getElementById('sealedProductTypeOptions');
@@ -210,6 +209,7 @@ navLogout.addEventListener('click', (e) => {
     showCustomMessageModal("Sesión Cerrada", "Has cerrado sesión correctamente."); // Usar modal personalizado
     document.querySelector('.user-info span').textContent = "Invitado";
     showLoginModal();
+    console.log("Cerrar Sesión Clicked");
 });
 
 // Listener para el botón de refrescar el panel
@@ -236,13 +236,6 @@ const ADMIN_USERNAME = "dndadmin";
 const ADMIN_PASSWORD = "Blarias616";
 
 function showLoginModal() {
-    // Ocultar el contenedor principal del admin antes de mostrar el login
-    // Esto se maneja ahora principalmente con el style="display: none;" en admin.html
-    // pero lo mantenemos aquí para consistencia y seguridad.
-    if (adminContainer) {
-        adminContainer.style.display = 'none';
-    }
-    // Asegurarse de que todas las secciones estén inactivas
     const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
     sections.forEach(section => section.classList.remove('active'));
 
@@ -254,16 +247,12 @@ function showLoginModal() {
 
 function hideLoginModal() {
     loginModal.style.display = 'none';
-    // Hacer visible el contenedor principal del admin después de ocultar el login
-    if (adminContainer) {
-        adminContainer.style.display = 'flex';
-    }
 }
 
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const username = usernameInput.value;
-    const password = password.value;
+    const password = passwordInput.value;
 
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         isAuthenticated = true;
@@ -281,7 +270,6 @@ function checkAuth() {
     if (!isAuthenticated) {
         showLoginModal();
     } else {
-        hideLoginModal(); // Asegura que el contenedor principal se haga visible
         showSection(dashboardSection);
         updateDashboardStats();
     }
@@ -659,6 +647,10 @@ async function saveSealedProduct() {
             method = 'POST';
         }
 
+        // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
+        // Corregido el mensaje para que diga "guardar" en lugar de "eliminar"
+        console.log(`DEBUG: Intentando GUARDAR producto sellado en URL: ${targetUrl} con método: ${method}`);
+
         const response = await fetch(targetUrl, {
             method: method,
             headers: { 'Content-Type': 'application/json' },
@@ -826,6 +818,9 @@ function confirmDeletion(type, id) {
 async function deleteCard(cardId) {
     if (!isAuthenticated) { showLoginModal(); return; }
     try {
+        // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
+        console.log(`DEBUG: Intentando eliminar carta desde URL: ${SHEETDB_CARDS_API_URL}/id/${cardId} con método: DELETE`);
+
         const response = await fetch(`${SHEETDB_CARDS_API_URL}/id/${cardId}`, {
             method: 'DELETE'
         });
@@ -842,6 +837,9 @@ async function deleteCard(cardId) {
 async function deleteSealedProduct(productId) {
     if (!isAuthenticated) { showLoginModal(); return; }
     try {
+        // DEBUG: Imprimir la URL y el método a la consola antes de la llamada fetch
+        console.log(`DEBUG: Intentando eliminar producto sellado desde URL: ${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${productId} con método: DELETE`);
+
         const response = await fetch(`${SHEETDB_SEALED_PRODUCTS_API_URL}/id_producto/${productId}`, {
             method: 'DELETE'
         });
