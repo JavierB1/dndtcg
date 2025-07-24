@@ -4,7 +4,7 @@
 
 // Firebase y Firestore
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js'; // Actualizado a v12.0.0
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js'; // Actualizado a v12.0.0
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js'; // Actualizado a v12.0.0
 import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js'; // Actualizado a v12.0.0
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Añadido para Analytics
 
@@ -54,12 +54,12 @@ const navCards = document.getElementById('nav-cards');
 const navSealedProducts = document.getElementById('nav-sealed-products');
 const navCategories = document.getElementById('nav-categories');
 const navOrders = document.getElementById('nav-orders');
-const navLogout = document = document.getElementById('nav-logout');
+const navLogout = document.getElementById('nav-logout');
 
 const dashboardSection = document.getElementById('dashboard-section');
 const cardsSection = document.getElementById('cards-section');
 const sealedProductsSection = document.getElementById('sealed-products-section');
-const categoriesSection = document.getElementById('categories-section');
+const categoriesSection = document = document.getElementById('categories-section');
 
 const addCardBtn = document.getElementById('addCardBtn');
 const addSealedProductBtn = document.getElementById('addSealedProductBtn');
@@ -570,6 +570,7 @@ async function confirmDeletion() {
 // EVENT LISTENERS
 // ==========================================================================
 
+// Autenticación inicial con Firebase: Ahora solo muestra el modal de login si no hay usuario.
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentAdminUser = user;
@@ -579,29 +580,9 @@ onAuthStateChanged(auth, async (user) => {
         await loadAllData();
         console.log('Usuario autenticado:', userId);
     } else {
-        // En un entorno de producción, aquí se mostraría siempre el modal de login
-        // para forzar la autenticación.
-        // Para el entorno de Canvas, se intenta signInAnonymously si hay token inicial.
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            try {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } catch (authError) {
-                console.error("Error signing in with custom token:", authError);
-                try {
-                    await signInAnonymously(auth);
-                } catch (anonSignInError) {
-                    console.error("Error signing in anonymously:", anonSignInError);
-                    openModal(loginModal);
-                }
-            }
-        } else {
-            try {
-                await signInAnonymously(auth);
-            } catch (anonError) {
-                console.error("Error signing in anonymously:", anonError);
-                openModal(loginModal);
-            }
-        }
+        // Si no hay usuario autenticado, siempre muestra el modal de login
+        openModal(loginModal);
+        console.log('No hay usuario autenticado. Mostrando modal de login.');
     }
 });
 
@@ -685,6 +666,8 @@ window.addEventListener('click', (event) => {
     if (event.target === categoryModal) closeModal(categoryModal);
     if (event.target === confirmModal) closeModal(confirmModal);
     if (event.target === loginModal && loginModal.style.display === 'flex') {
+        // No cerrar el modal de login si está activo y se hace clic fuera
+        // Esto fuerza al usuario a iniciar sesión.
     }
 });
 
