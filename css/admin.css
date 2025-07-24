@@ -220,11 +220,12 @@ body {
     background-color: #f0f0f0;
     padding: 20px;
     border-radius: 8px;
-    text-align: center;
+    text-align: center; /* Alinea el contenido de la tarjeta al centro */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     display: flex; /* Habilitar flexbox */
     flex-direction: column; /* Apilar elementos verticalmente */
-    justify-content: space-between; /* Distribuir espacio para empujar el último elemento al final */
+    justify-content: space-between; /* Distribuye espacio entre h3 y p */
+    align-items: center; /* Alinea el contenido al centro horizontalmente */
     height: 120px; /* Altura fija para las tarjetas para una alineación consistente */
 }
 
@@ -232,7 +233,13 @@ body {
     margin-top: 0;
     color: #3498db;
     font-size: 1.1em;
-    margin-bottom: auto; /* ¡Añadido! Empuja el párrafo hacia abajo */
+    margin-bottom: 0; /* Asegura que no haya margen inferior extra en el h3 */
+    text-align: center; /* Alinea el texto del h3 al centro */
+    width: 100%; /* Asegura que ocupe todo el ancho disponible */
+    min-height: 2.2em; /* Aproximadamente 2 líneas de texto (1.1em * 2) */
+    display: flex; /* Para centrar verticalmente el texto si es de una línea */
+    align-items: center; /* Centra verticalmente el texto dentro del h3 */
+    justify-content: center; /* Centra horizontalmente el texto dentro del h3 */
 }
 
 .stat-card p {
@@ -241,66 +248,25 @@ body {
     color: #2c3e50;
     margin: 0; /* Eliminar margen superior para que flexbox lo maneje */
     padding-top: 10px; /* Pequeño padding para separar del título si es necesario */
+    text-align: center; /* Alinea el texto del p al centro */
+    width: 100%; /* Asegura que ocupe todo el ancho disponible */
 }
 
-/* Botones Generales */
-.add-button {
-    background-color: #28a745;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.2s ease;
-    margin-bottom: 20px;
+/* Nuevo estilo para contenedores de tabla responsivos */
+.table-responsive {
+    overflow-x: auto; /* Permite desplazamiento horizontal si el contenido es demasiado ancho */
+    -webkit-overflow-scrolling: touch; /* Mejora el desplazamiento en iOS */
+    margin-bottom: 20px; /* Espacio debajo de la tabla */
+    border-radius: 8px; /* Bordes redondeados para el contenedor */
+    border: 1px solid #eee; /* Borde sutil */
 }
-
-.add-button:hover {
-    background-color: #218838;
-}
-
-/* Inputs de búsqueda y filtros (reutilizados para productos sellados) */
-.admin-search-input,
-.admin-select-filter {
-    width: 100%;
-    max-width: 400px; /* Ancho para el filtro y la búsqueda */
-    padding: 10px 15px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95em;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
-    transition: border-color 0.2s ease;
-}
-.admin-search-input:focus,
-.admin-select-filter:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
-    outline: none;
-}
-
-/* Estilos específicos para el select (flecha personalizada) */
-.admin-select-filter {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-color: #fff;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 24px;
-    cursor: pointer;
-    padding-right: 40px; /* Espacio para la flecha */
-}
-
 
 /* Tablas (reutilizados para productos sellados) */
 table {
     width: 100%;
+    min-width: 600px; /* Añadido: Asegura que la tabla tenga un ancho mínimo para que se desplace */
     border-collapse: collapse;
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */ /* Movido al .table-responsive */
     background-color: white;
     border-radius: 8px;
     overflow: hidden; /* Para que los bordes redondeados se apliquen a los thead/tbody */
@@ -316,6 +282,7 @@ table th,
 table td {
     padding: 12px 15px;
     border-bottom: 1px solid #ddd;
+    white-space: nowrap; /* Evita que el contenido de la celda se envuelva */
 }
 
 table tbody tr:nth-child(even) {

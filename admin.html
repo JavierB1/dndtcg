@@ -86,22 +86,24 @@
                     <select id="adminCategoryFilter" class="admin-select-filter">
                         <option value="">Todas las categorías</option>
                     </select>
-                    <table id="cardsTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Imagen</th>
-                                <th>Nombre</th>
-                                <th>Precio</th>
-                                <th>Stock</th>
-                                <th>Categoría</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Las filas de las cartas se cargarán aquí con JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="table-responsive"> <!-- Nuevo contenedor para scroll horizontal -->
+                        <table id="cardsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Imagen</th>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Categoría</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las filas de las cartas se cargarán aquí con JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                     <div class="pagination-controls">
                         <button id="adminPrevPageBtn" class="pagination-btn">-</button>
                         <span id="adminPageInfo">Página 1 de 1</span>
@@ -120,22 +122,24 @@
                     <select id="adminSealedTypeFilter" class="admin-select-filter">
                         <option value="">Todos los tipos</option>
                     </select>
-                    <table id="sealedProductsTable">
-                        <thead>
-                            <tr>
-                                <th>ID Producto</th>
-                                <th>Imagen</th>
-                                <th>Nombre Producto</th>
-                                <th>Tipo</th>
-                                <th>Precio</th>
-                                <th>Stock</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Las filas de los productos sellados se cargarán aquí con JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="table-responsive"> <!-- Nuevo contenedor para scroll horizontal -->
+                        <table id="sealedProductsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID Producto</th>
+                                    <th>Imagen</th>
+                                    <th>Nombre Producto</th>
+                                    <th>Tipo</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las filas de los productos sellados se cargarán aquí con JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                     <div class="pagination-controls">
                         <button id="adminSealedPrevPageBtn">-</button>
                         <span id="adminSealedPageInfo">Página 1 de 1</span>
@@ -150,17 +154,19 @@
                 <button id="addCategoryBtn" class="add-button">Añadir Nueva Categoría</button>
                 <div class="category-list-container">
                     <h3>Lista de Categorías</h3>
-                    <table id="categoriesTable">
-                        <thead>
-                            <tr>
-                                <th>Nombre de Categoría</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Las filas de las categorías se cargarán aquí con JavaScript -->
-                        </tbody>
-                    </table>
+                    <div class="table-responsive"> <!-- Nuevo contenedor para scroll horizontal -->
+                        <table id="categoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Nombre de Categoría</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las filas de las categorías se cargarán aquí con JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
