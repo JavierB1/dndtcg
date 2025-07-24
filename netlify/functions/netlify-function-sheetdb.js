@@ -2,33 +2,25 @@
 
 // Accede a las variables de entorno de Netlify
 // ¡IMPORTANTE! Configura estas variables en el panel de Netlify (Site settings > Build & deploy > Environment)
-// Por ejemplo:
 // SHEETDB_CARDS_URL = https://sheetdb.io/api/v1/TU_ID_DE_TU_HOJA_DE_CARTAS
 // SHEETDB_SEALED_PRODUCTS_URL = https://sheetdb.io/api/v1/TU_ID_DE_TU_HOJA_DE_PRODUCTOS_SELLADOS
-// ADMIN_PASSWORD = TU_CONTRASEÑA_SEGURA_PARA_EL_ADMIN
 
 const SHEETDB_CONFIG = {
     cards_url: process.env.SHEETDB_CARDS_URL,
     sealed_products_url: process.env.SHEETDB_SEALED_PRODUCTS_URL,
 };
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-/**
- * Función de autenticación básica.
- * En producción, esto DEBE ser reemplazado por un sistema de autenticación robusto (ej. Firebase Auth).
- * @param {string} password - La contraseña proporcionada por el cliente.
- * @returns {boolean} - True si la contraseña es correcta, false en caso contrario.
- */
-function authenticateAdmin(password) {
-    return password === ADMIN_PASSWORD;
-}
+// NOTA IMPORTANTE: La verificación de autenticación basada en contraseña se ha ELIMINADO TEMPORALMENTE
+// para permitir el despliegue en Netlify y la integración inicial con Firebase Auth.
+// En un entorno de producción, DEBES implementar la verificación del token de Firebase Auth aquí.
+// Esto se hará en un paso posterior para asegurar las operaciones de escritura.
 
 exports.handler = async (event, context) => {
     // Configura CORS
     const headers = {
         'Access-Control-Allow-Origin': '*', // Reemplaza '*' con el dominio de tu Netlify en producción (ej. https://tudominio.netlify.app)
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization', // 'Authorization' para el token de Firebase Auth
         'Content-Type': 'application/json'
     };
 
@@ -41,16 +33,20 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // Autenticación del administrador
-    const adminPassword = event.headers['x-admin-password'];
-    if (!authenticateAdmin(adminPassword)) {
-        console.warn('Intento de acceso no autorizado a manage-sheetdb function');
-        return {
-            statusCode: 401,
-            headers: headers,
-            body: JSON.stringify({ success: false, message: 'No autorizado. Se requiere contraseña de administrador.' })
-        };
-    }
+    // --- TEMPORALMENTE: NO HAY VERIFICACIÓN DE AUTENTICACIÓN AQUÍ ---
+    // En un paso posterior, se agregará la verificación del token de Firebase Auth aquí.
+    // Por ahora, cualquier petición que llegue a esta función será procesada.
+    // Esto es solo para permitir que el despliegue de Netlify sea exitoso y probar el login de Firebase.
+    // const idToken = event.headers.authorization?.split('Bearer ')[1];
+    // if (!idToken) {
+    //     return {
+    //         statusCode: 401,
+    //         headers: headers,
+    //         body: JSON.stringify({ success: false, message: 'No autorizado. Se requiere token de autenticación.' })
+    //     };
+    // }
+    // Aquí iría la lógica para verificar el token con Firebase Admin SDK.
+    // -----------------------------------------------------------------
 
     let body;
     try {
@@ -63,7 +59,7 @@ exports.handler = async (event, context) => {
         };
     }
 
-    const { action, data, id, entityType } = body; // 'action', 'data', 'id', 'entityType'
+    const { action, data, id, entityType } = body;
 
     let targetUrl = '';
     if (entityType === 'cards') {
@@ -71,12 +67,10 @@ exports.handler = async (event, context) => {
     } else if (entityType === 'sealedProducts') {
         targetUrl = SHEETDB_CONFIG.sealed_products_url;
     } else {
-        // Si la entidad no es 'cards' ni 'sealedProducts', es un tipo no válido para esta función.
-        // Las categorías se gestionan directamente con Firestore desde admin.js.
         return {
             statusCode: 400,
             headers: headers,
-            body: JSON.stringify({ success: false, message: 'Tipo de entidad no válido para esta función. Las categorías se gestionan vía Firestore.' })
+            body: JSON.stringify({ success: false, message: 'Tipo de entidad no válido para esta función.' })
         };
     }
 
@@ -107,8 +101,7 @@ exports.handler = async (event, context) => {
                         body: JSON.stringify({ success: false, message: 'ID requerido para actualizar.' })
                     };
                 }
-                // Asume que el ID de la carta es 'id', el de producto sellado es 'id_producto'
-                let id_field = 'id'; // Por defecto para cartas
+                let id_field = 'id';
                 if (entityType === 'sealedProducts') {
                     id_field = 'id_producto';
                 }
@@ -126,7 +119,7 @@ exports.handler = async (event, context) => {
                         body: JSON.stringify({ success: false, message: 'ID requerido para eliminar.' })
                     };
                 }
-                let delete_id_field = 'id'; // Por defecto para cartas
+                let delete_id_field = 'id';
                 if (entityType === 'sealedProducts') {
                     delete_id_field = 'id_producto';
                 }
