@@ -1,14 +1,15 @@
 // ==========================================================================
-// VARIABLES GLOBALES Y REFERENCIAS A ELEMENTOS DEL DOM
+// GLOBAL VARIABLES AND DOM ELEMENT REFERENCES
 // ==========================================================================
 
-// Firebase y Firestore
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js'; // Updated to v12.0.0
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js'; // Updated to v12.0.0
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js'; // Updated to v12.0.0
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js"; // Added for Analytics
+// Firebase and Firestore SDK imports
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
 
-// Your real Firebase configuration for dndtcgadmin
+// Your actual Firebase configuration for dndtcgadmin project
+// IMPORTANT: Replace with your specific Firebase project configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
     authDomain: "dndtcgadmin.firebaseapp.com",
@@ -19,23 +20,24 @@ const firebaseConfig = {
     measurementId: "G-T8KRZX5S7R"
 };
 
-// Initialize Firebase
+// Initialize Firebase services
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const analytics = getAnalytics(app); // Initialize Analytics
 
-// App ID and User ID
-const appId = firebaseConfig.projectId; // Now we can use the projectId directly
-let userId = null; // Will be set after authentication
-let currentAdminUser = null; // To store the Firebase Auth user object
+// Application ID and User ID
+const appId = firebaseConfig.projectId; // Use projectId as appId for Firestore paths
+let userId = null; // Will be set after successful Firebase authentication
+let currentAdminUser = null; // Stores the authenticated Firebase User object
 
-// Netlify Function URL (IMPORTANT: Replace with your actual Netlify domain after deployment!)
-const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb'; // Replace with your Netlify domain
+// Netlify Function URL
+// IMPORTANT: Ensure this URL points to your deployed Netlify function
+const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb';
 
-// SheetDB URLs for READ operations (these can be in the frontend for GET requests)
-const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau"; // URL for your cards sheet
-const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp"; // URL for your 'producto_sellado' sheet
+// SheetDB URLs for READ operations (safe to be in frontend for GET requests)
+const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau";
+const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp";
 
 
 // DOM element references
@@ -46,8 +48,8 @@ const mainHeader = document.querySelector('.main-header');
 const loginModal = document.getElementById('loginModal');
 const loginForm = document.getElementById('loginForm');
 const loginMessage = document.getElementById('loginMessage');
-const usernameInput = document.getElementById('username'); // Ensure this ID exists in your HTML
-const passwordInput = document.getElementById('password'); // Ensure this ID exists in your HTML
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
 
 const navDashboard = document.getElementById('nav-dashboard');
 const navCards = document.getElementById('nav-cards');
@@ -62,7 +64,7 @@ const sealedProductsSection = document.getElementById('sealed-products-section')
 const categoriesSection = document.getElementById('categories-section');
 
 const addCardBtn = document.getElementById('addCardBtn');
-const addSealedProductBtn = document.getElementById('addSealedProductBtn');
+const addSealedProductBtn = document = document.getElementById('addSealedProductBtn');
 const addCategoryBtn = document.getElementById('addCategoryBtn');
 
 const cardModal = document.getElementById('cardModal');
@@ -136,6 +138,10 @@ let currentDeleteTarget = null;
 // UTILITY FUNCTIONS
 // ==========================================================================
 
+/**
+ * Shows a specific admin section and hides all others.
+ * @param {HTMLElement} sectionToShow - The DOM element of the section to display.
+ */
 function showSection(sectionToShow) {
     const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
     sections.forEach(section => {
@@ -144,21 +150,36 @@ function showSection(sectionToShow) {
     sectionToShow.classList.add('active');
 }
 
+/**
+ * Opens a modal.
+ * @param {HTMLElement} modalElement - The modal DOM element to open.
+ */
 function openModal(modalElement) {
     modalElement.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
 }
 
+/**
+ * Closes a modal.
+ * @param {HTMLElement} modalElement - The modal DOM element to close.
+ */
 function closeModal(modalElement) {
     modalElement.style.display = 'none';
-    document.body.style.overflow = '';
+    document.body.style.overflow = ''; // Restore body scroll
 }
 
+/**
+ * Displays a login error message.
+ * @param {string} message - The message to display.
+ */
 function showLoginError(message) {
     loginMessage.textContent = message;
     loginMessage.style.display = 'block';
 }
 
+/**
+ * Clears the login error message.
+ */
 function clearLoginError() {
     loginMessage.textContent = '';
     loginMessage.style.display = 'none';
@@ -174,6 +195,7 @@ function clearLoginError() {
  * @returns {Promise<Object>} - The function's response.
  */
 async function callNetlifyFunction(entityType, action, data = {}, id = null) {
+    // Ensure an admin user is authenticated before making the call
     if (!currentAdminUser) {
         console.error('No authenticated admin user.');
         showLoginError('Please log in to perform this operation.');
@@ -182,7 +204,8 @@ async function callNetlifyFunction(entityType, action, data = {}, id = null) {
     }
 
     try {
-        const idToken = await currentAdminUser.getIdToken(); // Get the Firebase Auth token
+        // Get the Firebase ID token for the currently authenticated user
+        const idToken = await currentAdminUser.getIdToken();
 
         const response = await fetch(NETLIFY_FUNCTION_URL, {
             method: 'POST',
@@ -195,34 +218,40 @@ async function callNetlifyFunction(entityType, action, data = {}, id = null) {
 
         const result = await response.json();
         if (!response.ok) {
+            // Handle errors from the Netlify function
             throw new Error(result.message || `Error in Netlify function: ${response.status}`);
         }
         return result;
     } catch (error) {
         console.error('Error calling Netlify function:', error);
+        alert(`Operation failed: ${error.message}`); // Display user-friendly error
         throw error;
     }
 }
 
 // ==========================================================================
-// AUTHENTICATION FUNCTIONS (NOW WITH FIREBASE AUTH)
+// AUTHENTICATION FUNCTIONS (FIREBASE AUTH)
 // ==========================================================================
 
+/**
+ * Handles the admin login process using Firebase Email/Password authentication.
+ * @param {Event} event - The form submission event.
+ */
 async function handleLogin(event) {
     event.preventDefault();
-    const email = usernameInput.value; // Use email for Firebase Auth
-    const password = passwordInput.value; // Use password for Firebase Auth
+    const email = usernameInput.value;
+    const password = passwordInput.value;
     clearLoginError();
 
     try {
-        // Log in with email and password from Firebase Auth
+        // Sign in with email and password using Firebase Auth
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        currentAdminUser = userCredential.user; // Store the authenticated user
+        currentAdminUser = userCredential.user; // Store the authenticated user object
         userId = currentAdminUser.uid; // Update userId with Firebase UID
 
-        closeModal(loginModal);
-        showSection(dashboardSection);
-        loadAllData();
+        closeModal(loginModal); // Close the login modal
+        showSection(dashboardSection); // Show the dashboard
+        await loadAllData(); // Load all necessary data for the admin panel
         console.log('Admin logged in with Firebase Auth. User ID:', userId);
     } catch (error) {
         console.error('Error logging in with Firebase:', error);
@@ -232,17 +261,20 @@ async function handleLogin(event) {
         } else if (error.code === 'auth/invalid-email') {
             errorMessage = 'Invalid email format.';
         }
-        showLoginError(errorMessage);
+        showLoginError(errorMessage); // Display specific error message to the user
     }
 }
 
+/**
+ * Handles the admin logout process using Firebase authentication.
+ */
 async function handleLogout() {
     try {
-        await signOut(auth); // Log out from Firebase
-        userId = null;
-        currentAdminUser = null; // Clear authenticated user
-        showSection(loginModal);
-        clearLoginError();
+        await signOut(auth); // Sign out from Firebase
+        userId = null; // Clear user ID
+        currentAdminUser = null; // Clear authenticated user object
+        showSection(loginModal); // Show the login modal again
+        clearLoginError(); // Clear any previous login errors
         console.log('Logged out with Firebase Auth.');
     } catch (error) {
         console.error('Error logging out:', error);
@@ -251,55 +283,82 @@ async function handleLogout() {
 }
 
 // ==========================================================================
-// DATA LOADING FUNCTIONS (Firestore and SheetDB)
+// DATA LOADING FUNCTIONS (Firestore for Categories, SheetDB for Cards/Sealed Products)
 // ==========================================================================
 
+/**
+ * Loads all categories from Firestore.
+ */
 async function loadCategories() {
     try {
+        // Query the public categories collection in Firestore
         const categoriesCol = collection(db, `artifacts/${appId}/public/data/categories`);
         const categorySnapshot = await getDocs(categoriesCol);
         allCategories = categorySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        populateCategoryFilters();
+        populateCategoryFilters(); // Update category filters and datalists
     } catch (error) {
         console.error('Error loading categories:', error);
+        alert('Error loading categories. Check console for more details.');
     }
 }
 
+/**
+ * Loads all cards data from SheetDB (direct read for display).
+ */
 async function loadCardsData() {
     try {
+        // Fetch cards data directly from SheetDB API
         const response = await fetch(SHEETDB_CARDS_API_URL.replace(/"/g, ''));
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         allCards = await response.json();
-        renderCardsTable();
-        updateDashboardStats();
+        renderCardsTable(); // Render the cards table
+        updateDashboardStats(); // Update dashboard statistics
     } catch (error) {
         console.error('Error loading cards data:', error);
         alert('Error loading cards. Check console for more details.');
     }
 }
 
+/**
+ * Loads all sealed products data from SheetDB (direct read for display).
+ */
 async function loadSealedProductsData() {
     try {
+        // Fetch sealed products data directly from SheetDB API
         const response = await fetch(SHEETDB_SEALED_PRODUCTS_API_URL.replace(/"/g, ''));
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         allSealedProducts = await response.json();
-        renderSealedProductsTable();
-        updateDashboardStats();
+        renderSealedProductsTable(); // Render the sealed products table
+        updateDashboardStats(); // Update dashboard statistics
     } catch (error) {
         console.error('Error loading sealed products data:', error);
         alert('Error loading sealed products. Check console for more details.');
     }
 }
 
+/**
+ * Loads all necessary data for the admin panel (categories, cards, sealed products).
+ */
 async function loadAllData() {
     await loadCategories();
     await loadCardsData();
     await loadSealedProductsData();
 }
 
+/**
+ * Populates category filters and datalists in forms.
+ */
 function populateCategoryFilters() {
+    // Extract unique category names from loaded categories
     const categories = [...new Set(allCategories.map(cat => cat.name))];
 
-    adminCategoryFilter.innerHTML = '<option value="">All categories</option>';
+    // Populate cards category filter
+    adminCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -307,7 +366,8 @@ function populateCategoryFilters() {
         adminCategoryFilter.appendChild(option);
     });
 
-    adminSealedCategoryFilter.innerHTML = '<option value="">All categories</option>';
+    // Populate sealed products category filter
+    adminSealedCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
@@ -315,6 +375,7 @@ function populateCategoryFilters() {
         adminSealedCategoryFilter.appendChild(option);
     });
 
+    // Populate datalists for card and sealed product forms
     categoryOptions.innerHTML = '';
     sealedProductCategoryOptions.innerHTML = '';
     categories.forEach(category => {
@@ -332,24 +393,29 @@ function populateCategoryFilters() {
 // TABLE RENDERING FUNCTIONS
 // ==========================================================================
 
+/**
+ * Renders the cards table with filtering and pagination.
+ */
 function renderCardsTable() {
     cardsTable.querySelector('tbody').innerHTML = '';
     const searchTerm = adminSearchInput.value.toLowerCase();
     const selectedCategory = adminCategoryFilter.value;
 
+    // Filter cards based on search term and selected category
     let filteredCards = allCards.filter(card => {
         const matchesSearch = card.name.toLowerCase().includes(searchTerm) || card.id.toLowerCase().includes(searchTerm);
         const matchesCategory = selectedCategory === '' || card.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    filteredCards.sort((a, b) => a.name.localeCompare(b.name));
+    filteredCards.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
 
     const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
     const startIndex = (currentCardsPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const cardsToDisplay = filteredCards.slice(startIndex, endIndex);
 
+    // Populate table rows
     cardsToDisplay.forEach(card => {
         const row = cardsTable.querySelector('tbody').insertRow();
         row.innerHTML = `
@@ -361,8 +427,8 @@ function renderCardsTable() {
             <td>${card.category}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="edit-button" data-id="${card.id}" data-type="card">Edit</button>
-                    <button class="delete-button" data-id="${card.id}" data-type="card">Delete</button>
+                    <button class="edit-button" data-id="${card.id}" data-type="card">Editar</button>
+                    <button class="delete-button" data-id="${card.id}" data-type="card">Eliminar</button>
                 </div>
             </td>
         `;
@@ -371,24 +437,29 @@ function renderCardsTable() {
     updatePaginationControls(currentCardsPage, totalPages, adminPrevPageBtn, adminNextPageBtn, adminPageInfo, filteredCards.length);
 }
 
+/**
+ * Renders the sealed products table with filtering and pagination.
+ */
 function renderSealedProductsTable() {
     sealedProductsTable.querySelector('tbody').innerHTML = '';
     const searchTerm = adminSealedSearchInput.value.toLowerCase();
     const selectedCategory = adminSealedCategoryFilter.value;
 
+    // Filter products based on search term and selected category
     let filteredProducts = allSealedProducts.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm) || product.id_producto.toLowerCase().includes(searchTerm);
         const matchesCategory = selectedCategory === '' || product.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
-    filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+    filteredProducts.sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
 
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     const startIndex = (currentSealedProductsPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const productsToDisplay = filteredProducts.slice(startIndex, endIndex);
 
+    // Populate table rows
     productsToDisplay.forEach(product => {
         const row = sealedProductsTable.querySelector('tbody').insertRow();
         row.innerHTML = `
@@ -400,8 +471,8 @@ function renderSealedProductsTable() {
             <td>${product.stock}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="edit-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Edit</button>
-                    <button class="delete-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Delete</button>
+                    <button class="edit-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Editar</button>
+                    <button class="delete-sealed-product-button" data-id="${product.id_producto}" data-type="sealed">Eliminar</button>
                 </div>
             </td>
         `;
@@ -410,28 +481,44 @@ function renderSealedProductsTable() {
     updatePaginationControls(currentSealedProductsPage, totalPages, adminSealedPrevPageBtn, adminSealedNextPageBtn, adminSealedPageInfo, filteredProducts.length);
 }
 
+/**
+ * Renders the categories table.
+ */
 async function renderCategoriesTable() {
     categoriesTable.querySelector('tbody').innerHTML = '';
+    // Categories are loaded from Firestore, no pagination needed if few.
     allCategories.forEach(category => {
         const row = categoriesTable.querySelector('tbody').insertRow();
         row.innerHTML = `
             <td>${category.name}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="edit-category-button" data-id="${category.id}" data-name="${category.name}">Edit</button>
-                    <button class="delete-category-button" data-id="${category.id}" data-name="${category.name}">Delete</button>
+                    <button class="edit-category-button" data-id="${category.id}" data-name="${category.name}">Editar</button>
+                    <button class="delete-category-button" data-id="${category.id}" data-name="${category.name}">Eliminar</button>
                 </div>
             </td>
         `;
     });
 }
 
+/**
+ * Updates pagination controls (page info, prev/next button states).
+ * @param {number} currentPage - The current page number.
+ * @param {number} totalPages - The total number of pages.
+ * @param {HTMLElement} prevBtn - The previous page button element.
+ * @param {HTMLElement} nextBtn - The next page button element.
+ * @param {HTMLElement} infoSpan - The span element displaying page information.
+ * @param {number} totalItems - The total count of filtered items.
+ */
 function updatePaginationControls(currentPage, totalPages, prevBtn, nextBtn, infoSpan, totalItems) {
-    infoSpan.textContent = `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
+    infoSpan.textContent = `Página ${currentPage} de ${totalPages} (${totalItems} items)`;
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 }
 
+/**
+ * Updates the dashboard statistics (total cards, sealed products, out of stock, unique categories).
+ */
 function updateDashboardStats() {
     totalCardsCount.textContent = allCards.length;
     totalSealedProductsCount.textContent = allSealedProducts.length;
@@ -440,14 +527,19 @@ function updateDashboardStats() {
 }
 
 // ==========================================================================
-// DATA MANAGEMENT FUNCTIONS (CRUD via Netlify Functions)
+// DATA MANAGEMENT FUNCTIONS (CRUD via Netlify Functions for Cards/Sealed Products)
+// (Categories managed directly with Firestore)
 // ==========================================================================
 
+/**
+ * Handles the submission of the card form (add/edit).
+ * @param {Event} event - The form submission event.
+ */
 async function handleCardFormSubmit(event) {
     event.preventDefault();
-    const isEditing = !!cardId.value;
+    const isEditing = !!cardId.value; // Check if it's an edit operation
     const cardData = {
-        id: cardId.value || `C${Date.now()}`,
+        id: cardId.value || `C${Date.now()}`, // Generate new ID if adding
         name: cardName.value,
         image: cardImage.value,
         price: parseFloat(cardPrice.value),
@@ -463,20 +555,24 @@ async function handleCardFormSubmit(event) {
             result = await callNetlifyFunction('cards', 'add', cardData);
         }
         console.log(result.message, result.data);
-        closeModal(cardModal);
-        await loadCardsData();
-        alert(`Card ${isEditing ? 'updated' : 'added'} successfully.`);
+        closeModal(cardModal); // Close the modal
+        await loadCardsData(); // Reload data to update table
+        alert(`Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
     } catch (error) {
         console.error('Error saving card:', error);
-        alert(`Error saving card: ${error.message}`);
+        alert(`Error al guardar carta: ${error.message}`);
     }
 }
 
+/**
+ * Handles the submission of the sealed product form (add/edit).
+ * @param {Event} event - The form submission event.
+ */
 async function handleSealedProductFormSubmit(event) {
     event.preventDefault();
-    const isEditing = !!sealedProductId.value;
+    const isEditing = !!sealedProductId.value; // Check if it's an edit operation
     const productData = {
-        id_producto: sealedProductId.value || `S${Date.now()}`,
+        id_producto: sealedProductId.value || `S${Date.now()}`, // Generate new ID if adding
         name: sealedProductName.value,
         image: sealedProductImage.value,
         category: sealedProductCategory.value,
@@ -492,18 +588,23 @@ async function handleSealedProductFormSubmit(event) {
             result = await callNetlifyFunction('sealedProducts', 'add', productData);
         }
         console.log(result.message, result.data);
-        closeModal(sealedProductModal);
-        await loadSealedProductsData();
-        alert(`Sealed product ${isEditing ? 'updated' : 'added'} successfully.`);
+        closeModal(sealedProductModal); // Close the modal
+        await loadSealedProductsData(); // Reload data to update table
+        alert(`Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
     } catch (error) {
         console.error('Error saving sealed product:', error);
-        alert(`Error saving sealed product: ${error.message}`);
+        alert(`Error al guardar producto sellado: ${error.message}`);
     }
 }
 
+/**
+ * Handles the submission of the category form (add/edit).
+ * This function interacts ONLY with Firestore.
+ * @param {Event} event - The form submission event.
+ */
 async function handleCategoryFormSubmit(event) {
     event.preventDefault();
-    const isEditing = !!categoryId.value;
+    const isEditing = !!categoryId.value; // Check if it's an edit operation
     const categoryData = {
         name: categoryName.value
     };
@@ -511,57 +612,71 @@ async function handleCategoryFormSubmit(event) {
 
     try {
         if (isEditing) {
+            // Update existing category in Firestore
             const categoryRef = doc(db, `artifacts/${appId}/public/data/categories`, categoryDocId);
             await updateDoc(categoryRef, categoryData);
         } else {
+            // Add new category to Firestore
             const categoriesCol = collection(db, `artifacts/${appId}/public/data/categories`);
             await addDoc(categoriesCol, categoryData);
         }
         
-        console.log(`Category ${isEditing ? 'updated' : 'added'} successfully in Firestore.`);
-        closeModal(categoryModal);
-        await loadCategories();
-        updateDashboardStats();
-        alert(`Category ${isEditing ? 'updated' : 'added'} successfully.`);
+        console.log(`Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito en Firestore.`);
+        closeModal(categoryModal); // Close the modal
+        await loadCategories(); // Reload categories to update filters and tables
+        updateDashboardStats(); // Update dashboard statistics
+        alert(`Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
     } catch (error) {
         console.error('Error saving category to Firestore:', error);
-        alert(`Error saving category: ${error.message}`);
+        alert(`Error al guardar categoría: ${error.message}`);
     }
 }
 
+/**
+ * Opens the confirmation modal for deletion.
+ * @param {string} id - The ID of the item to delete.
+ * @param {string} type - The type of item ('card', 'sealed', 'category').
+ * @param {string} name - The name of the item (for display in message).
+ */
 function openConfirmModal(id, type, name = '') {
     currentDeleteTarget = { id, type, name };
-    confirmMessage.textContent = `Are you sure you want to delete ${name ? '"' + name + '"' : 'this item'}?`;
+    confirmMessage.textContent = `¿Estás seguro de que quieres eliminar ${name ? '"' + name + '"' : 'este elemento'}?`;
     openModal(confirmModal);
 }
 
+/**
+ * Confirms and executes the deletion of the item.
+ */
 async function confirmDeletion() {
-    if (!currentDeleteTarget) return;
+    if (!currentDeleteTarget) return; // If no item is selected for deletion, do nothing
 
     const { id, type, name } = currentDeleteTarget;
     try {
         let result;
         if (type === 'card') {
+            // Delete card via Netlify function
             result = await callNetlifyFunction('cards', 'delete', {}, id);
-            await loadCardsData();
+            await loadCardsData(); // Reload cards data
         } else if (type === 'sealed') {
+            // Delete sealed product via Netlify function
             result = await callNetlifyFunction('sealedProducts', 'delete', {}, id);
-            await loadSealedProductsData();
+            await loadSealedProductsData(); // Reload sealed products data
         } else if (type === 'category') {
+            // Delete category directly from Firestore
             const categoryRef = doc(db, `artifacts/${appId}/public/data/categories`, id);
             await deleteDoc(categoryRef);
-            await loadCategories();
-            updateDashboardStats();
-            console.log(`Category deleted from Firestore.`);
+            await loadCategories(); // Reload categories
+            updateDashboardStats(); // Update dashboard stats
+            console.log(`Categoría eliminada de Firestore.`);
         }
-        console.log(result.message || `Item ${type} deleted.`);
-        closeModal(confirmModal);
-        alert(`Item ${type} deleted successfully.`);
+        console.log(result.message || `Elemento ${type} eliminado.`);
+        closeModal(confirmModal); // Close confirmation modal
+        alert(`Elemento ${type} eliminado con éxito.`);
     } catch (error) {
-        console.error(`Error deleting ${type}:`, error);
-        alert(`Error deleting ${type}: ${error.message}`);
+        console.error(`Error al eliminar ${type}:`, error);
+        alert(`Error al eliminar ${type}: ${error.message}`);
     } finally {
-        currentDeleteTarget = null;
+        currentDeleteTarget = null; // Clear the deletion target
     }
 }
 
@@ -570,38 +685,58 @@ async function confirmDeletion() {
 // EVENT LISTENERS
 // ==========================================================================
 
-// Initial Firebase authentication: Now only shows the login modal if no user is authenticated.
+// Initial Firebase authentication check:
+// This listener fires when the authentication state changes (e.g., on page load, login, logout).
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        currentAdminUser = user;
-        userId = user.uid;
-        closeModal(loginModal);
-        showSection(dashboardSection);
-        await loadAllData();
+        // If a user is authenticated (logged in)
+        currentAdminUser = user; // Store the authenticated user object
+        userId = user.uid; // Get the user's UID
+        closeModal(loginModal); // Close the login modal if it's open
+        showSection(dashboardSection); // Show the dashboard section
+        await loadAllData(); // Load all data for the admin panel
         console.log('User authenticated:', userId);
     } else {
-        // If no user is authenticated, always show the login modal
+        // If no user is authenticated, always show the login modal to force authentication.
         openModal(loginModal);
         console.log('No authenticated user. Showing login modal.');
     }
 });
 
+// Add an event listener to sign out when the page is unloaded (closed or refreshed)
+window.addEventListener('unload', async () => {
+    // Note: signOut is asynchronous. There's no guarantee it will complete before the page unloads,
+    // especially if the browser is closing quickly.
+    // For robust security, rely on Firebase's session expiration and server-side token validation.
+    console.log('Page is unloading. Attempting to sign out...');
+    try {
+        await signOut(auth);
+        console.log('Signed out successfully on unload.');
+    } catch (error) {
+        console.error('Error signing out on unload:', error);
+    }
+});
+
+
+// Sidebar toggle button events
 sidebarToggleBtn.addEventListener('click', () => {
     sidebarMenu.classList.toggle('active');
     sidebarOverlay.classList.toggle('active');
 });
 
+// Sidebar overlay click event (closes sidebar when clicking outside)
 sidebarOverlay.addEventListener('click', () => {
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
 });
 
+// Navigation links events
 navDashboard.addEventListener('click', (e) => {
     e.preventDefault();
     showSection(dashboardSection);
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
-    updateDashboardStats();
+    updateDashboardStats(); // Ensure dashboard stats are updated
 });
 
 navCards.addEventListener('click', (e) => {
@@ -609,10 +744,10 @@ navCards.addEventListener('click', (e) => {
     showSection(cardsSection);
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
-    currentCardsPage = 1;
-    adminSearchInput.value = '';
-    adminCategoryFilter.value = '';
-    renderCardsTable();
+    currentCardsPage = 1; // Reset pagination
+    adminSearchInput.value = ''; // Clear search input
+    adminCategoryFilter.value = ''; // Clear category filter
+    renderCardsTable(); // Re-render table with fresh state
 });
 
 navSealedProducts.addEventListener('click', (e) => {
@@ -620,10 +755,10 @@ navSealedProducts.addEventListener('click', (e) => {
     showSection(sealedProductsSection);
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
-    currentSealedProductsPage = 1;
-    adminSealedSearchInput.value = '';
-    adminSealedCategoryFilter.value = '';
-    renderSealedProductsTable();
+    currentSealedProductsPage = 1; // Reset pagination
+    adminSealedSearchInput.value = ''; // Clear search input
+    adminSealedCategoryFilter.value = ''; // Clear category filter
+    renderSealedProductsTable(); // Re-render table with fresh state
 });
 
 navCategories.addEventListener('click', (e) => {
@@ -631,56 +766,59 @@ navCategories.addEventListener('click', (e) => {
     showSection(categoriesSection);
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
-    renderCategoriesTable();
+    renderCategoriesTable(); // Render categories table
 });
 
 navOrders.addEventListener('click', (e) => {
     e.preventDefault();
-    alert('Order management will be available soon.');
+    alert('Order management will be available soon.'); // Placeholder for future functionality
     sidebarMenu.classList.remove('active');
     sidebarOverlay.classList.remove('active');
 });
 
 navLogout.addEventListener('click', (e) => {
     e.preventDefault();
-    handleLogout();
+    handleLogout(); // Handle user logout
 });
 
+// Refresh button event
 document.getElementById('refreshAdminPageBtn').addEventListener('click', async () => {
     alert('Refreshing admin panel data...');
-    await loadAllData();
+    await loadAllData(); // Reload all data
     alert('Data updated.');
 });
 
+// Login form submission event
 loginForm.addEventListener('submit', handleLogin);
 
+// Close buttons for modals
 document.querySelectorAll('.admin-modal .close-button').forEach(button => {
     button.addEventListener('click', (e) => {
         closeModal(e.target.closest('.admin-modal'));
     });
 });
 
+// Close modals when clicking outside their content (except login modal)
 window.addEventListener('click', (event) => {
     if (event.target === cardModal) closeModal(cardModal);
     if (event.target === sealedProductModal) closeModal(sealedProductModal);
     if (event.target === categoryModal) closeModal(categoryModal);
     if (event.target === confirmModal) closeModal(confirmModal);
-    if (event.target === loginModal && loginModal.style.display === 'flex') {
-        // Do not close the login modal if it's active and clicked outside
-        // This forces the user to log in.
-    }
+    // The login modal is intentionally not closed by clicking outside to force login
 });
 
+// ======================= Cards =======================
 addCardBtn.addEventListener('click', () => {
     cardModalTitle.textContent = 'Add New Card';
-    cardForm.reset();
-    cardId.value = '';
+    cardForm.reset(); // Clear form fields
+    cardId.value = ''; // Ensure ID is empty for new entry
     openModal(cardModal);
 });
-cardForm.addEventListener('submit', handleCardFormSubmit);
+cardForm.addEventListener('submit', handleCardFormSubmit); // Handle card form submission
 
 cardsTable.addEventListener('click', (e) => {
     if (e.target.classList.contains('edit-button')) {
+        // Handle edit button click for cards
         const id = e.target.dataset.id;
         const card = allCards.find(c => c.id === id);
         if (card) {
@@ -694,6 +832,7 @@ cardsTable.addEventListener('click', (e) => {
             openModal(cardModal);
         }
     } else if (e.target.classList.contains('delete-button')) {
+        // Handle delete button click for cards
         const id = e.target.dataset.id;
         const card = allCards.find(c => c.id === id);
         openConfirmModal(id, 'card', card ? card.name : 'this card');
@@ -701,11 +840,11 @@ cardsTable.addEventListener('click', (e) => {
 });
 
 adminSearchInput.addEventListener('input', () => {
-    currentCardsPage = 1;
+    currentCardsPage = 1; // Reset page on search
     renderCardsTable();
 });
 adminCategoryFilter.addEventListener('change', () => {
-    currentCardsPage = 1;
+    currentCardsPage = 1; // Reset page on filter change
     renderCardsTable();
 });
 adminPrevPageBtn.addEventListener('click', () => {
@@ -729,16 +868,18 @@ adminNextPageBtn.addEventListener('click', () => {
     }
 });
 
+// ======================= Sealed Products =======================
 addSealedProductBtn.addEventListener('click', () => {
     sealedProductModalTitle.textContent = 'Add New Sealed Product';
-    sealedProductForm.reset();
-    sealedProductId.value = '';
+    sealedProductForm.reset(); // Clear form fields
+    sealedProductId.value = ''; // Ensure ID is empty for new entry
     openModal(sealedProductModal);
 });
-sealedProductForm.addEventListener('submit', handleSealedProductFormSubmit);
+sealedProductForm.addEventListener('submit', handleSealedProductFormSubmit); // Handle sealed product form submission
 
 sealedProductsTable.addEventListener('click', (e) => {
     if (e.target.classList.contains('edit-sealed-product-button')) {
+        // Handle edit button click for sealed products
         const id = e.target.dataset.id;
         const product = allSealedProducts.find(p => p.id_producto === id);
         if (product) {
@@ -752,6 +893,7 @@ sealedProductsTable.addEventListener('click', (e) => {
             openModal(sealedProductModal);
         }
     } else if (e.target.classList.contains('delete-sealed-product-button')) {
+        // Handle delete button click for sealed products
         const id = e.target.dataset.id;
         const product = allSealedProducts.find(p => p.id_producto === id);
         openConfirmModal(id, 'sealed', product ? product.name : 'this sealed product');
@@ -759,11 +901,11 @@ sealedProductsTable.addEventListener('click', (e) => {
 });
 
 adminSealedSearchInput.addEventListener('input', () => {
-    currentSealedProductsPage = 1;
+    currentSealedProductsPage = 1; // Reset page on search
     renderSealedProductsTable();
 });
 adminSealedCategoryFilter.addEventListener('change', () => {
-    currentSealedProductsPage = 1;
+    currentSealedProductsPage = 1; // Reset page on filter change
     renderSealedProductsTable();
 });
 adminSealedPrevPageBtn.addEventListener('click', () => {
@@ -787,16 +929,18 @@ adminSealedNextPageBtn.addEventListener('click', () => {
     }
 });
 
+// ======================= Categories =======================
 addCategoryBtn.addEventListener('click', () => {
     categoryModalTitle.textContent = 'Add New Category';
-    categoryForm.reset();
-    categoryId.value = '';
+    categoryForm.reset(); // Clear form fields
+    categoryId.value = ''; // Ensure ID is empty for new entry
     openModal(categoryModal);
 });
-categoryForm.addEventListener('submit', handleCategoryFormSubmit);
+categoryForm.addEventListener('submit', handleCategoryFormSubmit); // Handle category form submission
 
 categoriesTable.addEventListener('click', (e) => {
     if (e.target.classList.contains('edit-category-button')) {
+        // Handle edit button click for categories
         const id = e.target.dataset.id;
         const name = e.target.dataset.name;
         categoryModalTitle.textContent = 'Edit Category';
@@ -804,13 +948,18 @@ categoriesTable.addEventListener('click', (e) => {
         categoryName.value = name;
         openModal(categoryModal);
     } else if (e.target.classList.contains('delete-category-button')) {
+        // Handle delete button click for categories
         const id = e.target.dataset.id;
         const name = e.target.dataset.name;
         openConfirmModal(id, 'category', name);
     }
 });
 
+// ======================= Confirmation of Deletion =======================
 cancelDeleteBtn.addEventListener('click', () => closeModal(confirmModal));
 confirmDeleteBtn.addEventListener('click', confirmDeletion);
 
-// Initial data loading is done after authentication in onAuthStateChanged
+// ==========================================================================
+// APPLICATION INITIALIZATION
+// ==========================================================================
+// Initial data loading is handled by the onAuthStateChanged listener after Firebase authentication state is determined.
