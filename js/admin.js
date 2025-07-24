@@ -42,7 +42,7 @@ const navCards = document.getElementById('nav-cards');
 const navSealedProducts = document.getElementById('nav-sealed-products');
 const navCategories = document.getElementById('nav-categories');
 const navOrders = document.getElementById('nav-orders');
-const navLogout = document.getElementById('nav-logout');
+const navLogout = document = document.getElementById('nav-logout');
 
 const dashboardSection = document.getElementById('dashboard-section');
 const cardsSection = document.getElementById('cards-section');
