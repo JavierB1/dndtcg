@@ -39,10 +39,10 @@
                 <button id="sidebarToggleBtn" class="sidebar-toggle-btn">
                     <i class="fas fa-bars"></i>
                 </button>
-                <h1>Bienvenido <span class="desktop-only-title"></span></h1> <!-- MODIFICADO AQUÍ -->
-                <div class="header-right-controls"> <!-- Contenedor para alinear elementos a la derecha -->
+                <h1>Bienvenido <span class="desktop-only-title"></span></h1>
+                <div class="header-right-controls">
                     <button id="refreshAdminPageBtn" class="refresh-button">
-                        <i class="fas fa-sync-alt"></i> <!-- Icono de refrescar -->
+                        <i class="fas fa-sync-alt"></i>
                     </button>
                     <div class="user-info">
                         <span>Admin User</span>
@@ -55,7 +55,6 @@
             <section id="dashboard-section" class="admin-section active">
                 <h2>Dashboard</h2>
                 <p>Resumen rápido de tu tienda.</p>
-                <!-- Aquí irían estadísticas, alertas, etc. -->
                 <div class="dashboard-stats">
                     <div class="stat-card">
                         <h3>Total de Cartas</h3>
@@ -85,8 +84,9 @@
                     <input type="text" id="adminSearchInput" placeholder="Buscar carta por nombre o ID..." class="admin-search-input">
                     <select id="adminCategoryFilter" class="admin-select-filter">
                         <option value="">Todas las categorías</option>
+                        <!-- Las opciones se cargarán dinámicamente -->
                     </select>
-                    <div class="table-responsive"> <!-- Nuevo contenedor para scroll horizontal -->
+                    <div class="table-responsive">
                         <table id="cardsTable">
                             <thead>
                                 <tr>
@@ -119,10 +119,11 @@
                 <div class="sealed-product-list-container">
                     <h3>Lista de Productos Sellados</h3>
                     <input type="text" id="adminSealedSearchInput" placeholder="Buscar producto por nombre o ID..." class="admin-search-input">
-                    <select id="adminSealedTypeFilter" class="admin-select-filter">
+                    <select id="adminSealedCategoryFilter" class="admin-select-filter"> <!-- CORREGIDO: de adminSealedTypeFilter a adminSealedCategoryFilter -->
                         <option value="">Todos los tipos</option>
+                        <!-- Las opciones se cargarán dinámicamente -->
                     </select>
-                    <div class="table-responsive"> <!-- Nuevo contenedor para scroll horizontal -->
+                    <div class="table-responsive">
                         <table id="sealedProductsTable">
                             <thead>
                                 <tr>
@@ -154,7 +155,7 @@
                 <button id="addCategoryBtn" class="add-button">Añadir Nueva Categoría</button>
                 <div class="category-list-container">
                     <h3>Lista de Categorías</h3>
-                    <div class="table-responsive"> <!-- Nuevo contenedor para scroll horizontal -->
+                    <div class="table-responsive">
                         <table id="categoriesTable">
                             <thead>
                                 <tr>
@@ -204,9 +205,9 @@
                         <input type="text" id="sealedProductName" required>
                         <label for="sealedProductImage">URL Imagen:</label>
                         <input type="url" id="sealedProductImage" required>
-                        <label for="sealedProductType">Tipo Producto:</label>
-                        <input type="text" id="sealedProductType" list="sealedProductTypeOptions">
-                        <datalist id="sealedProductTypeOptions"></datalist>
+                        <label for="sealedProductCategory">Tipo Producto:</label> <!-- CORREGIDO: de sealedProductType a sealedProductCategory -->
+                        <input type="text" id="sealedProductCategory" list="sealedProductCategoryOptions"> <!-- CORREGIDO: de sealedProductType a sealedProductCategory -->
+                        <datalist id="sealedProductCategoryOptions"></datalist> <!-- CORREGIDO: de sealedProductTypeOptions a sealedProductCategoryOptions -->
                         <label for="sealedProductPrice">Precio:</label>
                         <input type="number" id="sealedProductPrice" step="0.01" required>
                         <label for="sealedProductStock">Stock:</label>
