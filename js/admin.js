@@ -32,13 +32,14 @@ let currentAdminUser = null;
 
 // URL de tu función de Netlify para operaciones de escritura (ADD, UPDATE, DELETE)
 // ¡IMPORTANTE! Asegúrate de que esta URL sea EXACTA y que tu función esté desplegada.
-const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/netlify-function-sheetdb'; // <-- ¡URL DE FUNCIÓN CORREGIDA!
+const NETLIFY_FUNCTION_URL = 'https://luminous-frangipane-754b8d.netlify.app/.netlify/functions/manage-sheetdb';
 
 // Contraseña para autenticar con tu función de Netlify.
 // ¡DEBE COINCIDIR EXACTAMENTE con el valor de la variable de entorno ADMIN_PASSWORD en Netlify!
 const ADMIN_FUNCTION_PASSWORD = 'Blarias616!'; // <-- Contraseña confirmada
 
-// SheetDB URLs for READ operations (estas son para lectura directa desde el frontend)
+// URLs de SheetDB para operaciones de LECTURA directa (GET)
+// Estas URLs se usan para cargar los datos en las tablas.
 const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau";
 const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp";
 
@@ -229,7 +230,7 @@ async function callBackendFunction(entityType, action, data = {}, id = null) {
                 'Content-Type': 'application/json',
                 'X-Admin-Password': ADMIN_FUNCTION_PASSWORD // Envía la contraseña de la función
             },
-            body: JSON.stringify({ entityType, action, data, id }) // Envía el tipo de entidad
+            body: JSON.stringify({ entityType, action, data, id })
         });
 
         const result = await response.json();
@@ -582,13 +583,12 @@ function updateDashboardStats() {
 
 /**
  * Maneja el envío del formulario de cartas (añadir/editar).
- * @param {Event} event - El evento de envío del formulario.
  */
 async function handleCardFormSubmit(event) {
     event.preventDefault();
     const isEditing = !!cardId.value;
     const cardData = {
-        id: cardId.value || `C${Date.now()}`, // Genera un ID si es nuevo
+        id: cardId.value || `C${Date.now()}`,
         nombre: cardName.value,
         imagen: cardImage.value,
         precio: parseFloat(cardPrice.value),
@@ -605,7 +605,7 @@ async function handleCardFormSubmit(event) {
         }
         console.log(result.message, result.data);
         closeModal(cardModal);
-        await loadCardsData(); // Recargar datos después de la operación
+        await loadCardsData();
         alert(`Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar carta:', error);
@@ -620,7 +620,7 @@ async function handleSealedProductFormSubmit(event) {
     event.preventDefault();
     const isEditing = !!sealedProductId.value;
     const productData = {
-        id_producto: sealedProductId.value || `S${Date.now()}`, // Genera un ID si es nuevo
+        id_producto: sealedProductId.value || `S${Date.now()}`,
         producto: sealedProductName.value,
         imagen: sealedProductImage.value,
         tipo_producto: sealedProductCategory.value,
@@ -637,7 +637,7 @@ async function handleSealedProductFormSubmit(event) {
         }
         console.log(result.message, result.data);
         closeModal(sealedProductModal);
-        await loadSealedProductsData(); // Recargar datos después de la operación
+        await loadSealedProductsData();
         alert(`Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar producto sellado:', error);
@@ -653,9 +653,9 @@ async function handleCategoryFormSubmit(event) {
     event.preventDefault();
     const isEditing = !!categoryId.value;
     const categoryData = {
-        name: categoryName.value // Asumiendo que el ID de la categoría para SheetDB es su nombre
+        name: categoryName.value
     };
-    const categoryDocId = categoryId.value; // Para Firestore, el ID es el doc.id
+    const categoryDocId = categoryId.value;
 
     try {
         if (isEditing) {
@@ -718,97 +718,197 @@ async function confirmDeletion() {
 
 
 // ==========================================================================
-// EVENT LISTENERS
+// INITIALIZATION (DOM Ready)
 // ==========================================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOMContentLoaded disparado. Asignando elementos DOM y adjuntando listeners...');
 
-// Autenticación inicial con Firebase
-onAuthStateChanged(auth, async (user) => {
-    currentAdminUser = user;
-    userId = user ? user.uid : null;
-    console.log('Cambio de estado de autenticación de Firebase. Usuario:', userId);
-    // La lógica de UI inicial se maneja en DOMContentLoaded para asegurar que el DOM esté listo.
-});
+    // Asignar todas las referencias DOM
+    sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    sidebarMenu = document.getElementById('sidebar-menu');
+    sidebarOverlay = document.getElementById('sidebar-overlay');
+    mainHeader = document.querySelector('.main-header');
+    loginModal = document.getElementById('loginModal');
+    loginForm = document.getElementById('loginForm');
+    loginMessage = document.getElementById('loginMessage');
+    usernameInput = document.getElementById('username');
+    passwordInput = document.getElementById('password');
 
+    navDashboard = document.getElementById('nav-dashboard');
+    navCards = document.getElementById('nav-cards');
+    navSealedProducts = document.getElementById('nav-sealed-products');
+    navCategories = document.getElementById('nav-categories');
+    navOrders = document.getElementById('nav-orders');
+    navLogout = document.getElementById('nav-logout');
 
-// Eventos de la Sidebar
-document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DOM esté cargado
-    if (sidebarToggleBtn) { // Null check
+    dashboardSection = document.getElementById('dashboard-section');
+    cardsSection = document.getElementById('cards-section');
+    sealedProductsSection = document.getElementById('sealed-products-section'); // Corregido el typo aquí
+    categoriesSection = document.getElementById('categories-section');
+
+    addCardBtn = document.getElementById('addCardBtn');
+    addSealedProductBtn = document.getElementById('addSealedProductBtn');
+    addCategoryBtn = document.getElementById('addCategoryBtn');
+
+    cardModal = document.getElementById('cardModal');
+    cardModalTitle = document.getElementById('cardModalTitle');
+    cardForm = document.getElementById('cardForm');
+    cardId = document.getElementById('cardId');
+    cardName = document.getElementById('cardName');
+    cardImage = document.getElementById('cardImage');
+    cardPrice = document.getElementById('cardPrice');
+    cardStock = document.getElementById('cardStock');
+    cardCategory = document.getElementById('cardCategory');
+    categoryOptions = document.getElementById('categoryOptions');
+    saveCardBtn = document.getElementById('saveCardBtn');
+
+    sealedProductModal = document.getElementById('sealedProductModal');
+    sealedProductModalTitle = document.getElementById('sealedProductModalTitle');
+    sealedProductForm = document.getElementById('sealedProductForm');
+    sealedProductId = document.getElementById('sealedProductId');
+    sealedProductName = document.getElementById('sealedProductName');
+    sealedProductImage = document.getElementById('sealedProductImage');
+    sealedProductCategory = document.getElementById('sealedProductCategory');
+    sealedProductCategoryOptions = document.getElementById('sealedProductCategoryOptions');
+    sealedProductPrice = document.getElementById('sealedProductPrice');
+    sealedProductStock = document.getElementById('sealedProductStock');
+    saveSealedProductBtn = document.getElementById('saveSealedProductBtn');
+
+    categoryModal = document.getElementById('categoryModal');
+    categoryModalTitle = document.getElementById('categoryModalTitle');
+    categoryForm = document.getElementById('categoryForm');
+    categoryId = document.getElementById('categoryId');
+    categoryName = document.getElementById('categoryName');
+    saveCategoryBtn = document.getElementById('saveCategoryBtn');
+
+    confirmModal = document.getElementById('confirmModal');
+    confirmMessage = document.getElementById('confirmMessage');
+    cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+    cardsTable = document.getElementById('cardsTable');
+    sealedProductsTable = document.getElementById('sealedProductsTable');
+    categoriesTable = document.getElementById('categoriesTable');
+
+    adminSearchInput = document.getElementById('adminSearchInput');
+    adminCategoryFilter = document.getElementById('adminCategoryFilter');
+    adminPrevPageBtn = document.getElementById('adminPrevPageBtn');
+    adminNextPageBtn = document.getElementById('adminNextPageBtn');
+    adminPageInfo = document.getElementById('adminPageInfo');
+
+    adminSealedSearchInput = document.getElementById('adminSealedSearchInput');
+    adminSealedCategoryFilter = document.getElementById('adminSealedCategoryFilter');
+    adminSealedPrevPageBtn = document.getElementById('adminSealedPrevPageBtn');
+    adminSealedNextPageBtn = document.getElementById('adminSealedNextPageBtn');
+    adminSealedPageInfo = document.getElementById('adminSealedPageInfo');
+
+    totalCardsCount = document.getElementById('totalCardsCount');
+    totalSealedProductsCount = document.getElementById('totalSealedProductsCount');
+    outOfStockCount = document.getElementById('outOfStockCount');
+    uniqueCategoriesCount = document.getElementById('uniqueCategoriesCount');
+
+    // Lógica de autenticación inicial al cargar el DOM
+    if (auth.currentUser) {
+        currentAdminUser = auth.currentUser;
+        userId = currentAdminUser.uid;
+        closeModal(loginModal);
+        showSection(dashboardSection);
+        await loadAllData();
+    } else {
+        openModal(loginModal);
+        clearLoginError();
+    }
+
+    // Adjuntar todos los listeners de eventos
+    if (sidebarToggleBtn) {
         sidebarToggleBtn.addEventListener('click', () => {
             sidebarMenu.classList.toggle('active');
             sidebarOverlay.classList.toggle('active');
         });
     }
 
-    if (sidebarOverlay) { // Null check
+    if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
             sidebarMenu.classList.remove('active');
             sidebarOverlay.classList.remove('active');
         });
     }
 
-    // Eventos de navegación
-    if (navDashboard) navDashboard.addEventListener('click', (e) => {
-        e.preventDefault();
-        showSection(dashboardSection);
-        sidebarMenu.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-        updateDashboardStats();
-    });
+    if (navDashboard) {
+        navDashboard.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(dashboardSection);
+            sidebarMenu.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            updateDashboardStats();
+        });
+    }
 
-    if (navCards) navCards.addEventListener('click', (e) => {
-        e.preventDefault();
-        showSection(cardsSection);
-        sidebarMenu.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-        currentCardsPage = 1;
-        if (adminSearchInput) adminSearchInput.value = '';
-        if (adminCategoryFilter) adminCategoryFilter.value = '';
-        renderCardsTable();
-    });
+    if (navCards) {
+        navCards.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(cardsSection);
+            sidebarMenu.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            currentCardsPage = 1;
+            if (adminSearchInput) adminSearchInput.value = '';
+            if (adminCategoryFilter) adminCategoryFilter.value = '';
+            renderCardsTable();
+        });
+    }
 
-    if (navSealedProducts) navSealedProducts.addEventListener('click', (e) => {
-        e.preventDefault();
-        showSection(sealedProductsSection);
-        sidebarMenu.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-        currentSealedProductsPage = 1;
-        if (adminSealedSearchInput) adminSealedSearchInput.value = '';
-        if (adminSealedCategoryFilter) adminSealedCategoryFilter.value = '';
-        renderSealedProductsTable();
-    });
+    if (navSealedProducts) {
+        navSealedProducts.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(sealedProductsSection);
+            sidebarMenu.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            currentSealedProductsPage = 1;
+            if (adminSealedSearchInput) adminSealedSearchInput.value = '';
+            if (adminSealedCategoryFilter) adminSealedCategoryFilter.value = '';
+            renderSealedProductsTable();
+        });
+    }
 
-    if (navCategories) navCategories.addEventListener('click', (e) => {
-        e.preventDefault();
-        showSection(categoriesSection);
-        sidebarMenu.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-        renderCategoriesTable();
-    });
+    if (navCategories) {
+        navCategories.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(categoriesSection);
+            sidebarMenu.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            renderCategoriesTable();
+        });
+    }
 
-    if (navOrders) navOrders.addEventListener('click', (e) => {
-        e.preventDefault();
-        alert('La gestión de pedidos estará disponible pronto.');
-        sidebarMenu.classList.remove('active');
-        sidebarOverlay.classList.remove('active');
-    });
+    if (navOrders) {
+        navOrders.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('La gestión de pedidos estará disponible pronto.');
+            sidebarMenu.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+    }
 
-    if (navLogout) navLogout.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleLogout();
-    });
+    if (navLogout) {
+        navLogout.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
 
-    // Evento del botón de refrescar
     const refreshAdminPageBtn = document.getElementById('refreshAdminPageBtn');
-    if (refreshAdminPageBtn) refreshAdminPageBtn.addEventListener('click', async () => {
-        alert('Refrescando datos del panel...');
-        await loadAllData();
-        alert('Datos actualizados.');
-    });
+    if (refreshAdminPageBtn) {
+        refreshAdminPageBtn.addEventListener('click', async () => {
+            alert('Refrescando datos del panel...');
+            await loadAllData();
+            alert('Datos actualizados.');
+        });
+    }
 
-    // Evento de login
-    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
 
-    // Eventos de Modales
     document.querySelectorAll('.admin-modal .close-button').forEach(button => {
         button.addEventListener('click', (e) => {
             closeModal(e.target.closest('.admin-modal'));
@@ -820,12 +920,9 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
         if (event.target === sealedProductModal) closeModal(sealedProductModal);
         if (event.target === categoryModal) closeModal(categoryModal);
         if (event.target === confirmModal) closeModal(confirmModal);
-        if (event.target === loginModal && loginModal.style.display === 'flex') {
-            // No cerrar el modal de login si está activo y se hace clic fuera
-        }
     });
 
-    // ======================= Cartas =======================
+    // Event listeners para la sección de Cartas
     if (addCardBtn) addCardBtn.addEventListener('click', () => {
         cardModalTitle.textContent = 'Añadir Nueva Carta';
         cardForm.reset();
@@ -833,7 +930,6 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
         openModal(cardModal);
     });
     if (cardForm) cardForm.addEventListener('submit', handleCardFormSubmit);
-
     if (cardsTable) cardsTable.addEventListener('click', (e) => {
         if (e.target.classList.contains('edit-button')) {
             const id = e.target.dataset.id;
@@ -854,7 +950,6 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
             openConfirmModal(id, 'card', card ? card.nombre : 'esta carta');
         }
     });
-
     if (adminSearchInput) adminSearchInput.addEventListener('input', () => {
         currentCardsPage = 1;
         renderCardsTable();
@@ -884,7 +979,7 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
         }
     });
 
-    // ======================= Productos Sellados =======================
+    // Event listeners para la sección de Productos Sellados
     if (addSealedProductBtn) addSealedProductBtn.addEventListener('click', () => {
         sealedProductModalTitle.textContent = 'Añadir Nuevo Producto Sellado';
         sealedProductForm.reset();
@@ -892,7 +987,6 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
         openModal(sealedProductModal);
     });
     if (sealedProductForm) sealedProductForm.addEventListener('submit', handleSealedProductFormSubmit);
-
     if (sealedProductsTable) sealedProductsTable.addEventListener('click', (e) => {
         if (e.target.classList.contains('edit-sealed-product-button')) {
             const id = e.target.dataset.id;
@@ -913,7 +1007,6 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
             openConfirmModal(id, 'sealed', product ? product.producto : 'este producto sellado');
         }
     });
-
     if (adminSealedSearchInput) adminSealedSearchInput.addEventListener('input', () => {
         currentSealedProductsPage = 1;
         renderSealedProductsTable();
@@ -943,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
         }
     });
 
-    // ======================= Categorías =======================
+    // Event listeners para la sección de Categorías
     if (addCategoryBtn) addCategoryBtn.addEventListener('click', () => {
         categoryModalTitle.textContent = 'Añadir Nueva Categoría';
         categoryForm.reset();
@@ -966,21 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => { // Se asegura de que el DO
         }
     });
 
-    // ======================= Confirmación de Eliminación =======================
+    // Event listeners para el Modal de Confirmación
     if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => closeModal(confirmModal));
     if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', confirmDeletion);
-
-    // Lógica de autenticación inicial:
-    // Si ya hay un usuario autenticado (por sesión persistente de Firebase), cargar datos.
-    // De lo contrario, mostrar el modal de login.
-    if (auth.currentUser) {
-        currentAdminUser = auth.currentUser;
-        userId = currentAdminUser.uid;
-        closeModal(loginModal);
-        showSection(dashboardSection);
-        await loadAllData();
-    } else {
-        openModal(loginModal);
-        clearLoginError();
-    }
 });
