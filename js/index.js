@@ -8,17 +8,27 @@ import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken }
 import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 // Firebase configuration
-// IMPORTANTE: Si estás desplegando esta aplicación fuera del entorno de Canvas (ej. en Netlify),
-// DEBES reemplazar estos valores con la configuración REAL de tu proyecto de Firebase.
-// Puedes encontrar esta configuración en la Consola de Firebase -> Configuración del proyecto -> Tus apps.
+// ==================================================================================================
+// IMPORTANTE: PARA QUE LA APLICACIÓN FUNCIONE EN NETLIFY (O CUALQUIER OTRO SERVIDOR),
+// DEBES REEMPLAZAR TODOS LOS VALORES "YOUR_..." CON LA CONFIGURACIÓN REAL DE TU PROYECTO DE FIREBASE.
+//
+// PASOS PARA OBTENER TU CONFIGURACIÓN DE FIREBASE:
+// 1. Ve a la Consola de Firebase: https://console.firebase.google.com/
+// 2. Selecciona tu proyecto.
+// 3. Haz clic en el icono de "Configuración del proyecto" (la tuerca) junto a "Project overview"
+//    en el menú de la izquierda.
+// 4. En la sección "Tus apps", busca tu aplicación web (si ya la tienes). Si no, crea una nueva.
+// 5. Firebase te proporcionará un objeto 'firebaseConfig' con tus credenciales.
+//    Copia esos valores y pégalos aquí, reemplazando los marcadores de posición.
+// ==================================================================================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY", // <-- REEMPLAZA ESTO
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // <-- REEMPLAZA ESTO
-    projectId: "YOUR_PROJECT_ID", // <-- REEMPLAZA ESTO
-    storageBucket: "YOUR_PROJECT_ID.appspot.com", // <-- REEMPLAZA ESTO
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <-- REEMPLAZA ESTO
-    appId: "YOUR_APP_ID", // <-- REEMPLAZA ESTO
-    // measurementId: "G-YOUR_MEASUREMENT_ID" // <-- OPCIONAL: Si usas Google Analytics
+    apiKey: "YOUR_API_KEY", // <-- ¡REEMPLAZA ESTO CON TU CLAVE REAL DE FIREBASE!
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // <-- ¡REEMPLAZA ESTO CON TU DOMINIO DE AUTENTICACIÓN!
+    projectId: "YOUR_PROJECT_ID", // <-- ¡REEMPLAZA ESTO CON EL ID DE TU PROYECTO!
+    storageBucket: "YOUR_PROJECT_ID.appspot.com", // <-- ¡REEMPLAZA ESTO CON TU BUCKET DE ALMACENAMIENTO!
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <-- ¡REEMPLAZA ESTO CON TU ID DE REMITENTE DE MENSAJES!
+    appId: "YOUR_APP_ID", // <-- ¡REEMPLAZA ESTO CON TU ID DE APLICACIÓN!
+    // measurementId: "G-YOUR_MEASUREMENT_ID" // <-- OPCIONAL: Si usas Google Analytics, reemplázalo.
 };
 
 // Initialize Firebase with the obtained configuration
@@ -27,13 +37,13 @@ let db;
 let auth;
 
 // Initialize Firebase only if config is available (should always be true with hardcoded config)
-if (firebaseConfig.apiKey && firebaseConfig.projectId) { // Basic check for valid config
+if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.authDomain) { // Basic check for valid config
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
 } else {
     console.error('Firebase configuration is incomplete or invalid. Firebase services will not be initialized.');
-    showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase. Por favor, asegúrate de que los valores de configuración de Firebase sean correctos.');
+    showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase. Por favor, asegúrate de que los valores de configuración de Firebase sean correctos en index.js.');
 }
 
 // Application ID and User ID
