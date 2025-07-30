@@ -7,26 +7,30 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-// Firebase configuration (using the actual project keys from admin.js)
-// This configuration is now hardcoded to resolve the "auth/api-key-not-valid" error.
-const firebaseConfig = {
-    apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
-    authDomain: "dndtcgadmin.firebaseapp.com",
-    projectId: "dndtcgadmin",
-    storageBucket: "dndtcgadmin.firebasestorage.app",
-    messagingSenderId: "754642671504",
-    appId: "1:754642671504:web:c087cc703862cf8c228515",
-    measurementId: "G-T8KRZX5S7R"
-};
+// Firebase configuration (using global variable provided by Canvas)
+// IMPORTANT: For deployment outside Canvas (e.g., Netlify), you MUST configure
+// these Firebase values as environment variables in your hosting provider
+// or ensure they are loaded securely.
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
 
 // Initialize Firebase with the obtained configuration
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+let app;
+let db;
+let auth;
+
+// Initialize Firebase only if config is available
+if (firebaseConfig) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+} else {
+    console.error('Firebase configuration not found. Firebase services will not be initialized.');
+    // You might want to show a user-friendly error message here
+    // showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase. Por favor, contacta al soporte.');
+}
 
 // Application ID and User ID
-// Using firebaseConfig.projectId as a fallback for appId if __app_id is not defined
-const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId || 'default-app-id';
+const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig?.projectId || 'default-app-id';
 let userId = null; // Will be set after authentication
 
 // SheetDB URLs for READ operations (these can be in the frontend for GET requests)
@@ -568,6 +572,11 @@ async function confirmOrder() {
 
     // Simulate sending order to backend (e.g., Firestore)
     try {
+        // Ensure db is initialized before attempting Firestore operations
+        if (!db) {
+            throw new Error('Firestore is not initialized.');
+        }
+
         // Add order to Firestore
         await addDoc(collection(db, `artifacts/${appId}/public/data/orders`), {
             customerName,
@@ -593,7 +602,7 @@ async function confirmOrder() {
 
     } catch (error) {
         console.error('Error al confirmar el pedido o enviar a Firestore:', error);
-        showMessageModal('Error al Confirmar', 'Hubo un problema al procesar tu pedido. Por favor, inténtalo de nuevo.');
+        showMessageModal('Error al Confirmar', `Hubo un problema al procesar tu pedido: ${error.message}. Por favor, inténtalo de nuevo.`);
     } finally {
         confirmOrderBtn.disabled = false;
         checkoutLoadingSpinner.style.display = 'none';
@@ -605,107 +614,113 @@ async function confirmOrder() {
 // ==========================================================================
 
 // Firebase Auth State Listener
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        userId = user.uid;
-        console.log('User is signed in:', userId);
-        // Load initial data for the store
-        loadCardsData();
-        loadSealedProductsData();
-    } else {
-        console.log('No user is signed in. Signing in anonymously...');
-        // Sign in anonymously if no user is signed in
-        // Se usa __initial_auth_token si está disponible, de lo contrario, signInAnonymously
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            signInWithCustomToken(auth, __initial_auth_token).then((userCredential) => {
-                userId = userCredential.user.uid;
-                console.log('Signed in with custom token with UID:', userId);
-                loadCardsData();
-                loadSealedProductsData();
-            }).catch((error) => {
-                console.error('Error signing in with custom token:', error);
-                // Fallback a anónimo si el token personalizado falla
-                signInAnonymously(auth).then((anonUserCredential) => {
-                    userId = anonUserCredential.user.uid;
-                    console.log('Signed in anonymously after custom token failure with UID:', userId);
+// Only attach if 'auth' object is initialized
+if (auth) {
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            userId = user.uid;
+            console.log('User is signed in:', userId);
+            // Load initial data for the store
+            loadCardsData();
+            loadSealedProductsData();
+        } else {
+            console.log('No user is signed in. Attempting anonymous sign-in...');
+            // Se usa __initial_auth_token si está disponible, de lo contrario, signInAnonymously
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                signInWithCustomToken(auth, __initial_auth_token).then((userCredential) => {
+                    userId = userCredential.user.uid;
+                    console.log('Signed in with custom token with UID:', userId);
                     loadCardsData();
                     loadSealedProductsData();
-                }).catch((anonError) => {
-                    console.error('Error signing in anonymously:', anonError);
-                    showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión. Algunas funciones podrían no estar disponibles.');
+                }).catch((error) => {
+                    console.error('Error signing in with custom token:', error);
+                    // Fallback a anónimo si el token personalizado falla
+                    signInAnonymously(auth).then((anonUserCredential) => {
+                        userId = anonUserCredential.user.uid;
+                        console.log('Signed in anonymously after custom token failure with UID:', userId);
+                        loadCardsData();
+                        loadSealedProductsData();
+                    }).catch((anonError) => {
+                        console.error('Error signing in anonymously:', anonError);
+                        showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión. Algunas funciones podrían no estar disponibles.');
+                    });
                 });
-            });
-        } else {
-            signInAnonymously(auth).then((userCredential) => {
-                userId = userCredential.user.uid;
-                console.log('Signed in anonymously with UID:', userId);
-                loadCardsData();
-                loadSealedProductsData();
-            }).catch((error) => {
-                console.error('Error signing in anonymously:', error);
-                showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión anónimamente. Algunas funciones podrían no estar disponibles.');
-            });
+            } else {
+                signInAnonymously(auth).then((userCredential) => {
+                    userId = userCredential.user.uid;
+                    console.log('Signed in anonymously with UID:', userId);
+                    loadCardsData();
+                    loadSealedProductsData();
+                }).catch((error) => {
+                    console.error('Error signing in anonymously:', error);
+                    showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión anónimamente. Algunas funciones podrían no estar disponibles.');
+                });
+            }
         }
-    }
-});
+    });
+} else {
+    // If auth is not initialized, log an error and potentially show a message
+    console.error('Firebase Auth is not initialized. User authentication and Firestore operations will not work.');
+    showMessageModal('Error de Inicio', 'La autenticación no está disponible. Por favor, recarga la página o contacta al soporte.');
+}
 
 
 document.addEventListener('DOMContentLoaded', () => {
     // Event listeners for modals
-    abrirModalProductosBtn.addEventListener('click', () => openModal(productSelectionModal));
-    closeProductSelectionModalBtn.addEventListener('click', () => closeModal(productSelectionModal));
-    openCardsModalBtn.addEventListener('click', () => {
+    if (abrirModalProductosBtn) abrirModalProductosBtn.addEventListener('click', () => openModal(productSelectionModal));
+    if (closeProductSelectionModalBtn) closeProductSelectionModalBtn.addEventListener('click', () => closeModal(productSelectionModal));
+    if (openCardsModalBtn) openCardsModalBtn.addEventListener('click', () => {
         closeModal(productSelectionModal);
         openModal(cardsModal);
         currentCardsPage = 1; // Reset pagination when opening
-        searchInput.value = ''; // Clear search
-        categoryFilter.value = ''; // Clear filter
+        if (searchInput) searchInput.value = ''; // Clear search
+        if (categoryFilter) categoryFilter.value = ''; // Clear filter
         renderCards();
     });
-    openSealedProductsModalBtn.addEventListener('click', () => {
+    if (openSealedProductsModalBtn) openSealedProductsModalBtn.addEventListener('click', () => {
         closeModal(productSelectionModal);
         openModal(sealedProductsModal);
         currentSealedProductsPage = 1; // Reset pagination when opening
-        sealedSearchInput.value = ''; // Clear search
-        sealedTypeFilter.value = ''; // Clear filter
+        if (sealedSearchInput) sealedSearchInput.value = ''; // Clear search
+        if (sealedTypeFilter) sealedTypeFilter.value = ''; // Clear filter
         renderSealedProducts();
     });
 
-    closeCardsModalBtn.addEventListener('click', () => closeModal(cardsModal));
-    closeSealedProductsModalBtn.addEventListener('click', () => closeModal(sealedProductsModal));
+    if (closeCardsModalBtn) closeCardsModalBtn.addEventListener('click', () => closeModal(cardsModal));
+    if (closeSealedProductsModalBtn) closeSealedProductsModalBtn.addEventListener('click', () => closeModal(sealedProductsModal));
 
-    abrirCarritoBtn.addEventListener('click', () => {
+    if (abrirCarritoBtn) abrirCarritoBtn.addEventListener('click', () => {
         renderCart();
         openModal(modalCarrito);
     });
-    cerrarCarritoBtn.addEventListener('click', () => closeModal(modalCarrito));
+    if (cerrarCarritoBtn) cerrarCarritoBtn.addEventListener('click', () => closeModal(modalCarrito));
 
-    openCheckoutModalBtn.addEventListener('click', () => {
+    if (openCheckoutModalBtn) openCheckoutModalBtn.addEventListener('click', () => {
         closeModal(modalCarrito); // Close cart modal
         openModal(checkoutModal); // Open checkout modal
     });
-    closeCheckoutModalBtn.addEventListener('click', () => closeModal(checkoutModal));
+    if (closeCheckoutModalBtn) closeCheckoutModalBtn.addEventListener('click', () => closeModal(checkoutModal));
 
-    okMessageModalBtn.addEventListener('click', closeMessageModal);
-    closeMessageModalBtn.addEventListener('click', closeMessageModal);
+    if (okMessageModalBtn) okMessageModalBtn.addEventListener('click', closeMessageModal);
+    if (closeMessageModalBtn) closeMessageModalBtn.addEventListener('click', closeMessageModal);
 
 
     // Event listeners for card/product list interactions
-    searchInput.addEventListener('input', () => {
+    if (searchInput) searchInput.addEventListener('input', () => {
         currentCardsPage = 1;
         renderCards();
     });
-    categoryFilter.addEventListener('change', () => {
+    if (categoryFilter) categoryFilter.addEventListener('change', () => {
         currentCardsPage = 1;
         renderCards();
     });
-    prevPageBtn.addEventListener('click', () => {
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => {
         if (currentCardsPage > 1) {
             currentCardsPage--;
             renderCards();
         }
     });
-    nextPageBtn.addEventListener('click', () => {
+    if (nextPageBtn) nextPageBtn.addEventListener('click', () => {
         const searchTerm = searchInput.value.toLowerCase();
         const selectedCategory = categoryFilter.value;
         const filteredCards = allCards.filter(card => {
@@ -720,21 +735,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    sealedSearchInput.addEventListener('input', () => {
+    if (sealedSearchInput) sealedSearchInput.addEventListener('input', () => {
         currentSealedProductsPage = 1;
         renderSealedProducts();
     });
-    sealedTypeFilter.addEventListener('change', () => {
+    if (sealedTypeFilter) sealedTypeFilter.addEventListener('change', () => {
         currentSealedProductsPage = 1;
         renderSealedProducts();
     });
-    sealedPrevPageBtn.addEventListener('click', () => {
+    if (sealedPrevPageBtn) sealedPrevPageBtn.addEventListener('click', () => {
         if (currentSealedProductsPage > 1) {
             currentSealedProductsPage--;
             renderSealedProducts();
         }
     });
-    sealedNextPageBtn.addEventListener('click', () => {
+    if (sealedNextPageBtn) sealedNextPageBtn.addEventListener('click', () => {
         const searchTerm = sealedSearchInput.value.toLowerCase();
         const selectedType = sealedTypeFilter.value;
         const filteredProducts = allSealedProducts.filter(product => {
@@ -826,8 +841,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    vaciarCarritoBtn.addEventListener('click', clearCart);
-    confirmOrderBtn.addEventListener('click', confirmOrder);
+    if (vaciarCarritoBtn) vaciarCarritoBtn.addEventListener('click', clearCart);
+    if (confirmOrderBtn) confirmOrderBtn.addEventListener('click', confirmOrder);
 
     // Close modals when clicking outside
     window.addEventListener('click', (event) => {
@@ -844,8 +859,8 @@ document.addEventListener('DOMContentLoaded', () => {
         viewAllCardsBtn.addEventListener('click', () => {
             openModal(cardsModal); // Abre el modal de cartas
             currentCardsPage = 1; // Reinicia la paginación del modal de cartas
-            searchInput.value = ''; // Limpia el campo de búsqueda
-            categoryFilter.value = ''; // Limpia el filtro de categoría
+            if (searchInput) searchInput.value = ''; // Limpia el campo de búsqueda
+            if (categoryFilter) categoryFilter.value = ''; // Limpia el filtro de categoría
             renderCards(); // Renderiza las cartas en el modal
         });
     }
