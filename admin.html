@@ -19,12 +19,12 @@
             </div>
             <nav class="sidebar-nav">
                 <ul>
-                    <li><a href="#" id="nav-dashboard">Dashboard</a></li>
-                    <li><a href="#" id="nav-cards">Gestión de Cartas</a></li>
-                    <li><a href="#" id="nav-sealed-products">Gestión Productos Sellados</a></li>
-                    <li><a href="#" id="nav-categories">Gestión de Categorías</a></li>
-                    <li><a href="#" id="nav-orders">Pedidos (Pronto)</a></li>
-                    <li><a href="#" id="nav-logout">Cerrar Sesión</a></li>
+                    <li><a href="#" id="nav-dashboard"><i class="fas fa-tachometer-alt"></i>&nbsp;Dashboard</a></li>
+                    <li><a href="#" id="nav-cards"><i class="fas fa-file-alt"></i>&nbsp;Gestión de Cartas</a></li>
+                    <li><a href="#" id="nav-sealed-products"><i class="fas fa-box-open"></i>&nbsp;Gestión Productos Sellados</a></li>
+                    <li><a href="#" id="nav-categories"><i class="fas fa-tags"></i>&nbsp;Gestión de Categorías</a></li>
+                    <li><a href="#" id="nav-orders"><i class="fas fa-shopping-cart"></i>&nbsp;Pedidos (Pronto)</a></li>
+                    <li><a href="#" id="nav-logout"><i class="fas fa-sign-out-alt"></i>&nbsp;Cerrar Sesión</a></li>
                 </ul>
             </nav>
         </aside>
@@ -119,7 +119,7 @@
                 <div class="sealed-product-list-container">
                     <h3>Lista de Productos Sellados</h3>
                     <input type="text" id="adminSealedSearchInput" placeholder="Buscar producto por nombre o ID..." class="admin-search-input">
-                    <select id="adminSealedCategoryFilter" class="admin-select-filter"> <!-- CORREGIDO: de adminSealedTypeFilter a adminSealedCategoryFilter -->
+                    <select id="adminSealedCategoryFilter" class="admin-select-filter">
                         <option value="">Todos los tipos</option>
                         <!-- Las opciones se cargarán dinámicamente -->
                     </select>
@@ -205,9 +205,9 @@
                         <input type="text" id="sealedProductName" required>
                         <label for="sealedProductImage">URL Imagen:</label>
                         <input type="url" id="sealedProductImage" required>
-                        <label for="sealedProductCategory">Tipo Producto:</label> <!-- CORREGIDO: de sealedProductType a sealedProductCategory -->
-                        <input type="text" id="sealedProductCategory" list="sealedProductCategoryOptions"> <!-- CORREGIDO: de sealedProductType a sealedProductCategory -->
-                        <datalist id="sealedProductCategoryOptions"></datalist> <!-- CORREGIDO: de sealedProductTypeOptions a sealedProductCategoryOptions -->
+                        <label for="sealedProductCategory">Tipo Producto:</label>
+                        <input type="text" id="sealedProductCategory" list="sealedProductCategoryOptions">
+                        <datalist id="sealedProductCategoryOptions"></datalist>
                         <label for="sealedProductPrice">Precio:</label>
                         <input type="number" id="sealedProductPrice" step="0.01" required>
                         <label for="sealedProductStock">Stock:</label>
@@ -255,6 +255,18 @@
                         <input type="password" id="password" required>
                         <button type="submit" id="loginBtn">Iniciar Sesión</button>
                     </form>
+                </div>
+            </div>
+
+            <!-- MODAL PARA MENSAJES (éxito/error) - AÑADIDO -->
+            <div id="messageModal" class="admin-modal">
+                <div class="admin-modal-content">
+                    <span class="close-button" id="closeMessageModal">&times;</span>
+                    <h3 id="messageModalTitle" style="text-align: center;"></h3>
+                    <p id="messageModalText" style="text-align: center; margin-bottom: 20px;"></p>
+                    <div class="modal-buttons">
+                        <button id="okMessageModal" class="confirm-button">Aceptar</button>
+                    </div>
                 </div>
             </div>
 

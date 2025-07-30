@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DND TCG</title>
 <link rel="stylesheet" href="css/style.css" />
+<!-- Font Awesome para iconos de redes sociales -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 <!-- NAVBAR -->
@@ -20,10 +22,46 @@
     </div>
 </nav>
 
-<!-- CONTENIDO PRINCIPAL -->
-<h1>Bienvenido a DND TCG</h1>
-<p>¡Empieza tu aventura!</p>
-<img src="index img/logonegro.png" alt="Logo DND TCG" />
+<!-- CONTENIDO PRINCIPAL ENVOLVIDO EN UN CONTENEDOR PARA EL FONDO -->
+<div class="main-content-wrapper">
+    <h1>Bienvenido a DND TCG</h1>
+    <p>¡Empieza tu aventura!</p>
+    <!-- Se ha eliminado la imagen del logo aquí -->
+</div>
+
+<!-- CONTENEDOR PARA LAS TARJETAS DE SECCIÓN (CARTAS Y REDES SOCIALES) -->
+<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; padding: 20px;">
+    <!-- NUEVA SECCIÓN: CARTAS FLOTANTES -->
+    <section id="floating-cards-section" class="content-section">
+        <h2>Explora Nuestras Cartas</h2>
+        <!-- Contenedor donde JavaScript inyectará las cartas flotantes -->
+        <div id="dynamicFloatingCardsContainer" class="floating-cards-container">
+            <!-- Las cartas se cargarán aquí dinámicamente desde SheetDB -->
+        </div>
+        <button id="viewAllCardsBtn" class="view-all-cards-button">Ver Todas las Cartas</button>
+    </section>
+
+    <!-- NUEVA SECCIÓN: REDES SOCIALES -->
+    <section id="social-media-section" class="content-section">
+        <h2>Síguenos en Redes</h2>
+        <p>Conéctate con nosotros y no te pierdas ninguna novedad.</p>
+        <div class="social-icons-container" style="margin-top: 25px;">
+            <a href="https://www.facebook.com/profile.php?id=61563669292858" target="_blank" aria-label="Visita nuestra página de Facebook">
+                <i class="fab fa-facebook"></i>
+            </a>
+            <a href="https://www.instagram.com/deckanddrift_sv/" target="_blank" aria-label="Visita nuestro perfil de Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://www.tiktok.com/@deckanddrift.sv?_t=ZM-8yT5h5LSCzo&_r=1" target="_blank" aria-label="Visita nuestro perfil de TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+            <a href="https://wa.link/nq7vky" target="_blank" aria-label="Envíanos un mensaje por WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+        </div>
+    </section>
+</div>
+
 
 <!-- NUEVO: Modal de Selección de Productos (Cartas o Sellados) -->
 <div id="productSelectionModal" class="modal">
@@ -65,7 +103,7 @@
         <span class="close" id="closeSealedProductsModal">&times;</span>
         <h2>Productos Sellados Disponibles</h2>
         <input type="text" id="sealedSearchInput" placeholder="Buscar producto sellado..." />
-        <select id="sealedTypeFilter" style="width: 100%; max-width: 300px; display: block; margin: 0 auto 20px auto; padding: 12px 15px; padding-right: 55px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1em; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 30px; cursor: pointer;">
+        <select id="sealedTypeFilter" style="width: 100%; max-width: 300px; display: block; margin: 0 auto 20px auto; padding: 12px 15px; padding-right: 55px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1em; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); transition: border-color 0 2s ease, box-shadow 0 2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 30px; cursor: pointer;">
             <option value="">Todos los tipos</option>
             <!-- Las opciones de tipo se cargarán dinámicamente con JavaScript -->
         </select>
@@ -88,10 +126,34 @@
     <!-- Botones -->
     <div>
         <button id="vaciarCarrito">Vaciar carrito</button>
-        <button id="enviarWhatsapp">Enviar lista a WhatsApp</button>
+        <button id="openCheckoutModalBtn">Proceder al Checkout</button> <!-- CAMBIADO: de enviarWhatsapp a openCheckoutModalBtn -->
     </div>
     </div>
 </div>
+
+<!-- NUEVO: MODAL DE CHECKOUT (para que el cliente ingrese sus datos) -->
+<div id="checkoutModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close" id="closeCheckoutModal">&times;</span>
+        <h2>Confirmar Pedido</h2>
+        <form id="checkoutForm">
+            <label for="customerName">Nombre Completo:</label>
+            <input type="text" id="customerName" required placeholder="Tu nombre completo">
+
+            <label for="customerPhone">Número de Teléfono (WhatsApp):</label>
+            <input type="tel" id="customerPhone" required placeholder="Ej: +5037xxxxxxx">
+
+            <label for="customerAddress">Dirección de Envío:</label>
+            <textarea id="customerAddress" required placeholder="Calle, número, colonia, ciudad, etc."></textarea>
+
+            <button type="button" id="confirmOrderBtn">
+                <span id="checkoutLoadingSpinner" class="spinner" style="display:none;"></span>
+                Confirmar Pedido
+            </button>
+        </form>
+    </div>
+</div>
+
 
 <!-- MODAL PARA MENSAJES (éxito/error) -->
 <div id="messageModal" class="modal">
@@ -111,6 +173,6 @@
 </footer>
 
 <!-- SCRIPT -->
-<script src="js/index.js"></script>
+<script src="js/index.js" type="module"></script>
 </body>
 </html>

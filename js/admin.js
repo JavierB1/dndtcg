@@ -147,6 +147,13 @@ let totalSealedProductsCount;
 let outOfStockCount;
 let uniqueCategoriesCount;
 
+// Nuevos elementos para el modal de mensaje personalizado
+let messageModal;
+let closeMessageModalBtn;
+let messageModalTitle;
+let messageModalText;
+let okMessageModalBtn;
+
 
 // ==========================================================================
 // UTILITY FUNCTIONS
@@ -210,6 +217,17 @@ function clearLoginError() {
 }
 
 /**
+ * Muestra un modal de mensaje personalizado.
+ * @param {string} title - El título del mensaje.
+ * @param {string} text - El texto del mensaje.
+ */
+function showMessageModal(title, text) {
+    if (messageModalTitle) messageModalTitle.textContent = title;
+    if (messageModalText) messageModalText.textContent = text;
+    openModal(messageModal);
+}
+
+/**
  * Realiza una petición a la función Netlify para operaciones de escritura (ADD, UPDATE, DELETE).
  * Incluye la contraseña de administrador en las cabeceras para autenticación de la función.
  * @param {string} entityType - El tipo de entidad ('cards', 'sealedProducts', 'categories').
@@ -246,7 +264,7 @@ async function callBackendFunction(entityType, action, data = {}, id = null) {
         return result;
     } catch (error) {
         console.error('Error al llamar a la función Netlify:', error);
-        alert(`Operación fallida: ${error.message}`);
+        showMessageModal("Error de Operación", `Operación fallida: ${error.message}`);
         throw error;
     }
 }
@@ -301,7 +319,7 @@ async function handleLogout() {
         // Opcional: Limpiar datos o redirigir a una página de inicio
     } catch (error) {
         console.error('Error al cerrar sesión:', error);
-        alert('Error al cerrar sesión. Por favor, inténtalo de nuevo.');
+        showMessageModal("Error al cerrar sesión", 'Error al cerrar sesión. Por favor, inténtalo de nuevo.');
     }
 }
 
@@ -329,7 +347,7 @@ async function loadCategories() {
         populateCategoryFilters();
     } catch (error) {
         console.error('Error al cargar categorías:', error);
-        alert('Error al cargar categorías. Consulta la consola para más detalles.');
+        showMessageModal("Error de Carga", 'Error al cargar categorías. Consulta la consola para más detalles.');
     }
 }
 
@@ -352,7 +370,7 @@ async function loadCardsData() {
         updateDashboardStats();
     } catch (error) {
         console.error('Error al cargar datos de cartas:', error);
-        alert('Error al cargar cartas. Consulta la consola para más detalles.');
+        showMessageModal("Error de Carga", 'Error al cargar cartas. Consulta la consola para más detalles.');
     }
 }
 
@@ -376,7 +394,7 @@ async function loadSealedProductsData() {
         updateDashboardStats();
     } catch (error) {
         console.error('Error al cargar datos de productos sellados:', error);
-        alert('Error al cargar productos sellados. Consulta la consola para más detalles.');
+        showMessageModal("Error de Carga", 'Error al cargar productos sellados. Consulta la consola para más detalles.');
     }
 }
 
@@ -611,10 +629,10 @@ async function handleCardFormSubmit(event) {
         console.log(result.message, result.data);
         closeModal(cardModal);
         await loadCardsData();
-        alert(`Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        showMessageModal("Éxito", `Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar carta:', error);
-        alert(`Error al guardar carta: ${error.message}`);
+        showMessageModal("Error al guardar carta", `Error al guardar carta: ${error.message}`);
     }
 }
 
@@ -643,17 +661,16 @@ async function handleSealedProductFormSubmit(event) {
         console.log(result.message, result.data);
         closeModal(sealedProductModal);
         await loadSealedProductsData();
-        alert(`Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
+        showMessageModal("Éxito", `Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar producto sellado:', error);
-        alert(`Error al guardar producto sellado: ${error.message}`);
+        showMessageModal("Error al guardar producto sellado", `Error al guardar producto sellado: ${error.message}`);
     }
 }
 
 /**
  * Maneja el envío del formulario de categorías (añadir/editar).
  * Esta función interactúa con Firestore y, opcionalmente, con SheetDB a través del backend.
- * @param {Event} event - El evento de envío del formulario.
  */
 async function handleCategoryFormSubmit(event) {
     event.preventDefault();
@@ -676,10 +693,10 @@ async function handleCategoryFormSubmit(event) {
         closeModal(categoryModal);
         await loadCategories();
         updateDashboardStats();
-        alert(`Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        showMessageModal("Éxito", `Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar categoría:', error);
-        alert(`Error al guardar categoría: ${error.message}`);
+        showMessageModal("Error al guardar categoría", `Error al guardar categoría: ${error.message}`);
     }
 }
 
@@ -719,10 +736,10 @@ async function confirmDeletion() {
         }
         console.log(result.message || `Elemento ${type} eliminado.`);
         closeModal(confirmModal);
-        alert(`Elemento ${type} eliminado con éxito.`);
+        showMessageModal("Éxito", `Elemento ${type} eliminado con éxito.`);
     } catch (error) {
         console.error(`Error al eliminar ${type}:`, error);
-        alert(`Error al eliminar ${type}: ${error.message}`);
+        showMessageModal("Error al eliminar", `Error al eliminar ${type}: ${error.message}`);
     } finally {
         currentDeleteTarget = null;
     }
@@ -844,6 +861,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     outOfStockCount = document.getElementById('outOfStockCount');
     uniqueCategoriesCount = document.getElementById('uniqueCategoriesCount');
 
+    // Asignar elementos para el nuevo modal de mensaje
+    messageModal = document.getElementById('messageModal');
+    closeMessageModalBtn = document.getElementById('closeMessageModal');
+    messageModalTitle = document.getElementById('messageModalTitle');
+    messageModalText = document.getElementById('messageModalText');
+    okMessageModalBtn = document.getElementById('okMessageModal');
+
+
     // Establecer la bandera DOM ready *después* de todas las asignaciones
     // Lógica de autenticación inicial:
     // Si ya hay un usuario autenticado (por sesión persistente de Firebase), cargar datos.
@@ -924,7 +949,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (navOrders) {
         navOrders.addEventListener('click', (e) => {
             e.preventDefault();
-            alert('La gestión de pedidos estará disponible pronto.');
+            showMessageModal("Próximamente", 'La gestión de pedidos estará disponible pronto.');
             sidebarMenu.classList.remove('active');
             sidebarOverlay.classList.remove('active');
         });
@@ -940,9 +965,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const refreshAdminPageBtn = document.getElementById('refreshAdminPageBtn');
     if (refreshAdminPageBtn) {
         refreshAdminPageBtn.addEventListener('click', async () => {
-            alert('Refrescando datos del panel...');
+            showMessageModal("Actualizando", 'Refrescando datos del panel...');
             await loadAllData();
-            alert('Datos actualizados.');
+            showMessageModal("Actualización Completa", 'Datos actualizados.');
         });
     }
 
@@ -961,12 +986,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event.target === sealedProductModal) closeModal(sealedProductModal);
         if (event.target === categoryModal) closeModal(categoryModal);
         if (event.target === confirmModal) closeModal(confirmModal);
+        if (event.target === messageModal) closeModal(messageModal); // Cerrar el nuevo modal de mensaje
         // El modal de inicio de sesión no se cierra intencionalmente al hacer clic fuera para forzar el inicio de sesión
         // if (event.target === loginModal && loginModal.style.display === 'flex') {
         //     // No cerrar el modal de inicio de sesión si está activo y se hace clic fuera
         //     // Esto fuerza al usuario a iniciar sesión.
         // }
     });
+
+    // Event listeners para el nuevo modal de mensaje
+    if (closeMessageModalBtn) {
+        closeMessageModalBtn.addEventListener('click', () => {
+            closeModal(messageModal);
+        });
+    }
+    if (okMessageModalBtn) {
+        okMessageModalBtn.addEventListener('click', () => {
+            closeModal(messageModal);
+        });
+    }
 
     // ======================= Cartas =======================
     if (addCardBtn) {
