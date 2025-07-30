@@ -7,30 +7,38 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-// Firebase configuration (using global variable provided by Canvas)
-// IMPORTANT: For deployment outside Canvas (e.g., Netlify), you MUST configure
-// these Firebase values as environment variables in your hosting provider
-// or ensure they are loaded securely.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+// Firebase configuration
+// IMPORTANTE: Si estás desplegando esta aplicación fuera del entorno de Canvas (ej. en Netlify),
+// DEBES reemplazar estos valores con la configuración REAL de tu proyecto de Firebase.
+// Puedes encontrar esta configuración en la Consola de Firebase -> Configuración del proyecto -> Tus apps.
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY", // <-- REEMPLAZA ESTO
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // <-- REEMPLAZA ESTO
+    projectId: "YOUR_PROJECT_ID", // <-- REEMPLAZA ESTO
+    storageBucket: "YOUR_PROJECT_ID.appspot.com", // <-- REEMPLAZA ESTO
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <-- REEMPLAZA ESTO
+    appId: "YOUR_APP_ID", // <-- REEMPLAZA ESTO
+    // measurementId: "G-YOUR_MEASUREMENT_ID" // <-- OPCIONAL: Si usas Google Analytics
+};
 
 // Initialize Firebase with the obtained configuration
 let app;
 let db;
 let auth;
 
-// Initialize Firebase only if config is available
-if (firebaseConfig) {
+// Initialize Firebase only if config is available (should always be true with hardcoded config)
+if (firebaseConfig.apiKey && firebaseConfig.projectId) { // Basic check for valid config
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
 } else {
-    console.error('Firebase configuration not found. Firebase services will not be initialized.');
-    // You might want to show a user-friendly error message here
-    // showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase. Por favor, contacta al soporte.');
+    console.error('Firebase configuration is incomplete or invalid. Firebase services will not be initialized.');
+    showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase. Por favor, asegúrate de que los valores de configuración de Firebase sean correctos.');
 }
 
 // Application ID and User ID
-const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig?.projectId || 'default-app-id';
+// Usamos el projectId de firebaseConfig como appId si __app_id no está definido.
+const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId || 'default-app-id';
 let userId = null; // Will be set after authentication
 
 // SheetDB URLs for READ operations (these can be in the frontend for GET requests)
@@ -626,6 +634,7 @@ if (auth) {
         } else {
             console.log('No user is signed in. Attempting anonymous sign-in...');
             // Se usa __initial_auth_token si está disponible, de lo contrario, signInAnonymously
+            // En Netlify, __initial_auth_token no estará definido, por lo que siempre intentará signInAnonymously
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                 signInWithCustomToken(auth, __initial_auth_token).then((userCredential) => {
                     userId = userCredential.user.uid;
@@ -662,6 +671,10 @@ if (auth) {
     // If auth is not initialized, log an error and potentially show a message
     console.error('Firebase Auth is not initialized. User authentication and Firestore operations will not work.');
     showMessageModal('Error de Inicio', 'La autenticación no está disponible. Por favor, recarga la página o contacta al soporte.');
+    // Incluso si Firebase Auth no se inicializa, intentamos cargar los datos de SheetDB
+    // para que la tienda sea funcional aunque no se guarden pedidos en Firestore.
+    loadCardsData();
+    loadSealedProductsData();
 }
 
 
