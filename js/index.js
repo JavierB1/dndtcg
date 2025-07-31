@@ -472,12 +472,14 @@ function renderCart() {
                 <p>Precio: $${itemPrice.toFixed(2)}</p>
                 <p>Subtotal: $${(item.quantity * itemPrice).toFixed(2)}</p>
             </div>
-            <div class="quantity-controls-cart">
-                <button class="decrease-cart-quantity" data-id="${id}" data-type="${item.type}">-</button>
-                <input type="number" class="quantity-input-cart" value="${cart[id] ? cart[id].quantity : 0}" min="1" max="${itemStock}" data-id="${id}" data-type="${item.type}">
-                <button class="increase-cart-quantity" data-id="${id}" data-type="${item.type}">+</button> <!-- ADDED '+' SIGN HERE -->
+            <div class="cart-item-controls-wrapper"> <!-- NUEVO: Wrapper para los controles de cantidad y eliminar -->
+                <div class="quantity-controls-cart">
+                    <button class="decrease-cart-quantity" data-id="${id}" data-type="${item.type}">-</button>
+                    <input type="number" class="quantity-input-cart" value="${cart[id] ? cart[id].quantity : 0}" min="1" max="${itemStock}" data-id="${id}" data-type="${item.type}">
+                    <button class="increase-cart-quantity" data-id="${id}" data-type="${item.type}">+</button>
+                </div>
+                <button class="eliminar-item" data-id="${id}" data-type="${item.type}">Eliminar</button>
             </div>
-            <button class="eliminar-item" data-id="${id}" data-type="${item.type}">Eliminar</button>
         `;
         listaCarrito.appendChild(itemElement);
         total += item.quantity * itemPrice;
@@ -675,52 +677,49 @@ async function confirmOrder() {
 // EVENT LISTENERS
 // ==========================================================================
 
-// Firebase Auth State Listener
-// Only attach if 'auth' object is initialized
+// Firebase Auth State Listener and Initial Sign-In Logic
+// Separamos la lógica de inicio de sesión inicial del listener para mayor claridad.
 if (auth) {
+    // 1. Escuchamos los cambios en el estado de autenticación
     onAuthStateChanged(auth, (user) => {
         if (user) {
             userId = user.uid;
-            console.log('User is signed in:', userId);
-            // Load initial data for the store
+            console.log('User is signed in with UID:', userId);
+            // Cuando el usuario está autenticado, cargamos los datos
             loadCardsData();
             loadSealedProductsData();
         } else {
-            console.log('No user is signed in. Attempting anonymous sign-in...');
-            // Se usa __initial_auth_token si está disponible, de lo contrario, signInAnonymously
-            // En Netlify, __initial_auth_token no estará definido, por lo que siempre intentará signInAnonymously
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                signInWithCustomToken(auth, __initial_auth_token).then((userCredential) => {
-                    userId = userCredential.user.uid;
-                    console.log('Signed in with custom token with UID:', userId);
-                    loadCardsData();
-                    loadSealedProductsData();
-                }).catch((error) => {
-                    console.error('Error signing in with custom token:', error);
-                    // Fallback a anónimo si el token personalizado falla
-                    signInAnonymously(auth).then((anonUserCredential) => {
-                        userId = anonUserCredential.user.uid;
-                        console.log('Signed in anonymously after custom token failure with UID:', userId);
-                        loadCardsData();
-                        loadSealedProductsData();
-                    }).catch((anonError) => {
-                        console.error('Error signing in anonymously:', anonError);
-                        showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión. Algunas funciones podrían no estar disponibles.');
-                    });
-                });
-            } else {
-                signInAnonymously(auth).then((userCredential) => {
-                    userId = userCredential.user.uid;
-                    console.log('Signed in anonymously with UID:', userId);
-                    loadCardsData();
-                    loadSealedProductsData();
-                }).catch((error) => {
-                    console.error('Error signing in anonymously:', error);
-                    showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión anónimamente. Algunas funciones podrían no estar disponibles.');
-                });
-            }
+            // El usuario no está autenticado (puede ser la primera carga)
+            console.log('No user is currently signed in.');
+            // En este punto, no hacemos nada. La lógica de inicio de sesión
+            // inicial se ejecutará una sola vez fuera de este listener.
         }
     });
+
+    // 2. Intentamos iniciar sesión de forma inicial si no hay un usuario
+    // Ya que el token de Canvas no estará en Netlify, usamos la autenticación anónima
+    // directamente, con un robusto manejo de errores.
+    async function handleInitialAuth() {
+        try {
+            // Si el token de Canvas está definido, lo usamos.
+            // En Netlify, esta condición será falsa.
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+                console.log('Successfully signed in with custom token.');
+            } else {
+                // Si no estamos en el entorno de Canvas, intentamos un inicio de sesión anónimo
+                await signInAnonymously(auth);
+                console.log('Successfully signed in anonymously.');
+            }
+        } catch (error) {
+            console.error('Error during initial sign-in attempt:', error);
+            showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión. La tienda podría no funcionar correctamente. Por favor, revisa la configuración de Firebase.');
+        }
+    }
+
+    // Llamamos a la función de autenticación inicial
+    handleInitialAuth();
+
 } else {
     // If auth is not initialized, log an error and potentially show a message
     console.error('Firebase Auth is not initialized. User authentication and Firestore operations will not work.');
