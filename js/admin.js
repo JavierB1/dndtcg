@@ -3,6 +3,7 @@
 // ==========================================================================
 
 // Firebase and Firestore SDK imports
+// Importaciones de los SDK de Firebase y Firestore
 import { initializeApp }
 from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -11,42 +12,56 @@ import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc }
 from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
 // Your actual Firebase configuration for dndtcgadmin project
-// ¡IMPORTANTE! Reemplaza este objeto con la configuración de tu proyecto de Firebase.
+// Configuración de Firebase - Directamente proporcionada
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "tu-proyecto.firebaseapp.com",
-    projectId: "tu-proyecto-id",
-    storageBucket: "tu-proyecto.appspot.com",
-    messagingSenderId: "...",
-    appId: "1:..."
+    apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
+    authDomain: "dndtcgadmin.firebaseapp.com",
+    projectId: "dndtcgadmin",
+    storageBucket: "dndtcgadmin.firebasestorage.app",
+    messagingSenderId: "754642671504",
+    appId: "1:754642671504:web:c087cc703862cf8c228515",
+    measurementId: "G-T8KRZX5S7R"
 };
 
 // Initialize Firebase services
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Inicializa los servicios de Firebase.
+// Se verifica si la configuración de Firebase es válida antes de inicializar.
+let app;
+let db;
+let auth;
+if (firebaseConfig && firebaseConfig.projectId) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+} else {
+    console.error("Error: firebaseConfig no está disponible o no tiene un 'projectId'. No se pudo inicializar la app.");
+}
 
 // Application ID and User ID
+// ID de la aplicación y del usuario
 const appId = firebaseConfig.projectId;
 let userId = null;
 let currentAdminUser = null;
 
-// Arrays para almacenar los datos cargados
+// Arrays para almacenar los datos cargados desde Firestore
+// Arrays to store loaded data from Firestore
 let allCards = [];
 let allSealedProducts = [];
 let allCategories = [];
 
 // Configuración de paginación
+// Pagination configuration
 const itemsPerPage = 10;
 let currentCardsPage = 1;
 let currentSealedProductsPage = 1;
 
 // Variable para el elemento a eliminar
+// Variable for the item to be deleted
 let currentDeleteTarget = null;
 
+
 // ==========================================================================
-// DOM ELEMENT REFERENCES (Declaradas con 'let' en el ámbito global para acceso fácil)
-// Se asignarán en DOMContentLoaded
+// DOM ELEMENT REFERENCES
 // ==========================================================================
 let sidebarToggleBtn;
 let sidebarMenu;
@@ -57,6 +72,7 @@ let loginForm;
 let loginMessage;
 let usernameInput;
 let passwordInput;
+let togglePasswordVisibilityBtn; // Elemento para el botón de alternar visibilidad
 
 let navDashboard;
 let navCards;
@@ -83,7 +99,6 @@ let cardImage;
 let cardPrice;
 let cardStock;
 let cardCategory;
-let categoryOptions; // Datalist para categorías de cartas
 let saveCardBtn;
 
 let sealedProductModal;
@@ -93,7 +108,6 @@ let sealedProductId;
 let sealedProductName;
 let sealedProductImage;
 let sealedProductCategory;
-let sealedProductCategoryOptions; // Datalist para categorías de productos sellados
 let sealedProductPrice;
 let sealedProductStock;
 let saveSealedProductBtn;
@@ -131,7 +145,6 @@ let totalSealedProductsCount;
 let outOfStockCount;
 let uniqueCategoriesCount;
 
-// Nuevos elementos para el modal de mensaje personalizado
 let messageModal;
 let closeMessageModalBtn;
 let messageModalTitle;
@@ -158,13 +171,23 @@ function showSection(sectionToShow) {
 }
 
 /**
+ * Oculta todas las secciones del panel de administración.
+ */
+function hideAllSections() {
+    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
+    sections.forEach(section => {
+        if (section) section.classList.remove('active');
+    });
+}
+
+/**
  * Abre un modal.
  * @param {HTMLElement} modalElement - El elemento modal a abrir.
  */
 function openModal(modalElement) {
     if (modalElement) {
         modalElement.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Evita el scroll del body
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -175,7 +198,7 @@ function openModal(modalElement) {
 function closeModal(modalElement) {
     if (modalElement) {
         modalElement.style.display = 'none';
-        document.body.style.overflow = ''; // Restaura el scroll del body
+        document.body.style.overflow = '';
     }
 }
 
@@ -211,12 +234,13 @@ function showMessageModal(title, text) {
     openModal(messageModal);
 }
 
+
 // ==========================================================================
 // FIREBASE AUTHENTICATION FUNCTIONS
 // ==========================================================================
 
 /**
- * Maneja el proceso de inicio de sesión del administrador usando Firebase Email/Password Auth.
+ * Maneja el proceso de inicio de sesión del administrador.
  * @param {Event} event - El evento de envío del formulario.
  */
 async function handleLogin(event) {
@@ -226,28 +250,30 @@ async function handleLogin(event) {
     clearLoginError();
 
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        currentAdminUser = userCredential.user;
-        userId = currentAdminUser.uid;
-        console.log('Administrador ha iniciado sesión con Firebase Auth. ID de usuario:', userId);
-
-        closeModal(loginModal);
-        showSection(dashboardSection);
-        await loadAllData(); // Carga todos los datos después de un inicio de sesión exitoso
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log('Administrador ha iniciado sesión con Firebase Auth.');
+        closeModal(loginModal); // Cierra el modal solo si el login fue exitoso
+        showSection(dashboardSection); // Muestra la sección de dashboard
+        // Carga los datos después de un inicio de sesión exitoso
+        await loadAllData();
     } catch (error) {
         console.error('Error al iniciar sesión con Firebase:', error);
         let errorMessage = 'Error al iniciar sesión. Por favor, inténtalo de nuevo.';
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'Correo electrónico o contraseña incorrectos.';
+            errorMessage = 'Correo electrónico o contraseña incorrectos. Por favor, verifica tus credenciales.';
         } else if (error.code === 'auth/invalid-email') {
             errorMessage = 'Formato de correo electrónico no válido.';
+        } else if (error.code === 'auth/network-request-failed') {
+            errorMessage = 'Error de red. Verifica tu conexión a internet.';
+        } else {
+            errorMessage = `Error desconocido: ${error.message}. Por favor, revisa la consola para más detalles.`;
         }
         showLoginError(errorMessage);
     }
 }
 
 /**
- * Maneja el proceso de cierre de sesión del administrador usando Firebase Auth.
+ * Maneja el proceso de cierre de sesión del administrador.
  */
 async function handleLogout() {
     try {
@@ -255,10 +281,8 @@ async function handleLogout() {
         userId = null;
         currentAdminUser = null;
         console.log('Sesión cerrada con Firebase Auth.');
-
-        openModal(loginModal); // Muestra el modal de inicio de sesión de nuevo
-        clearLoginError();
-        // Opcional: Limpiar datos o redirigir a una página de inicio
+        hideAllSections(); // Oculta todas las secciones del administrador
+        openModal(loginModal); // Muestra el modal de login al cerrar sesión
     } catch (error) {
         console.error('Error al cerrar sesión:', error);
         showMessageModal("Error al cerrar sesión", 'Error al cerrar sesión. Por favor, inténtalo de nuevo.');
@@ -266,27 +290,37 @@ async function handleLogout() {
 }
 
 // Firebase Auth State Listener: Se ejecuta cuando el estado de autenticación cambia
+// Este listener ahora solo actualiza las variables de estado, no manipula la UI
 onAuthStateChanged(auth, (user) => {
     currentAdminUser = user;
     userId = user ? user.uid : null;
     console.log('Cambio de estado de autenticación de Firebase. Usuario:', userId);
-    // La lógica de UI inicial se maneja en DOMContentLoaded para asegurar que el DOM esté listo.
+
+    // No se manipula la UI aquí para evitar que se salte el login.
+    // La carga de datos y la visibilidad de la UI se gestiona en handleLogin y handleLogout
 });
 
 
 // ==========================================================================
-// DATA LOADING FUNCTIONS (Firestore for all data)
+// DATA LOADING FUNCTIONS (All from Firestore now)
 // ==========================================================================
 
 /**
  * Carga todas las categorías desde Firestore.
+ * Loads all categories from Firestore.
  */
 async function loadCategories() {
+    // Si la inicialización falló, no intentes cargar datos.
+    if (!db) {
+        console.error("No se pudo cargar categorías: la base de datos no está inicializada.");
+        return;
+    }
     try {
         const categoriesCol = collection(db, `artifacts/${appId}/public/data/categories`);
         const categorySnapshot = await getDocs(categoriesCol);
         allCategories = categorySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        populateCategoryFilters();
+        populateCategoryFiltersAndSelects();
+        renderCategoriesTable();
     } catch (error) {
         console.error('Error al cargar categorías:', error);
         showMessageModal("Error de Carga", 'Error al cargar categorías. Consulta la consola para más detalles.');
@@ -295,16 +329,25 @@ async function loadCategories() {
 
 /**
  * Carga todos los datos de cartas desde Firestore.
+ * Loads all card data from Firestore.
  */
 async function loadCardsData() {
+    // Si la inicialización falló, no intentes cargar datos.
+    if (!db) {
+        console.error("No se pudo cargar cartas: la base de datos no está inicializada.");
+        return;
+    }
     try {
         const cardsCol = collection(db, `artifacts/${appId}/public/data/cards`);
-        const cardSnapshot = await getDocs(cardsCol);
-        allCards = cardSnapshot.docs.map(doc => ({
+        const cardsSnapshot = await getDocs(cardsCol);
+        allCards = cardsSnapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data(),
-            precio: parseFloat(doc.data().price) || 0, // Usar 'price' y 'stock' para compatibilidad
-            stock: parseInt(doc.data().stock) || 0
+            ...doc.data()
+        }));
+        allCards = allCards.map(card => ({
+            ...card,
+            precio: parseFloat(card.precio) || 0,
+            stock: parseInt(card.stock) || 0
         }));
         renderCardsTable();
         updateDashboardStats();
@@ -316,18 +359,27 @@ async function loadCardsData() {
 
 /**
  * Carga todos los datos de productos sellados desde Firestore.
+ * Loads all sealed product data from Firestore.
  */
 async function loadSealedProductsData() {
+    // Si la inicialización falló, no intentes cargar datos.
+    if (!db) {
+        console.error("No se pudo cargar productos sellados: la base de datos no está inicializada.");
+        return;
+    }
     try {
-        const sealedProductsCol = collection(db, `artifacts/${appId}/public/data/sealedProducts`);
-        const productSnapshot = await getDocs(sealedProductsCol);
-        allSealedProducts = productSnapshot.docs.map(doc => ({
+        const sealedProductsCol = collection(db, `artifacts/${appId}/public/data/sealed_products`);
+        const sealedProductsSnapshot = await getDocs(sealedProductsCol);
+        allSealedProducts = sealedProductsSnapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data(),
-            precio: parseFloat(doc.data().price) || 0, // Usar 'price' y 'stock'
-            stock: parseInt(doc.data().stock) || 0
+            ...doc.data()
         }));
-        console.log('Datos de productos sellados cargados:', allSealedProducts); // Para depuración
+        allSealedProducts = allSealedProducts.map(product => ({
+            ...product,
+            precio: parseFloat(product.precio) || 0,
+            stock: parseInt(product.stock) || 0
+        }));
+        console.log('Datos de productos sellados cargados:', allSealedProducts);
         renderSealedProductsTable();
         updateDashboardStats();
     } catch (error) {
@@ -338,6 +390,7 @@ async function loadSealedProductsData() {
 
 /**
  * Carga todos los datos necesarios para el panel de administración.
+ * Loads all necessary data for the admin panel.
  */
 async function loadAllData() {
     await loadCategories();
@@ -346,19 +399,19 @@ async function loadAllData() {
 }
 
 /**
- * Rellena los filtros de categoría y los datalists en los formularios.
+ * Rellena los filtros de categoría y los menús desplegables en los formularios.
+ * Populates category filters and select elements in forms.
  */
-function populateCategoryFilters() {
-    // Se añade null check para seguridad, si estas advertencias persisten, VERIFICA los IDs en admin.html
-    if (!adminCategoryFilter || !adminSealedCategoryFilter || !categoryOptions || !sealedProductCategoryOptions) {
-        console.warn("Elementos DOM para filtros de categoría no disponibles. Verifica los IDs en admin.html.");
+function populateCategoryFiltersAndSelects() {
+    if (!adminCategoryFilter || !adminSealedCategoryFilter || !cardCategory || !sealedProductCategory) {
+        console.warn("Elementos DOM para filtros de categoría no disponibles. Verifica los IDs en el HTML.");
         return;
     }
 
-    const categories = [...new Set(allCategories.map(cat => cat.name))];
+    const categoryNames = allCategories.map(cat => cat.name);
 
     adminCategoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
-    categories.forEach(category => {
+    categoryNames.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
         option.textContent = category;
@@ -366,23 +419,26 @@ function populateCategoryFilters() {
     });
 
     adminSealedCategoryFilter.innerHTML = '<option value="">Todos los tipos</option>';
-    categories.forEach(category => {
+    categoryNames.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
         option.textContent = category;
         adminSealedCategoryFilter.appendChild(option);
     });
 
-    categoryOptions.innerHTML = '';
-    sealedProductCategoryOptions.innerHTML = '';
-    categories.forEach(category => {
+    cardCategory.innerHTML = '<option value="" disabled selected>Selecciona una categoría</option>';
+    sealedProductCategory.innerHTML = '<option value="" disabled selected>Selecciona un tipo</option>';
+
+    categoryNames.forEach(category => {
         const cardOption = document.createElement('option');
         cardOption.value = category;
-        categoryOptions.appendChild(cardOption);
+        cardOption.textContent = category;
+        cardCategory.appendChild(cardOption);
 
         const sealedOption = document.createElement('option');
         sealedOption.value = category;
-        sealedProductCategoryOptions.appendChild(sealedOption);
+        sealedOption.textContent = category;
+        sealedProductCategory.appendChild(sealedOption);
     });
 }
 
@@ -392,333 +448,311 @@ function populateCategoryFilters() {
 
 /**
  * Renderiza la tabla de cartas con filtrado y paginación.
+ * Renders the cards table with filtering and pagination.
  */
 function renderCardsTable() {
     if (!cardsTable || !adminSearchInput || !adminCategoryFilter || !adminPrevPageBtn || !adminNextPageBtn || !adminPageInfo) {
-        console.warn("Elementos DOM para la tabla de cartas no disponibles. Verifica los IDs en admin.html.");
+        console.warn("Elementos DOM para la tabla de cartas no disponibles. Verifica los IDs en el HTML.");
         return;
     }
-    cardsTable.querySelector('tbody').innerHTML = '';
-    const searchTerm = adminSearchInput.value.toLowerCase();
-    const selectedCategory = adminCategoryFilter.value;
 
-    let filteredCards = allCards.filter(card => {
-        const cardName = card.name ? String(card.name).toLowerCase() : '';
-        const cardId = card.id ? String(card.id).toLowerCase() : '';
-        const matchesSearch = cardName.includes(searchTerm) || cardId.includes(searchTerm);
-        const matchesCategory = selectedCategory === '' || String(card.category) === selectedCategory;
+    const searchQuery = adminSearchInput.value.toLowerCase();
+    const categoryFilter = adminCategoryFilter.value;
+
+    const filteredCards = allCards.filter(card => {
+        const matchesSearch = card.nombre?.toLowerCase().includes(searchQuery) || card.id?.toLowerCase().includes(searchQuery);
+        const matchesCategory = categoryFilter === "" || card.categoria === categoryFilter;
         return matchesSearch && matchesCategory;
     });
 
-    filteredCards.sort((a, b) => (String(a.name) || '').localeCompare(String(b.name) || ''));
-
     const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
+    currentCardsPage = Math.min(Math.max(currentCardsPage, 1), totalPages || 1);
     const startIndex = (currentCardsPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const cardsToDisplay = filteredCards.slice(startIndex, endIndex);
+    const cardsOnPage = filteredCards.slice(startIndex, endIndex);
 
-    cardsToDisplay.forEach(card => {
-        const row = cardsTable.querySelector('tbody').insertRow();
-        row.innerHTML = `
-            <td>${card.id || ''}</td>
-            <td><img src="${card.imageUrl || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${card.name || 'No Image'}" onerror="this.onerror=null;this.src='https://placehold.co/50x50/cccccc/333333?text=No+Image';" /></td>
-            <td>${card.name || ''}</td>
-            <td>$${(card.price || 0).toFixed(2)}</td>
-            <td>${card.stock || 0}</td>
-            <td>${card.category || ''}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="edit-button" data-id="${card.id || ''}" data-type="card">Editar</button>
-                    <button class="delete-button" data-id="${card.id || ''}" data-type="card">Eliminar</button>
-                </div>
-            </td>
-        `;
-    });
-    updatePaginationControls(currentCardsPage, totalPages, adminPrevPageBtn, adminNextPageBtn, adminPageInfo, filteredCards.length);
+    const tbody = cardsTable.querySelector('tbody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        cardsOnPage.forEach(card => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${card.id}</td>
+                <td><img src="${card.imagen_url}" alt="${card.nombre}" onerror="this.src='https://placehold.co/50x50/2d3748/a0aec0?text=No+Img'"></td>
+                <td>${card.nombre}</td>
+                <td>$${card.precio.toFixed(2)}</td>
+                <td>${card.stock}</td>
+                <td>${card.categoria}</td>
+                <td class="action-buttons">
+                    <button class="edit-button edit-card-btn" data-id="${card.id}">Editar</button>
+                    <button class="delete-button delete-card-btn" data-id="${card.id}">Eliminar</button>
+                </td>
+            `;
+        });
+    }
+
+    if (adminPageInfo) {
+        adminPageInfo.textContent = `Página ${currentCardsPage} de ${totalPages || 1}`;
+    }
+    if (adminPrevPageBtn) {
+        adminPrevPageBtn.disabled = currentCardsPage <= 1;
+    }
+    if (adminNextPageBtn) {
+        adminNextPageBtn.disabled = currentCardsPage >= totalPages;
+    }
 }
 
 /**
  * Renderiza la tabla de productos sellados con filtrado y paginación.
+ * Renders the sealed products table with filtering and pagination.
  */
 function renderSealedProductsTable() {
     if (!sealedProductsTable || !adminSealedSearchInput || !adminSealedCategoryFilter || !adminSealedPrevPageBtn || !adminSealedNextPageBtn || !adminSealedPageInfo) {
-        console.warn("Elementos DOM para la tabla de productos sellados no disponibles. Verifica los IDs en admin.html.");
+        console.warn("Elementos DOM para la tabla de productos sellados no disponibles. Verifica los IDs en el HTML.");
         return;
     }
-    sealedProductsTable.querySelector('tbody').innerHTML = '';
-    const searchTerm = adminSealedSearchInput.value.toLowerCase();
-    const selectedCategory = adminSealedCategoryFilter.value;
 
-    let filteredProducts = allSealedProducts.filter(product => {
-        const productName = product.name ? String(product.name).toLowerCase() : '';
-        const productId = product.id ? String(product.id).toLowerCase() : '';
-        const matchesSearch = productName.includes(searchTerm) || productId.includes(searchTerm);
-        const matchesCategory = selectedCategory === '' || String(product.category) === selectedCategory;
+    const searchQuery = adminSealedSearchInput.value.toLowerCase();
+    const categoryFilter = adminSealedCategoryFilter.value;
+
+    const filteredSealedProducts = allSealedProducts.filter(product => {
+        const matchesSearch = product.nombre?.toLowerCase().includes(searchQuery) || product.id?.toLowerCase().includes(searchQuery);
+        const matchesCategory = categoryFilter === "" || product.categoria === categoryFilter;
         return matchesSearch && matchesCategory;
     });
 
-    filteredProducts.sort((a, b) => (String(a.name) || '').localeCompare(String(b.name) || ''));
-
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredSealedProducts.length / itemsPerPage);
+    currentSealedProductsPage = Math.min(Math.max(currentSealedProductsPage, 1), totalPages || 1);
     const startIndex = (currentSealedProductsPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const productsToDisplay = filteredProducts.slice(startIndex, endIndex);
+    const productsOnPage = filteredSealedProducts.slice(startIndex, endIndex);
 
-    productsToDisplay.forEach(product => {
-        const row = sealedProductsTable.querySelector('tbody').insertRow();
-        row.innerHTML = `
-            <td>${product.id || ''}</td>
-            <td><img src="${product.imageUrl || 'https://placehold.co/50x50/cccccc/333333?text=No+Image'}" alt="${product.name || 'No Image'}" onerror="this.onerror=null;this.src='https://placehold.co/50x50/cccccc/333333?text=No+Image';" /></td>
-            <td>${product.name || ''}</td>
-            <td>${product.category || ''}</td>
-            <td>$${(product.price || 0).toFixed(2)}</td>
-            <td>${product.stock || 0}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="edit-sealed-product-button" data-id="${product.id || ''}" data-type="sealed">Editar</button>
-                    <button class="delete-sealed-product-button" data-id="${product.id || ''}" data-type="sealed">Eliminar</button>
-                </div>
-            </td>
-        `;
-    });
-    updatePaginationControls(currentSealedProductsPage, totalPages, adminSealedPrevPageBtn, adminSealedNextPageBtn, adminSealedPageInfo, filteredProducts.length);
+    const tbody = sealedProductsTable.querySelector('tbody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        productsOnPage.forEach(product => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${product.id}</td>
+                <td><img src="${product.imagen_url}" alt="${product.nombre}" onerror="this.src='https://placehold.co/50x50/2d3748/a0aec0?text=No+Img'"></td>
+                <td>${product.nombre}</td>
+                <td>${product.categoria}</td>
+                <td>$${product.precio.toFixed(2)}</td>
+                <td>${product.stock}</td>
+                <td class="action-buttons">
+                    <button class="edit-sealed-product-button" data-id="${product.id}">Editar</button>
+                    <button class="delete-sealed-product-button" data-id="${product.id}">Eliminar</button>
+                </td>
+            `;
+        });
+    }
+
+    if (adminSealedPageInfo) {
+        adminSealedPageInfo.textContent = `Página ${currentSealedProductsPage} de ${totalPages || 1}`;
+    }
+    if (adminSealedPrevPageBtn) {
+        adminSealedPrevPageBtn.disabled = currentSealedProductsPage <= 1;
+    }
+    if (adminSealedNextPageBtn) {
+        adminSealedNextPageBtn.disabled = currentSealedProductsPage >= totalPages;
+    }
 }
 
 /**
  * Renderiza la tabla de categorías.
+ * Renders the categories table.
  */
-async function renderCategoriesTable() {
+function renderCategoriesTable() {
     if (!categoriesTable) {
-        console.warn("El elemento DOM para la tabla de categorías no está disponible. Verifica los IDs en admin.html.");
+        console.warn("Elemento DOM para la tabla de categorías no disponible. Verifica el ID en el HTML.");
         return;
     }
-    categoriesTable.querySelector('tbody').innerHTML = '';
-    allCategories.forEach(category => {
-        const row = categoriesTable.querySelector('tbody').insertRow();
-        row.innerHTML = `
-            <td>${category.name || ''}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="edit-category-button" data-id="${category.id || ''}" data-name="${category.name || ''}">Editar</button>
-                    <button class="delete-category-button" data-id="${category.id || ''}" data-name="${category.name || ''}">Eliminar</button>
-                </div>
-            </td>
-        `;
-    });
+
+    const tbody = categoriesTable.querySelector('tbody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        allCategories.forEach(category => {
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${category.name}</td>
+                <td class="action-buttons">
+                    <button class="edit-category-button" data-id="${category.id}">Editar</button>
+                    <button class="delete-category-button" data-id="${category.id}">Eliminar</button>
+                </td>
+            `;
+        });
+    }
 }
 
 /**
- * Actualiza los controles de paginación.
- * @param {number} currentPage - La página actual.
- * @param {number} totalPages - El total de páginas.
- * @param {HTMLElement} prevBtn - Botón "anterior".
- * @param {HTMLElement} nextBtn - Botón "siguiente".
- * @param {HTMLElement} infoSpan - Span de información de página.
- * @param {number} totalItems - Total de elementos filtrados.
- */
-function updatePaginationControls(currentPage, totalPages, prevBtn, nextBtn, infoSpan, totalItems) {
-    if (!infoSpan || !prevBtn || !nextBtn) return; // Null check
-    infoSpan.textContent = `Página ${currentPage} de ${totalPages} (${totalItems} items)`;
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-}
-
-/**
- * Actualiza las estadísticas del dashboard.
+ * Actualiza las estadísticas en el dashboard.
+ * Updates the dashboard stats.
  */
 function updateDashboardStats() {
-    if (!totalCardsCount || !totalSealedProductsCount || !outOfStockCount || !uniqueCategoriesCount) {
-        console.warn("Elementos DOM de estadísticas del dashboard no disponibles. Verifica los IDs en admin.html.");
-        return;
-    }
-    totalCardsCount.textContent = allCards.length;
-    totalSealedProductsCount.textContent = allSealedProducts.length;
-    outOfStockCount.textContent = allCards.filter(card => (card.stock || 0) === 0).length + allSealedProducts.filter(product => (product.stock || 0) === 0).length;
-    uniqueCategoriesCount.textContent = allCategories.length;
+    if (totalCardsCount) totalCardsCount.textContent = allCards.length;
+    if (totalSealedProductsCount) totalSealedProductsCount.textContent = allSealedProducts.length;
+    if (outOfStockCount) outOfStockCount.textContent = allCards.filter(c => c.stock === 0).length;
+    if (uniqueCategoriesCount) uniqueCategoriesCount.textContent = allCategories.length;
 }
 
 // ==========================================================================
-// DATA MANAGEMENT FUNCTIONS (CRUD via Firestore)
+// CRUD OPERATIONS (All using Firestore now)
 // ==========================================================================
 
 /**
- * Maneja el envío del formulario de cartas (añadir/editar).
+ * Maneja el envío del formulario para añadir/editar una carta.
+ * Handles the form submission for adding/editing a card.
  * @param {Event} event - El evento de envío del formulario.
  */
-async function handleCardFormSubmit(event) {
+async function handleSaveCard(event) {
     event.preventDefault();
-    const isEditing = !!cardId.value;
-    const cardData = {
-        name: cardName.value,
-        imageUrl: cardImage.value,
-        price: parseFloat(cardPrice.value),
+
+    const id = cardId.value;
+    const data = {
+        nombre: cardName.value,
+        imagen_url: cardImage.value || '',
+        precio: parseFloat(cardPrice.value).toFixed(2),
         stock: parseInt(cardStock.value),
-        category: cardCategory.value
+        categoria: cardCategory.value
     };
 
+    if (!data.categoria) {
+        showMessageModal("Error de Validación", "Por favor, selecciona una categoría para la carta.");
+        return;
+    }
+
     try {
-        if (isEditing) {
-            const cardRef = doc(db, `artifacts/${appId}/public/data/cards`, cardId.value);
-            await updateDoc(cardRef, cardData);
+        if (id) {
+            const cardDocRef = doc(db, `artifacts/${appId}/public/data/cards`, id);
+            await updateDoc(cardDocRef, data);
+            showMessageModal("Éxito", "Carta actualizada correctamente.");
         } else {
             const cardsCol = collection(db, `artifacts/${appId}/public/data/cards`);
-            await addDoc(cardsCol, cardData);
+            await addDoc(cardsCol, data);
+            showMessageModal("Éxito", "Carta añadida correctamente.");
         }
-        
-        console.log(`Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        cardForm.reset();
         closeModal(cardModal);
         await loadCardsData();
-        showMessageModal("Éxito", `Carta ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar carta:', error);
-        showMessageModal("Error al guardar carta", `Error al guardar carta: ${error.message}`);
+        showMessageModal("Error de Operación", `Operación fallida: ${error.message}`);
     }
 }
 
 /**
- * Maneja el envío del formulario de productos sellados (añadir/editar).
+ * Maneja el envío del formulario para añadir/editar un producto sellado.
+ * Handles the form submission for adding/editing a sealed product.
+ * @param {Event} event - El evento de envío del formulario.
  */
-async function handleSealedProductFormSubmit(event) {
+async function handleSaveSealedProduct(event) {
     event.preventDefault();
-    const isEditing = !!sealedProductId.value;
-    const productData = {
-        name: sealedProductName.value,
-        imageUrl: sealedProductImage.value,
-        category: sealedProductCategory.value,
-        price: parseFloat(sealedProductPrice.value),
+
+    const id = sealedProductId.value;
+    const data = {
+        nombre: sealedProductName.value,
+        imagen_url: sealedProductImage.value || '',
+        categoria: sealedProductCategory.value,
+        precio: parseFloat(sealedProductPrice.value).toFixed(2),
         stock: parseInt(sealedProductStock.value)
     };
 
+    if (!data.categoria) {
+        showMessageModal("Error de Validación", "Por favor, selecciona un tipo para el producto sellado.");
+        return;
+    }
+
     try {
-        if (isEditing) {
-            const productRef = doc(db, `artifacts/${appId}/public/data/sealedProducts`, sealedProductId.value);
-            await updateDoc(productRef, productData);
+        if (id) {
+            const sealedProductDocRef = doc(db, `artifacts/${appId}/public/data/sealed_products`, id);
+            await updateDoc(sealedProductDocRef, data);
+            showMessageModal("Éxito", "Producto sellado actualizado correctamente.");
         } else {
-            const productsCol = collection(db, `artifacts/${appId}/public/data/sealedProducts`);
-            await addDoc(productsCol, productData);
+            const sealedProductsCol = collection(db, `artifacts/${appId}/public/data/sealed_products`);
+            await addDoc(sealedProductsCol, data);
+            showMessageModal("Éxito", "Producto sellado añadido correctamente.");
         }
-        
-        console.log(`Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
+        sealedProductForm.reset();
         closeModal(sealedProductModal);
         await loadSealedProductsData();
-        showMessageModal("Éxito", `Producto sellado ${isEditing ? 'actualizado' : 'añadido'} con éxito.`);
     } catch (error) {
         console.error('Error al guardar producto sellado:', error);
-        showMessageModal("Error al guardar producto sellado", `Error al guardar producto sellado: ${error.message}`);
+        showMessageModal("Error de Operación", `Operación fallida: ${error.message}`);
     }
 }
 
 /**
- * Maneja el envío del formulario de categorías (añadir/editar).
- * Esta función interactúa directamente con Firestore.
+ * Maneja el envío del formulario para añadir/editar una categoría.
+ * Handles the form submission for adding/editing a category.
+ * @param {Event} event - El evento de envío del formulario.
  */
-async function handleCategoryFormSubmit(event) {
+async function handleSaveCategory(event) {
     event.preventDefault();
-    const isEditing = !!categoryId.value;
-    const categoryData = {
+
+    const id = categoryId.value;
+    const data = {
         name: categoryName.value
     };
-    const categoryDocId = categoryId.value;
 
     try {
-        if (isEditing) {
-            const categoryRef = doc(db, `artifacts/${appId}/public/data/categories`, categoryDocId);
-            await updateDoc(categoryRef, categoryData);
+        if (id) {
+            const categoryDocRef = doc(db, `artifacts/${appId}/public/data/categories`, id);
+            await updateDoc(categoryDocRef, data);
+            showMessageModal("Éxito", "Categoría actualizada correctamente.");
         } else {
             const categoriesCol = collection(db, `artifacts/${appId}/public/data/categories`);
-            await addDoc(categoriesCol, categoryData);
+            await addDoc(categoriesCol, data);
+            showMessageModal("Éxito", "Categoría añadida correctamente.");
         }
-        
-        console.log(`Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        categoryForm.reset();
         closeModal(categoryModal);
         await loadCategories();
-        updateDashboardStats();
-        showMessageModal("Éxito", `Categoría ${isEditing ? 'actualizada' : 'añadida'} con éxito.`);
+        await loadCardsData();
+        await loadSealedProductsData();
     } catch (error) {
         console.error('Error al guardar categoría:', error);
-        showMessageModal("Error al guardar categoría", `Error al guardar categoría: ${error.message}`);
+        showMessageModal("Error de Operación", `Operación fallida: ${error.message}`);
     }
 }
 
 /**
- * Abre el modal de confirmación para eliminar.
- * @param {string} id - El ID del elemento a eliminar.
- * @param {string} type - El tipo de elemento ('card', 'sealed', 'category').
- * @param {string} name - El nombre del elemento (para mostrar en el mensaje).
+ * Elimina un elemento (carta, producto sellado o categoría) después de la confirmación.
+ * Deletes an item (card, sealed product, or category) after confirmation.
  */
-function openConfirmModal(id, type, name = '') {
-    currentDeleteTarget = { id, type, name };
-    if (confirmMessage) confirmMessage.textContent = `¿Estás seguro de que quieres eliminar ${name ? '"' + name + '"' : 'este elemento'}?`;
-    openModal(confirmModal);
-}
-
-/**
- * Confirma y ejecuta la eliminación del elemento.
- */
-async function confirmDeletion() {
-    if (!currentDeleteTarget) return;
-
-    const { id, type, name } = currentDeleteTarget;
+async function handleDeleteConfirmed() {
+    const { type, id } = currentDeleteTarget;
     try {
         if (type === 'card') {
-            const cardRef = doc(db, `artifacts/${appId}/public/data/cards`, id);
-            await deleteDoc(cardRef);
+            const cardDocRef = doc(db, `artifacts/${appId}/public/data/cards`, id);
+            await deleteDoc(cardDocRef);
+            showMessageModal("Éxito", "Carta eliminada correctamente.");
             await loadCardsData();
-        } else if (type === 'sealed') {
-            const productRef = doc(db, `artifacts/${appId}/public/data/sealedProducts`, id);
-            await deleteDoc(productRef);
+        } else if (type === 'sealedProduct') {
+            const sealedProductDocRef = doc(db, `artifacts/${appId}/public/data/sealed_products`, id);
+            await deleteDoc(sealedProductDocRef);
+            showMessageModal("Éxito", "Producto sellado eliminado correctamente.");
             await loadSealedProductsData();
         } else if (type === 'category') {
-            const categoryRef = doc(db, `artifacts/${appId}/public/data/categories`, id);
-            await deleteDoc(categoryRef);
+            const categoryDocRef = doc(db, `artifacts/${appId}/public/data/categories`, id);
+            await deleteDoc(categoryDocRef);
+            showMessageModal("Éxito", "Categoría eliminada correctamente.");
             await loadCategories();
-            updateDashboardStats();
-            console.log(`Categoría eliminada de Firestore.`);
+            await loadCardsData();
+            await loadSealedProductsData();
         }
-        console.log(`Elemento ${type} eliminado.`);
         closeModal(confirmModal);
-        showMessageModal("Éxito", `Elemento ${type} eliminado con éxito.`);
     } catch (error) {
-        console.error(`Error al eliminar ${type}:`, error);
-        showMessageModal("Error al eliminar", `Error al eliminar ${type}: ${error.message}`);
-    } finally {
-        currentDeleteTarget = null;
+        console.error('Error al eliminar elemento:', error);
+        showMessageModal("Error de Operación", `Operación fallida: ${error.message}`);
     }
 }
-
 
 // ==========================================================================
 // EVENT LISTENERS
 // ==========================================================================
 
-// Verificación inicial de autenticación de Firebase:
-onAuthStateChanged(auth, async (user) => {
-    currentAdminUser = user;
-    userId = user ? user.uid : null;
-    console.log('Cambio de estado de autenticación de Firebase. Usuario:', userId);
-    // La lógica de UI inicial se maneja en DOMContentLoaded para asegurar que el DOM esté listo.
-});
-
-// Añadir un listener de eventos para cerrar sesión cuando la página se descarga (se cierra o se actualiza)
-window.addEventListener('unload', async () => {
-    console.log('La página se está descargando. Intentando cerrar sesión...');
-    try {
-        await signOut(auth);
-        console.log('Sesión cerrada correctamente al descargar.');
-    } catch (error) {
-        console.error('Error al cerrar sesión al descargar:', error);
-    }
-});
-
-
-// ==========================================================================
-// INICIALIZACIÓN DE LA APLICACIÓN
-// ==========================================================================
-// Envolver todo el código relacionado con el DOM en DOMContentLoaded para asegurar que los elementos estén disponibles
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOMContentLoaded disparado. Asignando elementos DOM y adjuntando listeners...');
-
-    // Asignar elementos DOM aquí después de que el documento esté completamente cargado
+document.addEventListener('DOMContentLoaded', () => {
+    // Asignación de elementos DOM
     sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
     sidebarMenu = document.getElementById('sidebar-menu');
     sidebarOverlay = document.getElementById('sidebar-overlay');
@@ -728,6 +762,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginMessage = document.getElementById('loginMessage');
     usernameInput = document.getElementById('username');
     passwordInput = document.getElementById('password');
+    togglePasswordVisibilityBtn = document.getElementById('togglePasswordVisibilityBtn'); // Referencia al botón
 
     navDashboard = document.getElementById('nav-dashboard');
     navCards = document.getElementById('nav-cards');
@@ -754,7 +789,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     cardPrice = document.getElementById('cardPrice');
     cardStock = document.getElementById('cardStock');
     cardCategory = document.getElementById('cardCategory');
-    categoryOptions = document.getElementById('categoryOptions');
     saveCardBtn = document.getElementById('saveCardBtn');
 
     sealedProductModal = document.getElementById('sealedProductModal');
@@ -764,7 +798,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     sealedProductName = document.getElementById('sealedProductName');
     sealedProductImage = document.getElementById('sealedProductImage');
     sealedProductCategory = document.getElementById('sealedProductCategory');
-    sealedProductCategoryOptions = document.getElementById('sealedProductCategoryOptions');
     sealedProductPrice = document.getElementById('sealedProductPrice');
     sealedProductStock = document.getElementById('sealedProductStock');
     saveSealedProductBtn = document.getElementById('saveSealedProductBtn');
@@ -802,334 +835,272 @@ document.addEventListener('DOMContentLoaded', async () => {
     outOfStockCount = document.getElementById('outOfStockCount');
     uniqueCategoriesCount = document.getElementById('uniqueCategoriesCount');
 
-    // Asignar elementos para el nuevo modal de mensaje
     messageModal = document.getElementById('messageModal');
     closeMessageModalBtn = document.getElementById('closeMessageModal');
     messageModalTitle = document.getElementById('messageModalTitle');
     messageModalText = document.getElementById('messageModalText');
     okMessageModalBtn = document.getElementById('okMessageModal');
 
+    // ------------------- Initial Load Control -------------------
+    // Inicia la aplicación con el modal de login abierto y sin secciones activas.
+    // Esto asegura que el usuario siempre vea la pantalla de login primero.
+    openModal(loginModal);
+    hideAllSections();
 
-    // Lógica de autenticación inicial:
-    // Si ya hay un usuario autenticado (por sesión persistente de Firebase), cargar datos.
-    // De lo contrario, mostrar el modal de login.
-    if (auth.currentUser) {
-        currentAdminUser = auth.currentUser;
-        userId = currentAdminUser.uid;
-        closeModal(loginModal);
-        showSection(dashboardSection);
-        await loadAllData();
-    } else {
-        // En un entorno local sin __initial_auth_token, simplemente mostramos el modal de login.
-        openModal(loginModal);
-        clearLoginError();
-    }
-
-    // Adjuntar todos los listeners de eventos aquí (después de que los elementos DOM estén asignados)
+    // ------------------- Navigation -------------------
     if (sidebarToggleBtn) {
         sidebarToggleBtn.addEventListener('click', () => {
-            sidebarMenu.classList.toggle('active');
-            sidebarOverlay.classList.toggle('active');
+            if (sidebarMenu) {
+                sidebarMenu.classList.toggle('active');
+            }
         });
     }
 
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
-            sidebarMenu.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
+            if (sidebarMenu) {
+                sidebarMenu.classList.remove('active');
+            }
         });
     }
 
-    if (navDashboard) {
-        navDashboard.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection(dashboardSection);
-            sidebarMenu.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-            updateDashboardStats();
+    if (navDashboard) navDashboard.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSection(dashboardSection);
+        navDashboard.classList.add('active');
+        navCards.classList.remove('active');
+        navSealedProducts.classList.remove('active');
+        navCategories.classList.remove('active');
+        if (sidebarMenu) sidebarMenu.classList.remove('active');
+    });
+
+    if (navCards) navCards.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSection(cardsSection);
+        navCards.classList.add('active');
+        navDashboard.classList.remove('active');
+        navSealedProducts.classList.remove('active');
+        navCategories.classList.remove('active');
+        if (sidebarMenu) sidebarMenu.classList.remove('active');
+    });
+
+    if (navSealedProducts) navSealedProducts.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSection(sealedProductsSection);
+        navSealedProducts.classList.add('active');
+        navDashboard.classList.remove('active');
+        navCards.classList.remove('active');
+        navCategories.classList.remove('active');
+        if (sidebarMenu) sidebarMenu.classList.remove('active');
+    });
+
+    if (navCategories) navCategories.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSection(categoriesSection);
+        navCategories.classList.add('active');
+        navDashboard.classList.remove('active');
+        navCards.classList.remove('active');
+        navSealedProducts.classList.remove('active');
+        if (sidebarMenu) sidebarMenu.classList.remove('active');
+    });
+
+    if (navLogout) navLogout.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleLogout();
+    });
+
+    // ------------------- Modals -------------------
+    document.querySelectorAll('.close-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            closeModal(cardModal);
+            closeModal(sealedProductModal);
+            closeModal(categoryModal);
+            closeModal(confirmModal);
+            closeModal(loginModal);
+            closeModal(messageModal);
         });
+    });
+
+    if (window) {
+        window.onclick = function(event) {
+            if (event.target == cardModal) closeModal(cardModal);
+            if (event.target == sealedProductModal) closeModal(sealedProductModal);
+            if (event.target == categoryModal) closeModal(categoryModal);
+            if (event.target == confirmModal) closeModal(confirmModal);
+            // El modal de login no se debe cerrar al hacer clic fuera
+            if (event.target == messageModal) closeModal(messageModal);
+        };
     }
 
-    if (navCards) {
-        navCards.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection(cardsSection);
-            sidebarMenu.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-            currentCardsPage = 1;
-            if (adminSearchInput) adminSearchInput.value = '';
-            if (adminCategoryFilter) adminCategoryFilter.value = '';
+    if (closeMessageModalBtn) closeMessageModalBtn.addEventListener('click', () => closeModal(messageModal));
+    if (okMessageModalBtn) okMessageModalBtn.addEventListener('click', () => closeModal(messageModal));
+
+    // ------------------- Card Management -------------------
+    if (addCardBtn) addCardBtn.addEventListener('click', () => {
+        cardModalTitle.textContent = "Añadir Nueva Carta";
+        cardId.value = '';
+        cardForm.reset();
+        if (cardCategory) cardCategory.value = '';
+        openModal(cardModal);
+    });
+
+    if (cardsTable) cardsTable.addEventListener('click', (e) => {
+        if (e.target.classList.contains('edit-card-btn')) {
+            const id = e.target.dataset.id;
+            const cardToEdit = allCards.find(c => c.id === id);
+            if (cardToEdit) {
+                cardModalTitle.textContent = "Editar Carta";
+                cardId.value = cardToEdit.id;
+                cardName.value = cardToEdit.nombre;
+                cardImage.value = cardToEdit.imagen_url || '';
+                cardPrice.value = cardToEdit.precio;
+                cardStock.value = cardToEdit.stock;
+                cardCategory.value = cardToEdit.categoria;
+                openModal(cardModal);
+            }
+        }
+        if (e.target.classList.contains('delete-card-btn')) {
+            const id = e.target.dataset.id;
+            currentDeleteTarget = { type: 'card', id: id };
+            if (confirmMessage) confirmMessage.textContent = `¿Estás seguro de que quieres eliminar la carta con ID ${id}?`;
+            openModal(confirmModal);
+        }
+    });
+
+    if (cardForm) cardForm.addEventListener('submit', handleSaveCard);
+
+    if (adminSearchInput) adminSearchInput.addEventListener('input', () => {
+        currentCardsPage = 1;
+        renderCardsTable();
+    });
+    if (adminCategoryFilter) adminCategoryFilter.addEventListener('change', () => {
+        currentCardsPage = 1;
+        renderCardsTable();
+    });
+    if (adminPrevPageBtn) adminPrevPageBtn.addEventListener('click', () => {
+        if (currentCardsPage > 1) {
+            currentCardsPage--;
             renderCardsTable();
-        });
-    }
+        }
+    });
+    if (adminNextPageBtn) adminNextPageBtn.addEventListener('click', () => {
+        currentCardsPage++;
+        renderCardsTable();
+    });
 
-    if (navSealedProducts) {
-        navSealedProducts.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection(sealedProductsSection);
-            sidebarMenu.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-            currentSealedProductsPage = 1;
-            if (adminSealedSearchInput) adminSealedSearchInput.value = '';
-            if (adminSealedCategoryFilter) adminSealedCategoryFilter.value = '';
+    // ------------------- Sealed Product Management -------------------
+    if (addSealedProductBtn) addSealedProductBtn.addEventListener('click', () => {
+        sealedProductModalTitle.textContent = "Añadir Nuevo Producto Sellado";
+        sealedProductId.value = '';
+        sealedProductForm.reset();
+        if (sealedProductCategory) sealedProductCategory.value = '';
+        openModal(sealedProductModal);
+    });
+
+    if (sealedProductsTable) sealedProductsTable.addEventListener('click', (e) => {
+        if (e.target.classList.contains('edit-sealed-product-button')) {
+            const id = e.target.dataset.id;
+            const productToEdit = allSealedProducts.find(p => p.id === id);
+            if (productToEdit) {
+                sealedProductModalTitle.textContent = "Editar Producto Sellado";
+                sealedProductId.value = productToEdit.id;
+                sealedProductName.value = productToEdit.nombre;
+                sealedProductImage.value = productToEdit.imagen_url || '';
+                sealedProductCategory.value = productToEdit.categoria;
+                sealedProductPrice.value = productToEdit.precio;
+                sealedProductStock.value = productToEdit.stock;
+                openModal(sealedProductModal);
+            }
+        }
+        if (e.target.classList.contains('delete-sealed-product-button')) {
+            const id = e.target.dataset.id;
+            currentDeleteTarget = { type: 'sealedProduct', id: id };
+            if (confirmMessage) confirmMessage.textContent = `¿Estás seguro de que quieres eliminar el producto sellado con ID ${id}?`;
+            openModal(confirmModal);
+        }
+    });
+
+    if (sealedProductForm) sealedProductForm.addEventListener('submit', handleSaveSealedProduct);
+
+    if (adminSealedSearchInput) adminSealedSearchInput.addEventListener('input', () => {
+        currentSealedProductsPage = 1;
+        renderSealedProductsTable();
+    });
+    if (adminSealedCategoryFilter) adminSealedCategoryFilter.addEventListener('change', () => {
+        currentSealedProductsPage = 1;
+        renderSealedProductsTable();
+    });
+    if (adminSealedPrevPageBtn) adminSealedPrevPageBtn.addEventListener('click', () => {
+        if (currentSealedProductsPage > 1) {
+            currentSealedProductsPage--;
             renderSealedProductsTable();
-        });
-    }
+        }
+    });
+    if (adminSealedNextPageBtn) adminSealedNextPageBtn.addEventListener('click', () => {
+        currentSealedProductsPage++;
+        renderSealedProductsTable();
+    });
 
-    if (navCategories) {
-        navCategories.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection(categoriesSection);
-            sidebarMenu.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-            renderCategoriesTable();
-        });
-    }
+    // ------------------- Category Management -------------------
+    if (addCategoryBtn) addCategoryBtn.addEventListener('click', () => {
+        categoryModalTitle.textContent = "Añadir Nueva Categoría";
+        categoryId.value = '';
+        categoryForm.reset();
+        openModal(categoryModal);
+    });
 
-    if (navOrders) {
-        navOrders.addEventListener('click', (e) => {
-            e.preventDefault();
-            showMessageModal("Próximamente", 'La gestión de pedidos estará disponible pronto.');
-            sidebarMenu.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-        });
-    }
+    if (categoriesTable) categoriesTable.addEventListener('click', (e) => {
+        if (e.target.classList.contains('edit-category-button')) {
+            const id = e.target.dataset.id;
+            const categoryToEdit = allCategories.find(c => c.id === id);
+            if (categoryToEdit) {
+                categoryModalTitle.textContent = "Editar Categoría";
+                categoryId.value = categoryToEdit.id;
+                categoryName.value = categoryToEdit.name;
+                openModal(categoryModal);
+            }
+        }
+        if (e.target.classList.contains('delete-category-button')) {
+            const id = e.target.dataset.id;
+            currentDeleteTarget = { type: 'category', id: id };
+            if (confirmMessage) confirmMessage.textContent = `¿Estás seguro de que quieres eliminar la categoría? Esto no eliminará las cartas asociadas.`;
+            openModal(confirmModal);
+        }
+    });
 
-    if (navLogout) {
-        navLogout.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleLogout();
-        });
-    }
+    if (categoryForm) categoryForm.addEventListener('submit', handleSaveCategory);
 
+    // ------------------- Confirmation Modal -------------------
+    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => closeModal(confirmModal));
+    if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', handleDeleteConfirmed);
+
+    // ------------------- Refresh Button -------------------
     const refreshAdminPageBtn = document.getElementById('refreshAdminPageBtn');
     if (refreshAdminPageBtn) {
         refreshAdminPageBtn.addEventListener('click', async () => {
-            showMessageModal("Actualizando", 'Refrescando datos del panel...');
+            showMessageModal("Recargando Datos", "Por favor, espera mientras actualizamos los datos...");
             await loadAllData();
-            showMessageModal("Actualización Completa", 'Datos actualizados.');
+            closeModal(messageModal);
+            showMessageModal("Datos Recargados", "Todos los datos han sido actualizados.");
         });
     }
 
+    // ------------------- Login form handler -------------------
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
+    
+    // ------------------- Toggle password visibility (LÓGICA AÑADIDA AQUÍ) -------------------
+    if (togglePasswordVisibilityBtn && passwordInput) {
+        togglePasswordVisibilityBtn.addEventListener('click', function() {
+            // Alternar el tipo de input entre 'password' y 'text'
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
 
-    document.querySelectorAll('.admin-modal .close-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            closeModal(e.target.closest('.admin-modal'));
+            // Alternar la clase del icono para cambiar entre ojo abierto y cerrado
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
         });
-    });
-
-    window.addEventListener('click', (event) => {
-        if (event.target === cardModal) closeModal(cardModal);
-        if (event.target === sealedProductModal) closeModal(sealedProductModal);
-        if (event.target === categoryModal) closeModal(categoryModal);
-        if (event.target === confirmModal) closeModal(confirmModal);
-        if (event.target === messageModal) closeModal(messageModal); // Cerrar el nuevo modal de mensaje
-    });
-
-    // Event listeners para el nuevo modal de mensaje
-    if (closeMessageModalBtn) {
-        closeMessageModalBtn.addEventListener('click', () => {
-            closeModal(messageModal);
-        });
-    }
-    if (okMessageModalBtn) {
-        okMessageModalBtn.addEventListener('click', () => {
-            closeModal(messageModal);
-        });
-    }
-
-    // ======================= Cartas =======================
-    if (addCardBtn) {
-        addCardBtn.addEventListener('click', () => {
-            cardModalTitle.textContent = 'Añadir Nueva Carta';
-            cardForm.reset();
-            cardId.value = ''; // Asegurarse de que el ID esté vacío para añadir
-            openModal(cardModal);
-        });
-    }
-    if (cardForm) {
-        cardForm.addEventListener('submit', handleCardFormSubmit);
-    }
-
-    if (cardsTable) {
-        cardsTable.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('edit-button')) {
-                const id = e.target.dataset.id;
-                const cardRef = doc(db, `artifacts/${appId}/public/data/cards`, id);
-                const cardDoc = await getDoc(cardRef);
-                if (cardDoc.exists()) {
-                    const card = { id: cardDoc.id, ...cardDoc.data() };
-                    cardModalTitle.textContent = 'Editar Carta';
-                    cardId.value = card.id;
-                    cardName.value = card.name;
-                    cardImage.value = card.imageUrl;
-                    cardPrice.value = card.price;
-                    cardStock.value = card.stock;
-                    cardCategory.value = card.category;
-                    openModal(cardModal);
-                }
-            } else if (e.target.classList.contains('delete-button')) {
-                const id = e.target.dataset.id;
-                const card = allCards.find(c => c.id === id);
-                openConfirmModal(id, 'card', card ? card.name : 'esta carta');
-            }
-        });
-    }
-
-    if (adminSearchInput) {
-        adminSearchInput.addEventListener('input', () => {
-            currentCardsPage = 1;
-            renderCardsTable();
-        });
-    }
-    if (adminCategoryFilter) {
-        adminCategoryFilter.addEventListener('change', () => {
-            currentCardsPage = 1;
-            renderCardsTable();
-        });
-    }
-    if (adminPrevPageBtn) {
-        adminPrevPageBtn.addEventListener('click', () => {
-            if (currentCardsPage > 1) {
-                currentCardsPage--;
-                renderCardsTable();
-            }
-        });
-    }
-    if (adminNextPageBtn) {
-        adminNextPageBtn.addEventListener('click', () => {
-            const searchTerm = adminSearchInput.value.toLowerCase();
-            const selectedCategory = adminCategoryFilter.value;
-            const filteredCards = allCards.filter(card => {
-                const matchesSearch = (card.name && card.name.toLowerCase().includes(searchTerm)) || (card.id && card.id.toLowerCase().includes(searchTerm));
-                const matchesCategory = selectedCategory === '' || (card.category && card.category === selectedCategory);
-                return matchesSearch && matchesCategory;
-            });
-            const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
-            if (currentCardsPage < totalPages) {
-                currentCardsPage++;
-                renderCardsTable();
-            }
-        });
-    }
-
-    // ======================= Productos Sellados =======================
-    if (addSealedProductBtn) {
-        addSealedProductBtn.addEventListener('click', () => {
-            sealedProductModalTitle.textContent = 'Añadir Nuevo Producto Sellado';
-            sealedProductForm.reset();
-            sealedProductId.value = ''; // Asegurarse de que el ID esté vacío para añadir
-            openModal(sealedProductModal);
-        });
-    }
-    if (sealedProductForm) {
-        sealedProductForm.addEventListener('submit', handleSealedProductFormSubmit);
-    }
-
-    if (sealedProductsTable) {
-        sealedProductsTable.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('edit-sealed-product-button')) {
-                const id = e.target.dataset.id;
-                const productRef = doc(db, `artifacts/${appId}/public/data/sealedProducts`, id);
-                const productDoc = await getDoc(productRef);
-                if (productDoc.exists()) {
-                    const product = { id: productDoc.id, ...productDoc.data() };
-                    sealedProductModalTitle.textContent = 'Editar Producto Sellado';
-                    sealedProductId.value = product.id;
-                    sealedProductName.value = product.name;
-                    sealedProductImage.value = product.imageUrl;
-                    sealedProductCategory.value = product.category;
-                    sealedProductPrice.value = product.price;
-                    sealedProductStock.value = product.stock;
-                    openModal(sealedProductModal);
-                }
-            } else if (e.target.classList.contains('delete-sealed-product-button')) {
-                const id = e.target.dataset.id;
-                const product = allSealedProducts.find(p => p.id === id);
-                openConfirmModal(id, 'sealed', product ? product.name : 'este producto sellado');
-            }
-        });
-    }
-
-    if (adminSealedSearchInput) {
-        adminSealedSearchInput.addEventListener('input', () => {
-            currentSealedProductsPage = 1;
-            renderSealedProductsTable();
-        });
-    }
-    if (adminSealedCategoryFilter) {
-        adminSealedCategoryFilter.addEventListener('change', () => {
-            currentSealedProductsPage = 1;
-            renderSealedProductsTable();
-        });
-    }
-    if (adminSealedPrevPageBtn) {
-        adminSealedPrevPageBtn.addEventListener('click', () => {
-            if (currentSealedProductsPage > 1) {
-                currentSealedProductsPage--;
-                renderSealedProductsTable();
-            }
-        });
-    }
-    if (adminSealedNextPageBtn) {
-        adminSealedNextPageBtn.addEventListener('click', () => {
-            const searchTerm = adminSealedSearchInput.value.toLowerCase();
-            const selectedCategory = adminSealedCategoryFilter.value;
-            const filteredProducts = allSealedProducts.filter(product => {
-                const matchesSearch = (product.name && product.name.toLowerCase().includes(searchTerm)) || (product.id && product.id.toLowerCase().includes(searchTerm));
-                const matchesCategory = selectedCategory === '' || (product.category && product.category === selectedCategory);
-                return matchesSearch && matchesCategory;
-            });
-            const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-            if (currentSealedProductsPage < totalPages) {
-                currentSealedProductsPage++;
-                renderSealedProductsTable();
-            }
-        });
-    }
-
-    // ======================= Categorías =======================
-    if (addCategoryBtn) {
-        addCategoryBtn.addEventListener('click', () => {
-            categoryModalTitle.textContent = 'Añadir Nueva Categoría';
-            categoryForm.reset();
-            categoryId.value = ''; // Asegurarse de que el ID esté vacío para añadir
-            openModal(categoryModal);
-        });
-    }
-    if (categoryForm) {
-        categoryForm.addEventListener('submit', handleCategoryFormSubmit);
-    }
-
-    if (categoriesTable) {
-        categoriesTable.addEventListener('click', async (e) => {
-            if (e.target.classList.contains('edit-category-button')) {
-                const id = e.target.dataset.id;
-                const name = e.target.dataset.name;
-                const categoryRef = doc(db, `artifacts/${appId}/public/data/categories`, id);
-                const categoryDoc = await getDoc(categoryRef);
-                if (categoryDoc.exists()) {
-                    categoryModalTitle.textContent = 'Editar Categoría';
-                    categoryId.value = categoryDoc.id;
-                    categoryName.value = categoryDoc.data().name;
-                    openModal(categoryModal);
-                }
-            } else if (e.target.classList.contains('delete-category-button')) {
-                const id = e.target.dataset.id;
-                const name = e.target.dataset.name;
-                openConfirmModal(id, 'category', name);
-            }
-        });
-    }
-
-    // ======================= Confirmación de Eliminación =======================
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', () => closeModal(confirmModal));
-    }
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', confirmDeletion);
     }
 });

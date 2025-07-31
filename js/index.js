@@ -3,18 +3,16 @@
 // ==========================================================================
 
 // Firebase and Firestore SDK imports
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
+import { getFirestore, collection, getDocs, doc, addDoc } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
 // Firebase configuration
-// Esta es la configuración REAL de tu proyecto Firebase 'dndtcgadmin'.
-// Copiada directamente desde tu archivo admin.js.
 const firebaseConfig = {
     apiKey: "AIzaSyDjRTOnQ4d9-4l_W-EwRbYNQ8xkTLKbwsM",
     authDomain: "dndtcgadmin.firebaseapp.com",
     projectId: "dndtcgadmin",
-    storageBucket: "dndtcgadmin.firebasbasestorage.app",
+    storageBucket: "dndtcgadmin.appspot.com", // Corregido el dominio del storage bucket
     messagingSenderId: "754642671504",
     appId: "1:754642671504:web:c087cc703862cf8c228515",
     measurementId: "G-T8KRZX5S7R"
@@ -25,34 +23,31 @@ let app;
 let db;
 let auth;
 
-// Initialize Firebase only if config is available (should always be true with hardcoded config)
-if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.authDomain) { // Basic check for valid config
+if (firebaseConfig && firebaseConfig.projectId) {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
 } else {
     console.error('Firebase configuration is incomplete or invalid. Firebase services will not be initialized.');
-    showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase. Por favor, asegúrate de que los valores de configuración de Firebase sean correctos en index.js.');
+    showMessageModal('Error de Configuración', 'La aplicación no pudo cargar la configuración de Firebase.');
 }
 
 // Application ID and User ID
-// Usamos el projectId de firebaseConfig como appId si __app_id no está definido.
-const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId || 'default-app-id';
-let userId = null; // Will be set after authentication
+const appId = firebaseConfig.projectId;
+let userId = null;
 
-// SheetDB URLs for READ operations (these can be in the frontend for GET requests)
-const SHEETDB_CARDS_API_URL = "https://sheetdb.io/api/v1/uqi0ko63u6yau";
-const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp";
-
+// Arrays para almacenar datos
 let allCards = [];
 let allSealedProducts = [];
-// El carrito ahora solo almacena el ID, tipo y cantidad. El precio y nombre se obtienen de allCards/allSealedProducts.
-let cart = JSON.parse(localStorage.getItem('cart')) || {}; // Load cart from localStorage
+let allCategories = [];
+let cart = JSON.parse(localStorage.getItem('cart')) || {};
+
+// Configuración de paginación
 let currentCardsPage = 1;
 let currentSealedProductsPage = 1;
 const itemsPerPage = 10;
 
-// DOM Element References (declared globally for access by all functions)
+// DOM Element References
 const abrirModalProductosBtn = document.getElementById('abrirModalProductos');
 const productSelectionModal = document.getElementById('productSelectionModal');
 const closeProductSelectionModalBtn = document.getElementById('closeProductSelectionModal');
@@ -99,12 +94,8 @@ const messageModalTitle = document.getElementById('messageModalTitle');
 const messageModalText = document.getElementById('messageModalText');
 const okMessageModalBtn = document.getElementById('okMessageModal');
 
-// NUEVA REFERENCIA DOM para el botón "Ver Todas las Cartas"
 const viewAllCardsBtn = document.getElementById('viewAllCardsBtn');
-// NUEVA REFERENCIA DOM para el contenedor de cartas flotantes dinámicas
 const dynamicFloatingCardsContainer = document.getElementById('dynamicFloatingCardsContainer');
-
-// NUEVA REFERENCIA DOM para la notificación "Agregado al carrito"
 const addedToCartNotification = document.getElementById('addedToCartNotification');
 
 
@@ -112,11 +103,6 @@ const addedToCartNotification = document.getElementById('addedToCartNotification
 // UTILITY FUNCTIONS
 // ==========================================================================
 
-/**
- * Displays a custom message modal.
- * @param {string} title - The title of the message.
- * @param {string} message - The message content.
- */
 function showMessageModal(title, message) {
     messageModalTitle.textContent = title;
     messageModalText.textContent = message;
@@ -124,138 +110,130 @@ function showMessageModal(title, message) {
     document.body.style.overflow = 'hidden';
 }
 
-/**
- * Closes the custom message modal.
- */
 function closeMessageModal() {
     messageModal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
-/**
- * Muestra una pequeña notificación temporal "Agregado al carrito".
- * @param {string} itemName - El nombre del artículo agregado.
- */
 function showAddedToCartNotification(itemName) {
     if (addedToCartNotification) {
         addedToCartNotification.textContent = `${itemName} agregado al carrito`;
         addedToCartNotification.classList.add('show');
         setTimeout(() => {
             addedToCartNotification.classList.remove('show');
-        }, 1500); // Oculta el mensaje después de 1.5 segundos
+        }, 1500);
     }
 }
 
-/**
- * Opens a given modal element.
- * @param {HTMLElement} modalElement - The modal DOM element to open.
- */
 function openModal(modalElement) {
-    if (modalElement) { // Added null check
+    if (modalElement) {
         modalElement.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevent scrolling on the body
+        document.body.style.overflow = 'hidden';
     }
 }
 
-/**
- * Closes a given modal element.
- * @param {HTMLElement} modalElement - The modal DOM element to close.
- */
 function closeModal(modalElement) {
-    if (modalElement) { // Added null check
+    if (modalElement) {
         modalElement.style.display = 'none';
-        document.body.style.overflow = ''; // Restore body scrolling
+        document.body.style.overflow = '';
     }
 }
 
-/**
- * Saves the current cart to localStorage.
- */
 function saveCart() {
     localStorage.setItem('cart', JSON.stringify(cart));
 }
 
 // ==========================================================================
-// DATA LOADING FUNCTIONS
+// DATA LOADING FUNCTIONS (FROM FIREBASE)
 // ==========================================================================
 
 /**
- * Loads all cards data from SheetDB.
+ * Loads all categories from Firestore to populate filters.
  */
-async function loadCardsData() {
+async function loadCategories() {
+    if (!db) return;
     try {
-        const response = await fetch(SHEETDB_CARDS_API_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        // Ensure price and stock are numbers when loading
-        allCards = (await response.json()).map(card => ({
-            ...card,
-            precio: parseFloat(card.precio) || 0,
-            stock: parseInt(card.stock) || 0
-        }));
+        const categoriesCol = collection(db, `artifacts/${appId}/public/data/categories`);
+        const categorySnapshot = await getDocs(categoriesCol);
+        allCategories = categorySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         populateCategoryFilter();
-        renderCards();
-        renderFloatingCards(); // Call this to display cards on the main page
+        populateSealedTypeFilter();
     } catch (error) {
-        console.error('Error loading cards data:', error);
-        showMessageModal('Error de Carga', 'No se pudieron cargar las cartas. Inténtalo de nuevo más tarde.');
+        console.error('Error loading categories from Firestore:', error);
+        showMessageModal('Error de Carga', 'No se pudieron cargar las categorías.');
     }
 }
 
 /**
- * Loads all sealed products data from SheetDB.
+ * Loads all cards data from Firestore.
  */
-async function loadSealedProductsData() {
+async function loadCardsData() {
+    if (!db) return;
     try {
-        const response = await fetch(SHEETDB_SEALED_PRODUCTS_API_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        // Ensure price and stock are numbers when loading
-        allSealedProducts = (await response.json()).map(product => ({
-            ...product,
-            precio: parseFloat(product.precio) || 0,
-            stock: parseInt(product.stock) || 0
+        const cardsCol = collection(db, `artifacts/${appId}/public/data/cards`);
+        const cardsSnapshot = await getDocs(cardsCol);
+        allCards = cardsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            precio: parseFloat(doc.data().precio) || 0,
+            stock: parseInt(doc.data().stock) || 0
         }));
-        populateSealedTypeFilter();
-        renderSealedProducts();
+        renderCards();
+        renderFloatingCards();
     } catch (error) {
-        console.error('Error loading sealed products data:', error);
-        showMessageModal('Error de Carga', 'No se pudieron cargar los productos sellados. Inténtalo de nuevo más tarde.');
+        console.error('Error loading cards data from Firestore:', error);
+        showMessageModal('Error de Carga', 'No se pudieron cargar las cartas.');
     }
 }
+
+/**
+ * Loads all sealed products data from Firestore.
+ */
+async function loadSealedProductsData() {
+    if (!db) return;
+    try {
+        const sealedProductsCol = collection(db, `artifacts/${appId}/public/data/sealed_products`);
+        const sealedProductsSnapshot = await getDocs(sealedProductsCol);
+        allSealedProducts = sealedProductsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            precio: parseFloat(doc.data().precio) || 0,
+            stock: parseInt(doc.data().stock) || 0
+        }));
+        renderSealedProducts();
+    } catch (error) {
+        console.error('Error loading sealed products from Firestore:', error);
+        showMessageModal('Error de Carga', 'No se pudieron cargar los productos sellados.');
+    }
+}
+
 
 /**
  * Populates the category filter dropdown for cards.
  */
 function populateCategoryFilter() {
-    const categories = [...new Set(allCards.map(card => card.categoria))].filter(Boolean); // Get unique categories, filter out empty
-    if (categoryFilter) { // Added null check
-        categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
-        categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category;
-            option.textContent = category;
-            categoryFilter.appendChild(option);
-        });
-    }
+    if (!categoryFilter) return;
+    categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+    allCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.name;
+        option.textContent = category.name;
+        categoryFilter.appendChild(option);
+    });
 }
 
 /**
  * Populates the type filter dropdown for sealed products.
  */
 function populateSealedTypeFilter() {
-    const types = [...new Set(allSealedProducts.map(product => product.tipo_producto))].filter(Boolean); // Get unique types, filter out empty
-    if (sealedTypeFilter) { // Added null check
-        sealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
-        types.forEach(type => {
-            const option = document.createElement('option');
-            option.value = type;
-            option.textContent = type;
-            sealedTypeFilter.appendChild(option);
-        });
-    }
+    if (!sealedTypeFilter) return;
+    sealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
+    allCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.name;
+        option.textContent = category.name;
+        sealedTypeFilter.appendChild(option);
+    });
 }
 
 // ==========================================================================
@@ -263,44 +241,50 @@ function populateSealedTypeFilter() {
 // ==========================================================================
 
 /**
- * Renders a selection of cards in the floating section on the main page.
+ * Renders the infinite scrolling card carousel on the homepage.
  */
 function renderFloatingCards() {
-    if (!dynamicFloatingCardsContainer) return; // Ensure element exists
+    if (!dynamicFloatingCardsContainer) return;
 
-    dynamicFloatingCardsContainer.innerHTML = ''; // Clear previous cards
+    dynamicFloatingCardsContainer.innerHTML = ''; // Limpia el contenedor
 
-    // Get a subset of cards to display (e.g., first 5 or random 5)
-    // For simplicity, let's take the first 5 available cards that have an image.
-    // CORRECCIÓN: Aseguramos que 'imagen' sea una URL válida antes de usarla
-    const cardsToDisplay = allCards.filter(card => card.imagen && typeof card.imagen === 'string' && card.imagen.startsWith('http')).slice(0, 5);
+    // 1. Obtiene hasta 10 cartas para mostrar
+    const cardsToDisplay = allCards
+        .filter(card => card.imagen_url && typeof card.imagen_url === 'string' && card.imagen_url.startsWith('http'))
+        .slice(0, 10);
 
     if (cardsToDisplay.length === 0) {
         dynamicFloatingCardsContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No hay cartas disponibles para mostrar.</p>';
         return;
     }
 
-    cardsToDisplay.forEach((card, index) => {
+    // 2. Crea los elementos de las cartas
+    const cardElements = cardsToDisplay.map(card => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('floating-card');
-        // Use a CSS custom property for animation delay
-        cardElement.style.setProperty('--i', index + 1); 
-        cardElement.innerHTML = `
-            <img src="${card.imagen}" alt="${card.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/150x210/cccccc/333333?text=No+Image';" />
-        `;
-        dynamicFloatingCardsContainer.appendChild(cardElement);
+        cardElement.innerHTML = `<img src="${card.imagen_url}" alt="${card.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/150x210/cccccc/333333?text=No+Image';" />`;
+        return cardElement;
     });
+
+    // 3. Añade las cartas originales al contenedor
+    cardElements.forEach(el => dynamicFloatingCardsContainer.appendChild(el));
+
+    // 4. Clona y añade las cartas de nuevo para crear el bucle infinito
+    if (cardsToDisplay.length > 1) { // Solo clona si hay más de una carta
+        cardElements.forEach(el => {
+            const clone = el.cloneNode(true);
+            dynamicFloatingCardsContainer.appendChild(clone);
+        });
+    }
+
+    // 5. Establece la animación dinámicamente
+    const numCards = cardsToDisplay.length;
+    const animationDuration = numCards * 4; // 4 segundos por carta (ajusta si es necesario)
+    dynamicFloatingCardsContainer.style.animation = `scroll ${animationDuration}s linear infinite`;
 }
 
-
-/**
- * Renders cards based on current filters and pagination.
- */
 function renderCards() {
-    if (!cardsContainer || !searchInput || !categoryFilter || !pageInfo || !prevPageBtn || !nextPageBtn) { // Added null checks
-        console.warn("One or more DOM elements for cards rendering are missing. Check index.html IDs.");
-        return;
-    }
+    if (!cardsContainer || !searchInput || !categoryFilter) return;
     cardsContainer.innerHTML = '';
     const searchTerm = searchInput.value.toLowerCase();
     const selectedCategory = categoryFilter.value;
@@ -311,7 +295,7 @@ function renderCards() {
         return matchesSearch && matchesCategory;
     });
 
-    filteredCards.sort((a, b) => a.nombre.localeCompare(b.nombre)); // Sort alphabetically by name
+    filteredCards.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
     const startIndex = (currentCardsPage - 1) * itemsPerPage;
@@ -325,9 +309,8 @@ function renderCards() {
     cardsToDisplay.forEach(card => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('carta');
-        // El input de cantidad ahora siempre inicia en 1 para "añadir"
         cardElement.innerHTML = `
-            <img src="${card.imagen}" alt="${card.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/180x250/cccccc/333333?text=No+Image';" />
+            <img src="${card.imagen_url}" alt="${card.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/180x250/cccccc/333333?text=No+Image';" />
             <h4>${card.nombre}</h4>
             <p>Precio: $${card.precio.toFixed(2)}</p>
             <p>Stock: ${card.stock}</p>
@@ -346,25 +329,19 @@ function renderCards() {
     updatePaginationControls(currentCardsPage, totalPages, pageInfo, prevPageBtn, nextPageBtn, filteredCards.length);
 }
 
-/**
- * Renders sealed products based on current filters and pagination.
- */
 function renderSealedProducts() {
-    if (!sealedProductsContainer || !sealedSearchInput || !sealedTypeFilter || !sealedPageInfo || !sealedPrevPageBtn || !sealedNextPageBtn) { // Added null checks
-        console.warn("One or more DOM elements for sealed products rendering are missing. Check index.html IDs.");
-        return;
-    }
+    if (!sealedProductsContainer || !sealedSearchInput || !sealedTypeFilter) return;
     sealedProductsContainer.innerHTML = '';
     const searchTerm = sealedSearchInput.value.toLowerCase();
     const selectedType = sealedTypeFilter.value;
 
     let filteredProducts = allSealedProducts.filter(product => {
-        const matchesSearch = product.producto.toLowerCase().includes(searchTerm);
-        const matchesType = selectedType === '' || product.tipo_producto === selectedType;
+        const matchesSearch = product.nombre.toLowerCase().includes(searchTerm);
+        const matchesType = selectedType === '' || product.categoria === selectedType;
         return matchesSearch && matchesType;
     });
 
-    filteredProducts.sort((a, b) => a.producto.localeCompare(b.producto)); // Sort alphabetically by name
+    filteredProducts.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     const startIndex = (currentSealedProductsPage - 1) * itemsPerPage;
@@ -377,20 +354,19 @@ function renderSealedProducts() {
 
     productsToDisplay.forEach(product => {
         const productElement = document.createElement('div');
-        productElement.classList.add('carta'); // Reusing 'carta' class for styling consistency
-        // El input de cantidad ahora siempre inicia en 1 para "añadir"
+        productElement.classList.add('carta');
         productElement.innerHTML = `
-            <img src="${product.imagen}" alt="${product.producto}" onerror="this.onerror=null;this.src='https://placehold.co/180x250/cccccc/333333?text=No+Image';" />
-            <h4>${product.producto}</h4>
-            <p>Tipo: ${product.tipo_producto}</p>
+            <img src="${product.imagen_url}" alt="${product.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/180x250/cccccc/333333?text=No+Image';" />
+            <h4>${product.nombre}</h4>
+            <p>Tipo: ${product.categoria}</p>
             <p>Precio: $${product.precio.toFixed(2)}</p>
             <p>Stock: ${product.stock}</p>
             <div class="quantity-controls">
-                <button class="decrease-quantity" data-id="${product.id_producto}" data-type="sealed">-</button>
-                <input type="number" class="quantity-input" value="1" min="1" max="${product.stock}" data-id="${product.id_producto}" data-type="sealed">
-                <button class="increase-quantity" data-id="${product.id_producto}" data-type="sealed">+</button>
+                <button class="decrease-quantity" data-id="${product.id}" data-type="sealed">-</button>
+                <input type="number" class="quantity-input" value="1" min="1" max="${product.stock}" data-id="${product.id}" data-type="sealed">
+                <button class="increase-quantity" data-id="${product.id}" data-type="sealed">+</button>
             </div>
-            <button class="agregar-carrito" data-id="${product.id_producto}" data-type="sealed" ${product.stock === 0 ? 'disabled' : ''}>
+            <button class="agregar-carrito" data-id="${product.id}" data-type="sealed" ${product.stock === 0 ? 'disabled' : ''}>
                 ${product.stock === 0 ? 'Agotado' : 'Añadir al Carrito'}
             </button>
         `;
@@ -400,30 +376,15 @@ function renderSealedProducts() {
     updatePaginationControls(currentSealedProductsPage, totalPages, sealedPageInfo, sealedPrevPageBtn, sealedNextPageBtn, filteredProducts.length);
 }
 
-/**
- * Updates pagination controls (page info, prev/next button states).
- * @param {number} currentPage - The current page number.
- * @param {number} totalPages - The total number of pages.
- * @param {HTMLElement} infoSpan - The span element displaying page info.
- * @param {HTMLElement} prevBtn - The previous page button element.
- * @param {HTMLElement} nextBtn - The next page button element.
- * @param {number} totalItems - The total count of filtered items.
- */
 function updatePaginationControls(currentPage, totalPages, infoSpan, prevBtn, nextBtn, totalItems) {
-    if (!infoSpan || !prevBtn || !nextBtn) return; // Added null checks
-    infoSpan.textContent = `Página ${currentPage} de ${totalPages} (${totalItems} items)`;
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    if (!infoSpan || !prevBtn || !nextBtn) return;
+    infoSpan.textContent = `Página ${currentPage} de ${totalPages || 1} (${totalItems} items)`;
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
 }
 
-/**
- * Renders the shopping cart content.
- */
 function renderCart() {
-    if (!listaCarrito || !vaciarCarritoBtn || !openCheckoutModalBtn) { // Added null checks
-        console.warn("One or more DOM elements for cart rendering are missing. Check index.html IDs.");
-        return;
-    }
+    if (!listaCarrito) return;
     listaCarrito.innerHTML = '';
     let total = 0;
 
@@ -438,49 +399,35 @@ function renderCart() {
     }
 
     for (const id in cart) {
-        const item = cart[id];
+        const itemInCart = cart[id];
         const itemElement = document.createElement('div');
         itemElement.classList.add('cart-item');
 
-        let imageUrl = '';
-        let itemName = '';
-        let itemPrice = 0;
-        let itemStock = 0;
-
-        if (item.type === 'card') {
-            const card = allCards.find(c => c.id === id);
-            if (card) {
-                imageUrl = card.imagen;
-                itemName = card.nombre;
-                itemPrice = card.precio;
-                itemStock = card.stock;
-            }
-        } else if (item.type === 'sealed') {
-            const product = allSealedProducts.find(p => p.id_producto === id);
-            if (product) {
-                imageUrl = product.imagen;
-                itemName = product.producto;
-                itemPrice = product.precio;
-                itemStock = product.stock;
-            }
+        let productData = null;
+        if (itemInCart.type === 'card') {
+            productData = allCards.find(c => c.id === id);
+        } else if (itemInCart.type === 'sealed') {
+            productData = allSealedProducts.find(p => p.id === id);
         }
 
-        itemElement.innerHTML = `
-            <img src="${imageUrl}" alt="${itemName}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/cccccc/333333?text=No+Image';" />
-            <div class="item-details">
-                <h4>${itemName}</h4>
-                <p>Precio: $${itemPrice.toFixed(2)}</p>
-                <p>Subtotal: $${(item.quantity * itemPrice).toFixed(2)}</p>
-            </div>
-            <div class="quantity-controls-cart">
-                <button class="decrease-cart-quantity" data-id="${id}" data-type="${item.type}">-</button>
-                <input type="number" class="quantity-input-cart" value="${cart[id] ? cart[id].quantity : 0}" min="1" max="${itemStock}" data-id="${id}" data-type="${item.type}">
-                <button class="increase-cart-quantity" data-id="${id}" data-type="${item.type}">+</button> <!-- ADDED '+' SIGN HERE -->
-            </div>
-            <button class="eliminar-item" data-id="${id}" data-type="${item.type}">Eliminar</button>
-        `;
-        listaCarrito.appendChild(itemElement);
-        total += item.quantity * itemPrice;
+        if (productData) {
+            itemElement.innerHTML = `
+                <img src="${productData.imagen_url}" alt="${productData.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/cccccc/333333?text=No+Image';" />
+                <div class="item-details">
+                    <h4>${productData.nombre}</h4>
+                    <p>Precio: $${productData.precio.toFixed(2)}</p>
+                    <p>Subtotal: $${(itemInCart.quantity * productData.precio).toFixed(2)}</p>
+                </div>
+                <div class="quantity-controls-cart">
+                    <button class="decrease-cart-quantity" data-id="${id}" data-type="${itemInCart.type}">-</button>
+                    <input type="number" class="quantity-input-cart" value="${itemInCart.quantity}" min="1" max="${productData.stock}" data-id="${id}" data-type="${itemInCart.type}">
+                    <button class="increase-cart-quantity" data-id="${id}" data-type="${itemInCart.type}">+</button>
+                </div>
+                <button class="eliminar-item" data-id="${id}" data-type="${itemInCart.type}">Eliminar</button>
+            `;
+            listaCarrito.appendChild(itemElement);
+            total += itemInCart.quantity * productData.precio;
+        }
     }
 
     const totalElement = document.createElement('div');
@@ -493,29 +440,15 @@ function renderCart() {
 // CART MANAGEMENT FUNCTIONS
 // ==========================================================================
 
-/**
- * Adds an item to the cart or updates its quantity.
- * @param {string} id - The ID of the item.
- * @param {string} type - The type of the item ('card' or 'sealed').
- * @param {number} quantityToAdd - La cantidad que se intenta añadir.
- * @param {boolean} [showNotification=true] - Si se debe mostrar la notificación "Agregado al carrito".
- */
 function addToCart(id, type, quantityToAdd, showNotification = true) {
-    let item = null;
-    let currentStock = 0;
-    let itemName = ''; // Para la notificación
-
+    let itemData = null;
     if (type === 'card') {
-        item = allCards.find(c => c.id === id);
-        currentStock = item ? item.stock : 0;
-        itemName = item ? item.nombre : 'Artículo';
+        itemData = allCards.find(c => c.id === id);
     } else if (type === 'sealed') {
-        item = allSealedProducts.find(p => p.id_producto === id);
-        currentStock = item ? item.stock : 0;
-        itemName = item ? item.producto : 'Artículo';
+        itemData = allSealedProducts.find(p => p.id === id);
     }
 
-    if (!item) {
+    if (!itemData) {
         showMessageModal('Error', 'Producto no encontrado.');
         return;
     }
@@ -523,10 +456,9 @@ function addToCart(id, type, quantityToAdd, showNotification = true) {
     const currentQuantityInCart = cart[id] ? cart[id].quantity : 0;
     const newQuantity = currentQuantityInCart + quantityToAdd;
 
-    // Lógica para no exceder el stock disponible
-    if (newQuantity > currentStock) {
-        showMessageModal('Stock Insuficiente', `Solo hay ${currentStock} unidades de "${itemName}" disponibles. No se puede añadir ${quantityToAdd} más.`);
-        return; // No se agrega al carrito si excede el stock
+    if (newQuantity > itemData.stock) {
+        showMessageModal('Stock Insuficiente', `Solo hay ${itemData.stock} unidades de "${itemData.nombre}" disponibles.`);
+        return;
     }
 
     if (newQuantity <= 0) {
@@ -540,50 +472,35 @@ function addToCart(id, type, quantityToAdd, showNotification = true) {
     }
     saveCart();
     renderCart();
-    renderCards(); // Re-render cards to update quantity inputs (which will now reset to 1)
-    renderSealedProducts(); // Re-render sealed products to update quantity inputs (which will now reset to 1)
+    renderCards();
+    renderSealedProducts();
 
-    // Mostrar notificación solo si showNotification es true y la cantidad es mayor a 0
-    if (showNotification && quantityToAdd > 0) { // Notificación basada en la cantidad que se intentó añadir
-        showAddedToCartNotification(itemName);
+    if (showNotification && quantityToAdd > 0) {
+        showAddedToCartNotification(itemData.nombre);
     }
 }
 
-/**
- * Removes an item from the cart.
- * @param {string} id - The ID of the item to remove.
- */
 function removeFromCart(id) {
     delete cart[id];
     saveCart();
     renderCart();
-    renderCards(); // Re-render cards to update quantity inputs
-    renderSealedProducts(); // Re-render sealed products to update quantity inputs
+    renderCards();
+    renderSealedProducts();
 }
 
-/**
- * Empties the entire cart.
- */
 function clearCart() {
     cart = {};
     saveCart();
     renderCart();
-    renderCards(); // Re-render cards to update quantity inputs
-    renderSealedProducts(); // Re-render sealed products to update quantity inputs
+    renderCards();
+    renderSealedProducts();
 }
 
 // ==========================================================================
 // CHECKOUT FUNCTIONS
 // ==========================================================================
 
-/**
- * Handles the order confirmation and sends a WhatsApp message.
- */
 async function confirmOrder() {
-    if (!customerNameInput || !customerPhoneInput || !customerAddressInput || !confirmOrderBtn || !checkoutLoadingSpinner) { // Added null checks
-        console.warn("One or more DOM elements for checkout are missing. Check index.html IDs.");
-        return;
-    }
     const customerName = customerNameInput.value.trim();
     const customerPhone = customerPhoneInput.value.trim();
     const customerAddress = customerAddressInput.value.trim();
@@ -592,9 +509,8 @@ async function confirmOrder() {
         showMessageModal('Error', 'Por favor, completa todos los campos del formulario.');
         return;
     }
-
     if (Object.keys(cart).length === 0) {
-        showMessageModal('Carrito Vacío', 'No hay productos en tu carrito para realizar un pedido.');
+        showMessageModal('Carrito Vacío', 'No hay productos en tu carrito.');
         return;
     }
 
@@ -615,12 +531,11 @@ async function confirmOrder() {
         if (item.type === 'card') {
             productInfo = allCards.find(c => c.id === id);
         } else if (item.type === 'sealed') {
-            productInfo = allSealedProducts.find(p => p.id_producto === id);
+            productInfo = allSealedProducts.find(p => p.id === id);
         }
-
         if (productInfo) {
             const subtotal = item.quantity * productInfo.precio;
-            orderDetails += `- ${item.quantity}x ${productInfo.nombre || productInfo.producto} ($${productInfo.precio.toFixed(2)} c/u) - Subtotal: $${subtotal.toFixed(2)}\n`;
+            orderDetails += `- ${item.quantity}x ${productInfo.nombre} ($${productInfo.precio.toFixed(2)} c/u) - Subtotal: $${subtotal.toFixed(2)}\n`;
             totalOrderPrice += subtotal;
         }
     }
@@ -628,43 +543,30 @@ async function confirmOrder() {
     orderDetails += `\nTotal del Pedido: $${totalOrderPrice.toFixed(2)}\n\n`;
     orderDetails += '¡Gracias por tu compra!';
 
-    // Encode the message for WhatsApp URL
     const whatsappMessage = encodeURIComponent(orderDetails);
-    const whatsappUrl = `https://wa.me/50377478050?text=${whatsappMessage}`; // Replace with your WhatsApp number
+    const whatsappUrl = `https://wa.me/50377478050?text=${whatsappMessage}`;
 
-    // Simulate sending order to backend (e.g., Firestore)
     try {
-        // Ensure db is initialized before attempting Firestore operations
-        if (!db) {
-            throw new Error('Firestore is not initialized.');
-        }
-
-        // Add order to Firestore
+        if (!db) throw new Error('Firestore is not initialized.');
         await addDoc(collection(db, `artifacts/${appId}/public/data/orders`), {
             customerName,
             customerPhone,
             customerAddress,
-            cart: JSON.stringify(cart), // Store cart as string to handle complex objects
+            cart: JSON.stringify(cart),
             total: totalOrderPrice,
             timestamp: new Date().toISOString(),
             status: 'pending'
         });
 
-        // Open WhatsApp
         window.open(whatsappUrl, '_blank');
-
-        showMessageModal('Pedido Confirmado', 'Tu pedido ha sido enviado. ¡Gracias por tu compra! Serás redirigido a WhatsApp para finalizar la comunicación.');
-        clearCart(); // Clear cart after successful order
-        closeModal(checkoutModal); // Close checkout modal
-        checkoutForm.reset(); // Reset form
-        
-        // Re-render products to reflect updated stock (if you implement stock deduction)
-        await loadCardsData();
-        await loadSealedProductsData();
+        showMessageModal('Pedido Confirmado', 'Tu pedido ha sido enviado. ¡Gracias por tu compra!');
+        clearCart();
+        closeModal(checkoutModal);
+        checkoutForm.reset();
 
     } catch (error) {
-        console.error('Error al confirmar el pedido o enviar a Firestore:', error);
-        showMessageModal('Error al Confirmar', `Hubo un problema al procesar tu pedido: ${error.message}. Por favor, inténtalo de nuevo.`);
+        console.error('Error al confirmar el pedido:', error);
+        showMessageModal('Error al Confirmar', `Hubo un problema al procesar tu pedido: ${error.message}.`);
     } finally {
         confirmOrderBtn.disabled = false;
         checkoutLoadingSpinner.style.display = 'none';
@@ -672,84 +574,58 @@ async function confirmOrder() {
 }
 
 // ==========================================================================
-// EVENT LISTENERS
+// INITIALIZATION AND EVENT LISTENERS
 // ==========================================================================
 
-// Firebase Auth State Listener
-// Only attach if 'auth' object is initialized
-if (auth) {
-    onAuthStateChanged(auth, (user) => {
+async function initializeAppAndData() {
+    if (!auth) {
+        console.error('Firebase Auth no está inicializado.');
+        showMessageModal('Error Crítico', 'La autenticación no está disponible.');
+        return;
+    }
+    
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
             userId = user.uid;
             console.log('User is signed in:', userId);
-            // Load initial data for the store
-            loadCardsData();
-            loadSealedProductsData();
         } else {
-            console.log('No user is signed in. Attempting anonymous sign-in...');
-            // Se usa __initial_auth_token si está disponible, de lo contrario, signInAnonymously
-            // En Netlify, __initial_auth_token no estará definido, por lo que siempre intentará signInAnonymously
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                signInWithCustomToken(auth, __initial_auth_token).then((userCredential) => {
-                    userId = userCredential.user.uid;
-                    console.log('Signed in with custom token with UID:', userId);
-                    loadCardsData();
-                    loadSealedProductsData();
-                }).catch((error) => {
-                    console.error('Error signing in with custom token:', error);
-                    // Fallback a anónimo si el token personalizado falla
-                    signInAnonymously(auth).then((anonUserCredential) => {
-                        userId = anonUserCredential.user.uid;
-                        console.log('Signed in anonymously after custom token failure with UID:', userId);
-                        loadCardsData();
-                        loadSealedProductsData();
-                    }).catch((anonError) => {
-                        console.error('Error signing in anonymously:', anonError);
-                        showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión. Algunas funciones podrían no estar disponibles.');
-                    });
-                });
-            } else {
-                signInAnonymously(auth).then((userCredential) => {
-                    userId = userCredential.user.uid;
-                    console.log('Signed in anonymously with UID:', userId);
-                    loadCardsData();
-                    loadSealedProductsData();
-                }).catch((error) => {
-                    console.error('Error signing in anonymously:', error);
-                    showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión anónimamente. Algunas funciones podrían no estar disponibles.');
-                });
+            try {
+                const userCredential = await signInAnonymously(auth);
+                userId = userCredential.user.uid;
+                console.log('Signed in anonymously with UID:', userId);
+            } catch (error) {
+                console.error('Error signing in anonymously:', error);
+                showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión anónimamente.');
+                return; // Stop execution if auth fails
             }
         }
+        // Load all data after ensuring user is authenticated (anonymously or otherwise)
+        await loadCategories();
+        await loadCardsData();
+        await loadSealedProductsData();
     });
-} else {
-    // If auth is not initialized, log an error and potentially show a message
-    console.error('Firebase Auth is not initialized. User authentication and Firestore operations will not work.');
-    showMessageModal('Error de Inicio', 'La autenticación no está disponible. Por favor, recarga la página o contacta al soporte.');
-    // Incluso si Firebase Auth no se inicializa, intentamos cargar los datos de SheetDB
-    // para que la tienda sea funcional aunque no se guarden pedidos en Firestore.
-    loadCardsData();
-    loadSealedProductsData();
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
+    initializeAppAndData();
+
     // Event listeners for modals
     if (abrirModalProductosBtn) abrirModalProductosBtn.addEventListener('click', () => openModal(productSelectionModal));
     if (closeProductSelectionModalBtn) closeProductSelectionModalBtn.addEventListener('click', () => closeModal(productSelectionModal));
     if (openCardsModalBtn) openCardsModalBtn.addEventListener('click', () => {
         closeModal(productSelectionModal);
         openModal(cardsModal);
-        currentCardsPage = 1; // Reset pagination when opening
-        if (searchInput) searchInput.value = ''; // Clear search
-        if (categoryFilter) categoryFilter.value = ''; // Clear filter
+        currentCardsPage = 1;
+        if (searchInput) searchInput.value = '';
+        if (categoryFilter) categoryFilter.value = '';
         renderCards();
     });
     if (openSealedProductsModalBtn) openSealedProductsModalBtn.addEventListener('click', () => {
         closeModal(productSelectionModal);
         openModal(sealedProductsModal);
-        currentSealedProductsPage = 1; // Reset pagination when opening
-        if (sealedSearchInput) sealedSearchInput.value = ''; // Clear search
-        if (sealedTypeFilter) sealedTypeFilter.value = ''; // Clear filter
+        currentSealedProductsPage = 1;
+        if (sealedSearchInput) sealedSearchInput.value = '';
+        if (sealedTypeFilter) sealedTypeFilter.value = '';
         renderSealedProducts();
     });
 
@@ -763,72 +639,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cerrarCarritoBtn) cerrarCarritoBtn.addEventListener('click', () => closeModal(modalCarrito));
 
     if (openCheckoutModalBtn) openCheckoutModalBtn.addEventListener('click', () => {
-        closeModal(modalCarrito); // Close cart modal
-        openModal(checkoutModal); // Open checkout modal
+        closeModal(modalCarrito);
+        openModal(checkoutModal);
     });
     if (closeCheckoutModalBtn) closeCheckoutModalBtn.addEventListener('click', () => closeModal(checkoutModal));
 
     if (okMessageModalBtn) okMessageModalBtn.addEventListener('click', closeMessageModal);
     if (closeMessageModalBtn) closeMessageModalBtn.addEventListener('click', closeMessageModal);
 
-
     // Event listeners for card/product list interactions
-    if (searchInput) searchInput.addEventListener('input', () => {
-        currentCardsPage = 1;
-        renderCards();
-    });
-    if (categoryFilter) categoryFilter.addEventListener('change', () => {
-        currentCardsPage = 1;
-        renderCards();
-    });
-    if (prevPageBtn) prevPageBtn.addEventListener('click', () => {
-        if (currentCardsPage > 1) {
-            currentCardsPage--;
-            renderCards();
-        }
-    });
+    if (searchInput) searchInput.addEventListener('input', () => { currentCardsPage = 1; renderCards(); });
+    if (categoryFilter) categoryFilter.addEventListener('change', () => { currentCardsPage = 1; renderCards(); });
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => { if (currentCardsPage > 1) { currentCardsPage--; renderCards(); } });
     if (nextPageBtn) nextPageBtn.addEventListener('click', () => {
-        const searchTerm = searchInput.value.toLowerCase();
-        const selectedCategory = categoryFilter.value;
-        const filteredCards = allCards.filter(card => {
-            const matchesSearch = card.nombre.toLowerCase().includes(searchTerm);
-            const matchesCategory = selectedCategory === '' || card.categoria === selectedCategory;
-            return matchesSearch && matchesCategory;
-        });
-        const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
-        if (currentCardsPage < totalPages) {
-            currentCardsPage++;
-            renderCards();
-        }
+        const filtered = allCards.filter(c => c.nombre.toLowerCase().includes(searchInput.value.toLowerCase()) && (categoryFilter.value === '' || c.categoria === categoryFilter.value));
+        if (currentCardsPage < Math.ceil(filtered.length / itemsPerPage)) { currentCardsPage++; renderCards(); }
     });
 
-    if (sealedSearchInput) sealedSearchInput.addEventListener('input', () => {
-        currentSealedProductsPage = 1;
-        renderSealedProducts();
-    });
-    if (sealedTypeFilter) sealedTypeFilter.addEventListener('change', () => {
-        currentSealedProductsPage = 1;
-        renderSealedProducts();
-    });
-    if (sealedPrevPageBtn) sealedPrevPageBtn.addEventListener('click', () => {
-        if (currentSealedProductsPage > 1) {
-            currentSealedProductsPage--;
-            renderSealedProducts();
-        }
-    });
+    if (sealedSearchInput) sealedSearchInput.addEventListener('input', () => { currentSealedProductsPage = 1; renderSealedProducts(); });
+    if (sealedTypeFilter) sealedTypeFilter.addEventListener('change', () => { currentSealedProductsPage = 1; renderSealedProducts(); });
+    if (sealedPrevPageBtn) sealedPrevPageBtn.addEventListener('click', () => { if (currentSealedProductsPage > 1) { currentSealedProductsPage--; renderSealedProducts(); } });
     if (sealedNextPageBtn) sealedNextPageBtn.addEventListener('click', () => {
-        const searchTerm = sealedSearchInput.value.toLowerCase();
-        const selectedType = sealedTypeFilter.value;
-        const filteredProducts = allSealedProducts.filter(product => {
-            const matchesSearch = product.producto.toLowerCase().includes(searchTerm);
-            const matchesType = selectedType === '' || product.tipo_producto === selectedType;
-            return matchesSearch && matchesType;
-        });
-        const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-        if (currentSealedProductsPage < totalPages) {
-            currentSealedProductsPage++;
-            renderSealedProducts();
-        }
+        const filtered = allSealedProducts.filter(p => p.nombre.toLowerCase().includes(sealedSearchInput.value.toLowerCase()) && (sealedTypeFilter.value === '' || p.categoria === sealedTypeFilter.value));
+        if (currentSealedProductsPage < Math.ceil(filtered.length / itemsPerPage)) { currentSealedProductsPage++; renderSealedProducts(); }
     });
 
     // Delegated event listener for "Add to Cart" and quantity buttons
@@ -836,176 +669,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('agregar-carrito')) {
             const id = e.target.dataset.id;
             const type = e.target.dataset.type;
-            // Encuentra el input de cantidad asociado a este botón "Añadir al Carrito"
             const quantityInput = e.target.closest('.carta').querySelector('.quantity-input');
             let quantityToAdd = parseInt(quantityInput.value);
-            
-            // Si la cantidad es inválida o menor a 1, por defecto añadir 1
-            if (isNaN(quantityToAdd) || quantityToAdd < 1) {
-                quantityToAdd = 1;
-                quantityInput.value = 1; // Ajusta el input visualmente si era inválido
-            }
-
-            addToCart(id, type, quantityToAdd, true); // Pasa 'true' para mostrar la notificación
-            // El input se reiniciará a 1 automáticamente después de renderCards/renderSealedProducts
+            if (isNaN(quantityToAdd) || quantityToAdd < 1) quantityToAdd = 1;
+            addToCart(id, type, quantityToAdd, true);
         } else if (e.target.classList.contains('increase-quantity')) {
-            const quantityInput = e.target.parentNode.querySelector('.quantity-input');
-            let currentValue = parseInt(quantityInput.value);
-            if (isNaN(currentValue)) currentValue = 0; // Manejar caso de input vacío/inválido
-            
-            // Obtener el stock máximo para esta carta/producto
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
-            let item = null;
-            let currentStock = 0;
-            if (type === 'card') {
-                item = allCards.find(c => c.id === id);
-            } else if (type === 'sealed') {
-                item = allSealedProducts.find(p => p.id_producto === id);
-            }
-            currentStock = item ? item.stock : 0;
-
-            if (currentValue < currentStock) {
-                quantityInput.value = currentValue + 1;
-            } else {
-                showMessageModal('Stock Máximo', `Solo puedes añadir hasta ${currentStock} unidades.`);
-            }
-            // No se llama a addToCart aquí, solo se actualiza el input
+            const input = e.target.parentNode.querySelector('.quantity-input');
+            let maxStock = parseInt(input.getAttribute('max'));
+            if (parseInt(input.value) < maxStock) input.value = parseInt(input.value) + 1;
         } else if (e.target.classList.contains('decrease-quantity')) {
-            const quantityInput = e.target.parentNode.querySelector('.quantity-input');
-            let currentValue = parseInt(quantityInput.value);
-            if (isNaN(currentValue)) currentValue = 0; // Manejar caso de input vacío/inválido
-
-            if (currentValue > 1) { // No permitir que baje de 1
-                quantityInput.value = currentValue - 1;
-            } else {
-                showMessageModal('Cantidad Mínima', 'La cantidad mínima a añadir es 1.');
-            }
-            // No se llama a addToCart aquí, solo se actualiza el input
+            const input = e.target.parentNode.querySelector('.quantity-input');
+            if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
         } else if (e.target.classList.contains('eliminar-item')) {
-            const id = e.target.dataset.id;
-            removeFromCart(id);
+            removeFromCart(e.target.dataset.id);
         } else if (e.target.classList.contains('increase-cart-quantity')) {
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
-            addToCart(id, type, 1, false); // Pasa 'false' para NO mostrar la notificación
+            addToCart(e.target.dataset.id, e.target.dataset.type, 1, false);
         } else if (e.target.classList.contains('decrease-cart-quantity')) {
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
-            addToCart(id, type, -1, false); // Pasa 'false' para NO mostrar la notificación
+            addToCart(e.target.dataset.id, e.target.dataset.type, -1, false);
         }
     });
-
-    // Delegated event listener for quantity input changes (manual typing)
-    document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('quantity-input')) {
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
-            let newQuantity = parseInt(e.target.value);
-
-            let item = null;
-            let currentStock = 0;
-            let itemName = ''; 
-
-            if (type === 'card') {
-                item = allCards.find(c => c.id === id);
-                currentStock = item ? item.stock : 0;
-                itemName = item ? item.nombre : 'Artículo';
-            } else if (type === 'sealed') {
-                item = allSealedProducts.find(p => p.id_producto === id);
-                currentStock = item ? item.stock : 0;
-                itemName = item ? item.producto : 'Artículo';
-            }
-
-            if (!item) {
-                showMessageModal('Error', 'Producto no encontrado.');
-                e.target.value = 1; // Reset to 1 if item not found
-                return;
-            }
-
-            if (isNaN(newQuantity) || newQuantity < 1) { // Mínimo 1 para añadir
-                newQuantity = 1;
-                showMessageModal('Cantidad Inválida', 'La cantidad debe ser al menos 1.');
-            }
-            if (newQuantity > currentStock) {
-                newQuantity = currentStock; // Ajusta la cantidad al stock máximo
-                showMessageModal('Stock Máximo', `Solo puedes añadir hasta ${currentStock} unidades de "${itemName}".`);
-            }
-
-            e.target.value = newQuantity; // Update input value to corrected quantity
-            // No se llama a addToCart aquí, solo se valida y ajusta el input
-        } else if (e.target.classList.contains('quantity-input-cart')) {
-            // Lógica para inputs en el carrito (mantener el comportamiento actual de actualizar el carrito)
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
-            let newQuantity = parseInt(e.target.value);
-
-            let item = null;
-            let currentStock = 0;
-            let itemName = ''; 
-
-            if (type === 'card') {
-                item = allCards.find(c => c.id === id);
-                currentStock = item ? item.stock : 0;
-                itemName = item ? item.nombre : 'Artículo';
-            } else if (type === 'sealed') {
-                item = allSealedProducts.find(p => p.id_producto === id);
-                currentStock = item ? item.stock : 0;
-                itemName = item ? item.producto : 'Artículo';
-            }
-
-            if (!item) {
-                showMessageModal('Error', 'Producto no encontrado.');
-                return;
-            }
-
-            if (isNaN(newQuantity) || newQuantity < 0) {
-                newQuantity = 0;
-            }
-            if (newQuantity > currentStock) {
-                newQuantity = currentStock;
-                showMessageModal('Stock Insuficiente', `Solo hay ${currentStock} unidades de "${itemName}" disponibles.`);
-            }
-
-            e.target.value = newQuantity; // Update input value to corrected quantity
-
-            if (newQuantity === 0) {
-                delete cart[id];
-            } else {
-                cart[id] = {
-                    id: id,
-                    type: type,
-                    quantity: newQuantity
-                };
-            }
-            saveCart();
-            renderCart();
-            renderCards(); // Re-render to update other quantity inputs
-            renderSealedProducts(); // Re-render to update other quantity inputs
-        }
-    });
-
+    
     if (vaciarCarritoBtn) vaciarCarritoBtn.addEventListener('click', clearCart);
     if (confirmOrderBtn) confirmOrderBtn.addEventListener('click', confirmOrder);
 
-    // Close modals when clicking outside
-    window.addEventListener('click', (event) => {
-        if (event.target === productSelectionModal) closeModal(productSelectionModal);
-        if (event.target === cardsModal) closeModal(cardsModal);
-        if (event.target === sealedProductsModal) closeModal(sealedProductsModal);
-        if (event.target === modalCarrito) closeModal(modalCarrito);
-        if (event.target === checkoutModal) closeModal(checkoutModal);
-        if (event.target === messageModal) closeModal(messageModal);
+    if (viewAllCardsBtn) viewAllCardsBtn.addEventListener('click', () => {
+        openModal(cardsModal);
+        currentCardsPage = 1;
+        if (searchInput) searchInput.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        renderCards();
     });
-
-    // NUEVO: Event listener para el botón "Ver Todas las Cartas" en la sección flotante
-    if (viewAllCardsBtn) {
-        viewAllCardsBtn.addEventListener('click', () => {
-            openModal(cardsModal); // Abre el modal de cartas
-            currentCardsPage = 1; // Reinicia la paginación del modal de cartas
-            if (searchInput) searchInput.value = ''; // Limpia el campo de búsqueda
-            if (categoryFilter) categoryFilter.value = ''; // Limpia el filtro de categoría
-            renderCards(); // Renderiza las cartas en el modal
-        });
-    }
 });

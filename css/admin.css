@@ -1,133 +1,42 @@
-/* Estilos Globales para el Panel de Administración */
-/* Estos estilos se aplican a todas las resoluciones a menos que sean sobrescritos */
-* {
-    box-sizing: border-box;
-}
-html, body {
-    height: 100%;
-}
-body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    background-color: #f4f7f6;
-    color: #333;
-    display: flex;
-    min-height: 100vh;
-    flex-direction: column;
-}
-
-.admin-container {
-    display: flex;
-    width: 100%;
-    flex-grow: 1;
-}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 /* ==========================================================================
-   ESTILOS PARA ESCRITORIO (APLICADOS POR DEFECTO Y PARA PANTALLAS GRANDES)
+   Base
    ========================================================================== */
-
-/* Sidebar (Barra Lateral) */
-.sidebar {
-    background-color: #2c3e50;
-    color: white;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    
-    position: static; /* Fija a la izquierda en el flujo del documento */
-    width: 250px;
-    height: auto; /* Altura se ajusta al contenido */
-    transform: translateX(0); /* Visible */
-    z-index: auto; /* Z-index normal */
-    max-height: none; /* Sin límite de altura */
-    overflow: visible; /* Contenido visible */
-    flex-shrink: 0; /* Evita que la sidebar se encoja */
-    flex-basis: 250px; /* Asegura que la sidebar tenga un ancho base */
-    transition: none; /* ¡Importante! Deshabilita la transición para escritorio */
-}
-
-.sidebar-header {
-    text-align: center;
-    margin-bottom: 30px;
-    display: flex; /* Visible en escritorio */
-    justify-content: space-between;
-    align-items: center;
-}
-
-.sidebar-header h3 {
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
     margin: 0;
-    font-size: 1.8em;
-    color: #ecf0f1;
-}
-
-.sidebar-nav ul {
-    list-style: none;
     padding: 0;
 }
 
-.sidebar-nav li {
-    margin-bottom: 15px;
+/* ==========================================================================
+   Layout Principal del Panel de Administración
+   ========================================================================== */
+.admin-container {
+    display: flex;
+    min-height: 100vh;
 }
 
-.sidebar-nav a {
-    color: white;
-    text-decoration: none;
-    padding: 10px 15px;
-    display: block;
-    border-radius: 8px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.sidebar-nav a:hover,
-.sidebar-nav a.active {
-    background-color: #34495e;
-    color: #4ad8ca;
-}
-
-/* Overlay y botón de cerrar (ocultos en escritorio) */
-.sidebar-overlay,
-.close-sidebar-btn,
-.sidebar-toggle-btn {
-    display: none; /* Oculto por defecto en escritorio */
-}
-
-/* Contenido Principal */
 .main-content {
-    flex-grow: 1;
-    padding: 30px;
-    background-color: #f4f7f6;
-    margin-left: 0;
-    transition: margin-left 0.3s ease-in-out;
-    width: auto;
-    padding-top: 30px; /* Padding-top original para escritorio */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .main-header {
+    background-color: #fff;
+    padding: 20px 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 60px;
-    
-    position: static; /* Header estático en escritorio */
-    background-color: transparent; /* Fondo transparente */
-    box-shadow: none; /* Sin sombra */
-    padding: 15px 30px;
-    margin-bottom: 30px;
-    border-bottom: 1px solid #ddd;
 }
 
 .main-header h1 {
-    font-size: 2em;
-    color: #2c3e50;
+    font-size: 1.5em;
     margin: 0;
-    flex-grow: 1;
-    text-align: left;
-}
-
-/* Asegura que la parte "al Panel de Administración" sea visible en escritorio */
-.main-header h1 .desktop-only-title {
-    display: inline; /* O inline-block, según se necesite */
 }
 
 .header-right-controls {
@@ -136,60 +45,194 @@ body {
     gap: 15px;
 }
 
-.user-info span {
+.user-info {
     font-weight: bold;
-    color: #3498db;
+    color: #555;
 }
 
-.refresh-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 45px;
-    height: 45px;
-}
-
-.refresh-button:hover {
-    background-color: #0056b3;
-    transform: translateY(-2px);
-}
-
-.refresh-button i {
-    font-size: 1.2em;
-}
-
-/* Secciones de Contenido General */
 .admin-section {
-    background-color: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    margin-bottom: 30px;
-    display: none; /* Controlado por JavaScript */
+    padding: 30px;
+    display: none; /* Por defecto, las secciones están ocultas */
+    flex-direction: column;
+    gap: 20px;
+    transition: opacity 0.3s ease;
 }
 
 .admin-section.active {
+    display: flex; /* La sección activa se muestra */
+}
+
+/* ==========================================================================
+   Sidebar (Menú de Navegación)
+   ========================================================================== */
+.sidebar {
+    width: 250px;
+    background-color: #2d3748;
+    color: #a0aec0;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease-in-out;
+}
+
+.sidebar-header h3 {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 30px;
+}
+
+.sidebar-nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav a {
     display: block;
+    color: #a0aec0;
+    text-decoration: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.admin-section h2 {
-    color: #2c3e50;
-    margin-top: 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+    background-color: #4a5568;
+    color: #fff;
 }
 
-/* Dashboard Stats */
+/* ==========================================================================
+   Controles Generales y Botones
+   ========================================================================== */
+/* Botón de añadir (el botón verde grande) */
+.add-button {
+    background-color: #48bb78;
+    color: #fff;
+    padding: 8px 16px; /* Ajuste para un tamaño compacto */
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    font-size: 0.9em; /* Tamaño de fuente más pequeño */
+    max-width: 250px; /* Limita el ancho para que no se estire */
+}
+
+.add-button:hover {
+    background-color: #38a169;
+}
+
+/* Estilos comunes para todos los botones de acción */
+.refresh-button,
+.pagination-btn,
+.edit-button,
+.delete-button,
+.confirm-button,
+.cancel-button,
+.edit-sealed-product-button, 
+.delete-sealed-product-button,
+.edit-category-button,
+.delete-category-button {
+    padding: 6px 10px; /* Ajustado para un tamaño más pequeño y compacto */
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    font-size: 0.8em; /* Ajustado el tamaño de la fuente para que coincida */
+    text-decoration: none; /* Elimina el subrayado de los enlaces/botones */
+    display: inline-block; /* Asegura que los enlaces se comporten como bloques para el padding */
+}
+
+/* MODIFICACIÓN: Estilos agrupados para todos los botones de editar y eliminar */
+.edit-button,
+.edit-sealed-product-button,
+.edit-category-button {
+    background-color: #ecc94b; /* Amarillo */
+    color: #fff;
+}
+
+.edit-button:hover,
+.edit-sealed-product-button:hover,
+.edit-category-button:hover {
+    background-color: #d69e2e;
+}
+
+.delete-button,
+.delete-sealed-product-button,
+.delete-category-button {
+    background-color: #e53e3e; /* Rojo */
+    color: #fff;
+}
+
+.delete-button:hover,
+.delete-sealed-product-button:hover,
+.delete-category-button:hover {
+    background-color: #c53030;
+}
+
+
+.refresh-button {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+.refresh-button:hover {
+    background-color: #cbd5e0;
+}
+
+.confirm-button {
+    background-color: #48bb78;
+    color: #fff;
+}
+
+.confirm-button:hover {
+    background-color: #38a169;
+}
+
+.cancel-button {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+.cancel-button:hover {
+    background-color: #cbd5e0;
+}
+
+.pagination-controls {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pagination-btn {
+    background-color: #e2e8f0;
+    color: #2d3748;
+    width: 32px; /* Ajustado para un tamaño más pequeño */
+    height: 32px; /* Ajustado para un tamaño más pequeño */
+    border-radius: 50%;
+    margin: 0 5px;
+    font-size: 1.2em; /* Ajustado el tamaño de la fuente */
+    padding: 0;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: #cbd5e0;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Dashboard
+   ========================================================================== */
 .dashboard-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -197,474 +240,347 @@ body {
 }
 
 .stat-card {
-    background-color: #f0f0f0;
+    background-color: #fff;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    height: 120px;
 }
 
 .stat-card h3 {
     margin-top: 0;
-    color: #3498db;
-    font-size: 1.1em;
-    margin-bottom: 0;
-    text-align: center;
-    width: 100%;
-    min-height: 2.2em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: #4a5568;
+    font-size: 1em;
 }
 
 .stat-card p {
-    font-size: 1.8em;
+    font-size: 2.5em;
     font-weight: bold;
-    color: #2c3e50;
-    margin: 0;
-    padding-top: 10px;
-    text-align: center;
-    width: 100%;
+    color: #2d3748;
 }
 
-/* Botones Generales */
-.add-button {
-    background-color: #28a745;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.2s ease;
-    margin-bottom: 20px;
-    display: inline-block; /* Asegura el formato de botón */
-}
-
-.add-button:hover {
-    background-color: #218838;
-}
-
-/* Inputs de búsqueda y filtros */
-.admin-search-input,
-.admin-select-filter {
-    width: 100%;
-    max-width: 400px;
-    padding: 10px 15px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95em;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
-    transition: border-color 0.2s ease;
-}
-.admin-search-input:focus,
-.admin-select-filter:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
-    outline: none;
-}
-
-/* Estilos específicos para el select (flecha personalizada) */
-.admin-select-filter {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-color: #fff;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 24px;
-    cursor: pointer;
-    padding-right: 40px;
-}
-
-/* Contenedor de tabla responsivo */
+/* ==========================================================================
+   Tablas y Listas
+   ========================================================================== */
 .table-responsive {
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
 }
 
-/* Tablas */
 table {
     width: 100%;
-    min-width: 600px;
     border-collapse: collapse;
-    background-color: white;
-    border-radius: 8px;
+    background-color: #fff;
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-table thead tr {
-    background-color: #34495e;
-    color: white;
+table thead {
+    background-color: #2d3748;
+    color: #fff;
     text-align: left;
 }
 
 table th,
 table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #ddd;
+    padding: 15px;
     white-space: nowrap;
-    vertical-align: middle; /* Alinea el contenido de la celda verticalmente */
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle; /* Alinea todo verticalmente al centro */
 }
 
-table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+table th:first-child,
+table td:first-child {
+    padding-left: 20px;
 }
+
+table th:last-child,
+table td:last-child {
+    padding-right: 20px;
+}
+
+/* NUEVO: Estilo para la primera columna (ID) para truncar texto largo */
+table td:first-child {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+
 
 table tbody tr:hover {
-    background-color: #f0f0f0;
+    background-color: #f7fafc;
 }
 
-table td img {
+table img {
     width: 50px;
-    height: auto;
-    border-radius: 5px;
-    vertical-align: middle;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
-/* Botones de Acción en Tablas */
 .action-buttons {
     display: flex;
-    align-items: center;
-    gap: 5px;
-    height: 100%; /* ¡Modificado! Asegura que el contenedor flex ocupe toda la altura de la celda */
+    gap: 10px;
 }
 
-.action-buttons button {
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.2s ease;
-}
-
-#cardsTable .action-buttons button.edit-button,
-#sealedProductsTable .action-buttons button.edit-sealed-product-button,
-#categoriesTable .action-buttons button.edit-category-button {
-    background-color: #ffc107;
-}
-
-#cardsTable .action-buttons button.edit-button:hover,
-#sealedProductsTable .action-buttons button.edit-sealed-product-button:hover,
-#categoriesTable .action-buttons button.edit-category-button:hover {
-    background-color: #e0a800;
-}
-
-#cardsTable .action-buttons button.delete-button,
-#sealedProductsTable .action-buttons button.delete-sealed-product-button,
-#categoriesTable .action-buttons button.delete-category-button {
-    background-color: #dc3545;
-}
-
-#cardsTable .action-buttons button.delete-button:hover,
-#sealedProductsTable .action-buttons button.delete-sealed-product-button:hover,
-#categoriesTable .action-buttons button.delete-category-button:hover {
-    background-color: #c82333;
-}
-
-/* Controles de Paginación */
-.pagination-controls {
-    text-align: center;
-    margin-top: 20px;
-    padding-top: 10px;
-    border-top: 1px solid #eee;
-}
-
-.pagination-controls button {
-    padding: 8px 12px;
-    margin: 0 5px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.2s;
-}
-
-.pagination-controls button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-.pagination-controls span {
-    font-weight: bold;
-    margin: 0 10px;
-}
-
-/* Modales del Panel de Administración */
+/* ==========================================================================
+   Modales
+   ========================================================================== */
 .admin-modal {
-    display: none; /* Oculto por defecto, JavaScript lo hará visible con display: flex */
+    display: none;
     position: fixed;
     z-index: 1000;
-    left: 0; top: 0;
+    left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Fondo oscuro translúcido para el overlay */
-    justify-content: center; /* Centra el contenido del modal horizontalmente */
-    align-items: center; /* Centra el contenido del modal verticalmente */
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
 }
 
 .admin-modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 25px;
-    border-radius: 10px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
     width: 90%;
     max-width: 500px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     position: relative;
-    animation: zoomIn 0.3s ease-out;
-}
-
-@keyframes zoomIn {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.admin-modal-content .close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    position: absolute;
-    top: 10px;
-    right: 15px;
-}
-
-.admin-modal-content .close-button:hover,
-.admin-modal-content .close-button:focus {
-    color: #333;
-    text-decoration: none;
-    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
 }
 
 .admin-modal-content h3 {
     margin-top: 0;
-    color: #2c3e50;
     margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+    text-align: center;
+    color: #2d3748;
 }
 
-.admin-modal-content form label {
-    display: block;
-    margin-bottom: 8px;
+.admin-modal-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.admin-modal-content label {
     font-weight: bold;
-    color: #555;
+    color: #4a5568;
 }
 
-.admin-modal-content form input[type="text"],
-.admin-modal-content form input[type="url"],
-.admin-modal-content form input[type="number"],
-.admin-modal-content form input[type="password"],
-.admin-modal-content form input[list] {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95em;
+.admin-modal-content input[type="text"],
+.admin-modal-content input[type="url"],
+.admin-modal-content input[type="number"],
+.admin-modal-content input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box; /* Añadido para mejor manejo de tamaño */
 }
 
-.admin-modal-content form button[type="submit"] {
-    background-color: #28a745;
-    color: white;
-    padding: 12px 20px;
+.admin-modal-content input:focus {
+    outline: none;
+    border-color: #63b3ed;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+.admin-modal-content button[type="submit"] {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #48bb78;
+    color: #fff;
+    font-weight: bold;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1em;
-    font-weight: bold;
     transition: background-color 0.2s ease;
-    width: 100%;
-    margin-top: 10px;
 }
 
-.admin-modal-content form button[type="submit"]:hover {
-    background-color: #218838;
+.admin-modal-content button[type="submit"]:hover {
+    background-color: #38a169;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover {
+    color: #333;
 }
 
 .modal-buttons {
-    text-align: right;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
     margin-top: 20px;
 }
 
-.modal-buttons .cancel-button {
-    background-color: #6c757d;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-right: 10px;
-    transition: background-color 0.2s ease;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
-.modal-buttons .cancel-button:hover {
-    background-color: #5a6268;
-}
-
-.modal-buttons .confirm-button {
-    background-color: #dc3545;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.modal-buttons .confirm-button:hover {
-    background-color: #c82333;
-}
-
 
 /* ==========================================================================
-   MEDIA QUERIES PARA MÓVIL (SOBRESCRITURA DE ESTILOS DE ESCRITORIO)
+   Estilos para los Menús Desplegables (SELECT) - ¡Nuevos estilos aquí!
    ========================================================================== */
+.admin-modal-content select,
+.admin-select-filter {
+    width: 100%;
+    padding: 12px 15px;
+    padding-right: 40px; /* Espacio para el icono de la flecha */
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1em;
+    background-color: #fff;
+    cursor: pointer;
+    -webkit-appearance: none; /* Elimina la apariencia nativa en WebKit */
+    -moz-appearance: none; /* Elimina la apariencia nativa en Mozilla */
+    appearance: none; /* Elimina la apariencia nativa */
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%234a5568" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 24px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-modal-content select:focus,
+.admin-select-filter:focus {
+    outline: none;
+    border-color: #63b3ed;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+/* ==========================================================================
+   Búsqueda
+   ========================================================================== */
+.admin-search-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    max-width: 400px;
+    margin-bottom: 20px;
+}
+
+.admin-search-input:focus {
+    outline: none;
+    border-color: #63b3ed;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+/* ==========================================================================
+   Password Toggle Button
+   ========================================================================== */
+.password-container {
+    position: relative;
+}
+
+/* Añade padding a la derecha al input de contraseña para que no se solape con el botón */
+.password-container input[type="password"],
+.password-container input[type="text"] {
+    padding-right: 45px !important;
+}
+
+/* CORRECCIÓN: Se cambió el nombre de la clase de .toggle-password-btn a .password-toggle-btn para que coincida con el HTML */
+.password-toggle-btn {
+    position: absolute;
+    right: 1px; /* Posiciona el botón dentro del borde del input */
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #4a5568;
+    height: 100%; /* El botón ocupa toda la altura del contenedor */
+    width: 40px; /* Ancho del área clickeable */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    font-size: 1.1em;
+}
+
+.password-toggle-btn:hover {
+    color: #2d3748;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+.sidebar-toggle-btn {
+    display: none; /* Oculto por defecto en desktop */
+    background: none;
+    border: none;
+    color: #4a5568;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
 @media (max-width: 768px) {
     .admin-container {
         flex-direction: column;
     }
 
-    /* Sidebar como menú desplegable en móvil */
     .sidebar {
         position: fixed;
-        top: 60px; /* Debajo del header fijo */
+        top: 0;
         left: 0;
-        width: 100%;
-        max-height: 0; /* Oculto por defecto */
-        overflow: hidden;
-        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out; /* ¡Añadida transición aquí! */
-        z-index: 999;
-        padding-top: 20px;
-        padding-bottom: 20px;
+        height: 100%;
+        transform: translateX(-100%);
+        z-index: 1000;
+        width: 250px;
+        padding-top: 80px;
     }
 
     .sidebar.active {
-        max-height: 500px; /* Muestra el menú desplegable */
+        transform: translateX(0);
     }
 
-    .sidebar-header {
-        display: none; /* Oculta el encabezado en el menú desplegable móvil */
+    .sidebar-toggle-btn {
+        display: block;
     }
 
-    .sidebar-nav li {
-        margin-bottom: 10px;
-    }
-
-    .sidebar-nav a {
-        padding: 12px 15px;
-    }
-
-    /* Overlay y botón de alternar (visibles en móvil) */
     .sidebar-overlay.active {
         display: block;
     }
 
-    .sidebar-toggle-btn {
-        display: block; /* Muestra el botón de hamburguesa */
-        margin-right: 15px;
-        /* Estilos de diseño para el botón de hamburguesa */
-        background-color: #007bff; /* Azul primario */
-        color: white;
-        border: none;
-        border-radius: 8px; /* Bordes redondeados */
-        padding: 10px 15px; /* Espaciado interno */
-        font-size: 1.2em; /* Tamaño del icono */
-        cursor: pointer;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra sutil */
-        display: flex; /* Para centrar el icono */
-        align-items: center;
-        justify-content: center;
-        width: 45px; /* Ancho fijo para que sea un cuadrado */
-        height: 45px; /* Alto fijo para que sea un cuadrado */
-    }
-
-    .sidebar-toggle-btn:hover {
-        background-color: #0056b3; /* Azul más oscuro al pasar el ratón */
-        transform: translateY(-2px); /* Pequeño efecto de elevación */
-    }
-
-
-    /* Contenido Principal en móvil */
-    .main-content {
-        margin-left: 0; /* Sin margen izquierdo en móvil */
-        padding: 20px 15px; /* Ajuste de padding para móvil */
-        width: 100%; /* Ocupa todo el ancho disponible en móvil */
-        /* Padding-top para compensar el header fijo en móvil */
-        padding-top: calc(90px + 20px); /* 90px es la altura real del header fijo */
-    }
-
-    /* Header fijo en móvil */
-    .main-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: #f4f7f6;
-        z-index: 1000;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        padding: 15px 15px; /* Padding para el header fijo en móvil */
-        margin-bottom: 0;
-        border-bottom: 1px solid #ddd;
-        flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-        height: 90px; /* Aseguramos que la altura del header sea consistente */
-    }
-
-    .main-header h1 {
-        font-size: 1.5em;
-        margin-bottom: 0;
-        text-align: left;
-    }
-
-    /* Oculta la parte "al Panel de Administración" en móvil */
-    .main-header h1 .desktop-only-title {
+    .desktop-only-title {
         display: none;
     }
 
-    .header-right-controls {
-        margin-left: auto;
-        gap: 10px;
-    }
-
-    /* Ajustes para elementos dentro de secciones en móvil */
-    .dashboard-stats {
-        grid-template-columns: 1fr; /* Una columna para las tarjetas en móvil */
-    }
-    table th, table td {
-        padding: 8px 10px;
-        font-size: 0.9em;
-    }
-    table td img {
-        width: 40px;
-    }
-    .action-buttons button {
-        padding: 6px 10px;
-        font-size: 0.8em;
-    }
-    .admin-modal-content {
-        width: 95%;
-        padding: 20px;
-    }
-    .admin-search-input,
-    .admin-select-filter {
-        max-width: 100%;
+    .main-header h1 {
+        font-size: 1.2em;
     }
 }

@@ -103,16 +103,26 @@ nav a:hover {
     text-shadow: 1px 1px 3px rgba(0,0,0,0.7); /* Sombra para el texto */
 }
 
-/* NUEVOS ESTILOS: Estilos de tarjeta para .content-section */
+/* Contenedor para las dos tarjetas de contenido */
+.content-section-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    padding: 40px 20px;
+}
+
+/* Estilos de tarjeta para .content-section */
 .content-section {
     background-color: #fefefe; /* Fondo blanco opaco */
     padding: 40px 20px;
-    margin: 30px auto; /* Centrar y dar espacio */
-    max-width: 1200px; /* Ancho máximo para el contenido */
     border-radius: 15px; /* Bordes más redondeados */
     box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* Sombra más pronunciada */
     text-align: center;
     color: #333;
+    flex: 1;
+    min-width: 300px;
+    max-width: 550px;
 }
 
 .content-section h2 {
@@ -169,82 +179,61 @@ nav a:hover {
 .social-icons-container .fa-whatsapp { color: #25D366; }
 
 
-/* Estilos para las cartas flotantes (en la sección "Explora Nuestras Cartas") */
-.floating-cards-container {
-    display: flex;
-    justify-content: center; /* Centra el contenido si hay espacio */
-    align-items: center; /* Alinea al centro verticalmente */
-    flex-wrap: nowrap; /* Evita que las cartas se envuelvan */
-    gap: 30px; /* Espacio entre las cartas */
-    perspective: 1000px; /* Mantenido, no interfiere con 2D */
-    margin-top: 30px;
-    margin-bottom: 8px;
+/* --- NUEVOS ESTILOS PARA EL CARRUSEL INFINITO --- */
+.carousel-wrapper {
+    width: 100%;
+    overflow: hidden; /* Oculta las cartas que están fuera de la vista */
     position: relative;
-    min-height: 280px; /* Aumenta la altura mínima para dar más espacio */
-    overflow-x: auto; /* Habilita el scroll horizontal */
-    -webkit-overflow-scrolling: touch; /* Desplazamiento suave en iOS */
-    scroll-snap-type: x mandatory; /* Para un desplazamiento más suave */
-    padding-bottom: 15px; /* Espacio para la barra de desplazamiento */
+    margin-top: 30px;
+    margin-bottom: 20px;
+    /* Efecto de degradado en los bordes para un look más suave */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
-/* Estilos de la barra de desplazamiento del carrusel */
-.floating-cards-container::-webkit-scrollbar {
-    height: 10px;
+.carousel-wrapper:hover .floating-cards-container {
+    animation-play-state: paused; /* Pausa la animación al pasar el ratón */
 }
 
-.floating-cards-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
+.floating-cards-container {
+    display: flex; /* Coloca las cartas en una fila */
+    gap: 30px; /* Espacio entre las cartas */
+    /* El ancho y la animación se establecerán dinámicamente con JS */
 }
 
-.floating-cards-container::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
+@keyframes scroll {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        /* Se mueve la mitad de la distancia total (el ancho de las cartas originales) */
+        transform: translateX(-50%);
+    }
 }
-
-.floating-cards-container::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
 
 .floating-card {
     width: 150px; /* Ancho de la carta */
-    height: 210px; /* Alto de la carta (proporción típica de carta) */
+    height: 210px; /* Alto de la carta */
     background-color: #fefefe;
     border: 1px solid #ddd;
-    border-radius: 10px; /* Bordes redondeados para la tarjeta */
+    border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden; /* Importante para que la imagen no se salga */
-    position: relative; /* Para animaciones */
-    
-    /* Removido backface-visibility para 2D */
-    /* backface-visibility: hidden; */ 
-
-    /* Animaciones: Solo flotación vertical */
-    animation: 
-        card-float 4s ease-in-out infinite alternate calc(var(--i) * 0.5s); /* Flotación vertical */
+    overflow: hidden;
     flex-shrink: 0; /* Evita que las cartas se encojan */
-    scroll-snap-align: start; /* Punto de anclaje para el scroll */
+    transition: transform 0.3s ease;
+}
+
+.floating-card:hover {
+    transform: scale(1.05) translateY(-10px); /* Efecto de zoom al pasar el ratón */
 }
 
 .floating-card img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Asegura que la imagen se ajuste completamente sin recortarse */
-    border-radius: 8px; /* Bordes redondeados para la imagen */
+    object-fit: contain;
+    border-radius: 8px;
 }
-
-/* Keyframes para la animación de flotación (sin cambios) */
-@keyframes card-float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-15px); }
-    100% { transform: translateY(0px); }
-}
-
-/* Eliminado @keyframes card-rotate */
+/* --- FIN DE ESTILOS DEL CARRUSEL --- */
 
 
 /* Botón "Ver Todas las Cartas" */
@@ -259,8 +248,8 @@ nav a:hover {
     font-weight: 600;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    margin-top: 3px; /* Reducido de 5px a 3px */
-    display: inline-block; /* Para que margin-top funcione */
+    margin-top: 20px; 
+    display: inline-block;
 }
 
 .view-all-cards-button:hover {
@@ -881,7 +870,6 @@ footer {
 
     .floating-cards-container {
         gap: 20px; /* Menos espacio en móvil */
-        min-height: 200px; /* Ajuste de altura mínima */
     }
 
     .floating-card {
@@ -1021,7 +1009,7 @@ footer {
     #messageModalTitle {
         font-size: 1.5em;
     }
-a
+
     #messageModalText {
         font-size: 1em;
     }
