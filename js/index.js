@@ -46,6 +46,7 @@ const SHEETDB_SEALED_PRODUCTS_API_URL = "https://sheetdb.io/api/v1/vxfb9yfps7owp
 
 let allCards = [];
 let allSealedProducts = [];
+// El carrito ahora solo almacena el ID, tipo y cantidad. El precio y nombre se obtienen de allCards/allSealedProducts.
 let cart = JSON.parse(localStorage.getItem('cart')) || {}; // Load cart from localStorage
 let currentCardsPage = 1;
 let currentSealedProductsPage = 1;
@@ -103,6 +104,9 @@ const viewAllCardsBtn = document.getElementById('viewAllCardsBtn');
 // NUEVA REFERENCIA DOM para el contenedor de cartas flotantes dinámicas
 const dynamicFloatingCardsContainer = document.getElementById('dynamicFloatingCardsContainer');
 
+// NUEVA REFERENCIA DOM para la notificación "Agregado al carrito"
+const addedToCartNotification = document.getElementById('addedToCartNotification');
+
 
 // ==========================================================================
 // UTILITY FUNCTIONS
@@ -129,12 +133,28 @@ function closeMessageModal() {
 }
 
 /**
+ * Muestra una pequeña notificación temporal "Agregado al carrito".
+ * @param {string} itemName - El nombre del artículo agregado.
+ */
+function showAddedToCartNotification(itemName) {
+    if (addedToCartNotification) {
+        addedToCartNotification.textContent = `${itemName} agregado al carrito`;
+        addedToCartNotification.classList.add('show');
+        setTimeout(() => {
+            addedToCartNotification.classList.remove('show');
+        }, 1500); // Oculta el mensaje después de 1.5 segundos
+    }
+}
+
+/**
  * Opens a given modal element.
  * @param {HTMLElement} modalElement - The modal DOM element to open.
  */
 function openModal(modalElement) {
-    modalElement.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // Prevent scrolling on the body
+    if (modalElement) { // Added null check
+        modalElement.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent scrolling on the body
+    }
 }
 
 /**
@@ -142,8 +162,10 @@ function openModal(modalElement) {
  * @param {HTMLElement} modalElement - The modal DOM element to close.
  */
 function closeModal(modalElement) {
-    modalElement.style.display = 'none';
-    document.body.style.overflow = ''; // Restore body scrolling
+    if (modalElement) { // Added null check
+        modalElement.style.display = 'none';
+        document.body.style.overflow = ''; // Restore body scrolling
+    }
 }
 
 /**
@@ -209,13 +231,15 @@ async function loadSealedProductsData() {
  */
 function populateCategoryFilter() {
     const categories = [...new Set(allCards.map(card => card.categoria))].filter(Boolean); // Get unique categories, filter out empty
-    categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        categoryFilter.appendChild(option);
-    });
+    if (categoryFilter) { // Added null check
+        categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+    }
 }
 
 /**
@@ -223,13 +247,15 @@ function populateCategoryFilter() {
  */
 function populateSealedTypeFilter() {
     const types = [...new Set(allSealedProducts.map(product => product.tipo_producto))].filter(Boolean); // Get unique types, filter out empty
-    sealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
-    types.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type;
-        option.textContent = type;
-        sealedTypeFilter.appendChild(option);
-    });
+    if (sealedTypeFilter) { // Added null check
+        sealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
+        types.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            sealedTypeFilter.appendChild(option);
+        });
+    }
 }
 
 // ==========================================================================
@@ -271,6 +297,10 @@ function renderFloatingCards() {
  * Renders cards based on current filters and pagination.
  */
 function renderCards() {
+    if (!cardsContainer || !searchInput || !categoryFilter || !pageInfo || !prevPageBtn || !nextPageBtn) { // Added null checks
+        console.warn("One or more DOM elements for cards rendering are missing. Check index.html IDs.");
+        return;
+    }
     cardsContainer.innerHTML = '';
     const searchTerm = searchInput.value.toLowerCase();
     const selectedCategory = categoryFilter.value;
@@ -295,6 +325,7 @@ function renderCards() {
     cardsToDisplay.forEach(card => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('carta');
+        // El input de cantidad ahora siempre inicia en 1 para "añadir"
         cardElement.innerHTML = `
             <img src="${card.imagen}" alt="${card.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/180x250/cccccc/333333?text=No+Image';" />
             <h4>${card.nombre}</h4>
@@ -302,7 +333,7 @@ function renderCards() {
             <p>Stock: ${card.stock}</p>
             <div class="quantity-controls">
                 <button class="decrease-quantity" data-id="${card.id}" data-type="card">-</button>
-                <input type="number" class="quantity-input" value="${cart[card.id] ? cart[card.id].quantity : 0}" min="0" max="${card.stock}" data-id="${card.id}" data-type="card">
+                <input type="number" class="quantity-input" value="1" min="1" max="${card.stock}" data-id="${card.id}" data-type="card">
                 <button class="increase-quantity" data-id="${card.id}" data-type="card">+</button>
             </div>
             <button class="agregar-carrito" data-id="${card.id}" data-type="card" ${card.stock === 0 ? 'disabled' : ''}>
@@ -319,6 +350,10 @@ function renderCards() {
  * Renders sealed products based on current filters and pagination.
  */
 function renderSealedProducts() {
+    if (!sealedProductsContainer || !sealedSearchInput || !sealedTypeFilter || !sealedPageInfo || !sealedPrevPageBtn || !sealedNextPageBtn) { // Added null checks
+        console.warn("One or more DOM elements for sealed products rendering are missing. Check index.html IDs.");
+        return;
+    }
     sealedProductsContainer.innerHTML = '';
     const searchTerm = sealedSearchInput.value.toLowerCase();
     const selectedType = sealedTypeFilter.value;
@@ -343,6 +378,7 @@ function renderSealedProducts() {
     productsToDisplay.forEach(product => {
         const productElement = document.createElement('div');
         productElement.classList.add('carta'); // Reusing 'carta' class for styling consistency
+        // El input de cantidad ahora siempre inicia en 1 para "añadir"
         productElement.innerHTML = `
             <img src="${product.imagen}" alt="${product.producto}" onerror="this.onerror=null;this.src='https://placehold.co/180x250/cccccc/333333?text=No+Image';" />
             <h4>${product.producto}</h4>
@@ -351,7 +387,7 @@ function renderSealedProducts() {
             <p>Stock: ${product.stock}</p>
             <div class="quantity-controls">
                 <button class="decrease-quantity" data-id="${product.id_producto}" data-type="sealed">-</button>
-                <input type="number" class="quantity-input" value="${cart[product.id_producto] ? cart[product.id_producto].quantity : 0}" min="0" max="${product.stock}" data-id="${product.id_producto}" data-type="sealed">
+                <input type="number" class="quantity-input" value="1" min="1" max="${product.stock}" data-id="${product.id_producto}" data-type="sealed">
                 <button class="increase-quantity" data-id="${product.id_producto}" data-type="sealed">+</button>
             </div>
             <button class="agregar-carrito" data-id="${product.id_producto}" data-type="sealed" ${product.stock === 0 ? 'disabled' : ''}>
@@ -374,6 +410,7 @@ function renderSealedProducts() {
  * @param {number} totalItems - The total count of filtered items.
  */
 function updatePaginationControls(currentPage, totalPages, infoSpan, prevBtn, nextBtn, totalItems) {
+    if (!infoSpan || !prevBtn || !nextBtn) return; // Added null checks
     infoSpan.textContent = `Página ${currentPage} de ${totalPages} (${totalItems} items)`;
     prevBtn.disabled = currentPage === 1;
     nextBtn.disabled = currentPage === totalPages || totalPages === 0;
@@ -383,6 +420,10 @@ function updatePaginationControls(currentPage, totalPages, infoSpan, prevBtn, ne
  * Renders the shopping cart content.
  */
 function renderCart() {
+    if (!listaCarrito || !vaciarCarritoBtn || !openCheckoutModalBtn) { // Added null checks
+        console.warn("One or more DOM elements for cart rendering are missing. Check index.html IDs.");
+        return;
+    }
     listaCarrito.innerHTML = '';
     let total = 0;
 
@@ -434,7 +475,7 @@ function renderCart() {
             <div class="quantity-controls-cart">
                 <button class="decrease-cart-quantity" data-id="${id}" data-type="${item.type}">-</button>
                 <input type="number" class="quantity-input-cart" value="${cart[id] ? cart[id].quantity : 0}" min="1" max="${itemStock}" data-id="${id}" data-type="${item.type}">
-                <button class="increase-cart-quantity" data-id="${id}" data-type="${item.type}"></button>
+                <button class="increase-cart-quantity" data-id="${id}" data-type="${item.type}">+</button> <!-- ADDED '+' SIGN HERE -->
             </div>
             <button class="eliminar-item" data-id="${id}" data-type="${item.type}">Eliminar</button>
         `;
@@ -456,18 +497,22 @@ function renderCart() {
  * Adds an item to the cart or updates its quantity.
  * @param {string} id - The ID of the item.
  * @param {string} type - The type of the item ('card' or 'sealed').
- * @param {number} quantityToAdd - The quantity to add.
+ * @param {number} quantityToAdd - La cantidad que se intenta añadir.
+ * @param {boolean} [showNotification=true] - Si se debe mostrar la notificación "Agregado al carrito".
  */
-function addToCart(id, type, quantityToAdd) {
+function addToCart(id, type, quantityToAdd, showNotification = true) {
     let item = null;
     let currentStock = 0;
+    let itemName = ''; // Para la notificación
 
     if (type === 'card') {
         item = allCards.find(c => c.id === id);
         currentStock = item ? item.stock : 0;
+        itemName = item ? item.nombre : 'Artículo';
     } else if (type === 'sealed') {
         item = allSealedProducts.find(p => p.id_producto === id);
         currentStock = item ? item.stock : 0;
+        itemName = item ? item.producto : 'Artículo';
     }
 
     if (!item) {
@@ -478,9 +523,10 @@ function addToCart(id, type, quantityToAdd) {
     const currentQuantityInCart = cart[id] ? cart[id].quantity : 0;
     const newQuantity = currentQuantityInCart + quantityToAdd;
 
+    // Lógica para no exceder el stock disponible
     if (newQuantity > currentStock) {
-        showMessageModal('Stock Insuficiente', `Solo hay ${currentStock} unidades de "${item.nombre || item.producto}" disponibles.`);
-        return;
+        showMessageModal('Stock Insuficiente', `Solo hay ${currentStock} unidades de "${itemName}" disponibles. No se puede añadir ${quantityToAdd} más.`);
+        return; // No se agrega al carrito si excede el stock
     }
 
     if (newQuantity <= 0) {
@@ -494,8 +540,13 @@ function addToCart(id, type, quantityToAdd) {
     }
     saveCart();
     renderCart();
-    renderCards(); // Re-render cards to update quantity inputs
-    renderSealedProducts(); // Re-render sealed products to update quantity inputs
+    renderCards(); // Re-render cards to update quantity inputs (which will now reset to 1)
+    renderSealedProducts(); // Re-render sealed products to update quantity inputs (which will now reset to 1)
+
+    // Mostrar notificación solo si showNotification es true y la cantidad es mayor a 0
+    if (showNotification && quantityToAdd > 0) { // Notificación basada en la cantidad que se intentó añadir
+        showAddedToCartNotification(itemName);
+    }
 }
 
 /**
@@ -529,6 +580,10 @@ function clearCart() {
  * Handles the order confirmation and sends a WhatsApp message.
  */
 async function confirmOrder() {
+    if (!customerNameInput || !customerPhoneInput || !customerAddressInput || !confirmOrderBtn || !checkoutLoadingSpinner) { // Added null checks
+        console.warn("One or more DOM elements for checkout are missing. Check index.html IDs.");
+        return;
+    }
     const customerName = customerNameInput.value.trim();
     const customerPhone = customerPhoneInput.value.trim();
     const customerAddress = customerAddressInput.value.trim();
@@ -781,45 +836,122 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('agregar-carrito')) {
             const id = e.target.dataset.id;
             const type = e.target.dataset.type;
-            addToCart(id, type, 1);
+            // Encuentra el input de cantidad asociado a este botón "Añadir al Carrito"
+            const quantityInput = e.target.closest('.carta').querySelector('.quantity-input');
+            let quantityToAdd = parseInt(quantityInput.value);
+            
+            // Si la cantidad es inválida o menor a 1, por defecto añadir 1
+            if (isNaN(quantityToAdd) || quantityToAdd < 1) {
+                quantityToAdd = 1;
+                quantityInput.value = 1; // Ajusta el input visualmente si era inválido
+            }
+
+            addToCart(id, type, quantityToAdd, true); // Pasa 'true' para mostrar la notificación
+            // El input se reiniciará a 1 automáticamente después de renderCards/renderSealedProducts
         } else if (e.target.classList.contains('increase-quantity')) {
+            const quantityInput = e.target.parentNode.querySelector('.quantity-input');
+            let currentValue = parseInt(quantityInput.value);
+            if (isNaN(currentValue)) currentValue = 0; // Manejar caso de input vacío/inválido
+            
+            // Obtener el stock máximo para esta carta/producto
             const id = e.target.dataset.id;
             const type = e.target.dataset.type;
-            addToCart(id, type, 1);
+            let item = null;
+            let currentStock = 0;
+            if (type === 'card') {
+                item = allCards.find(c => c.id === id);
+            } else if (type === 'sealed') {
+                item = allSealedProducts.find(p => p.id_producto === id);
+            }
+            currentStock = item ? item.stock : 0;
+
+            if (currentValue < currentStock) {
+                quantityInput.value = currentValue + 1;
+            } else {
+                showMessageModal('Stock Máximo', `Solo puedes añadir hasta ${currentStock} unidades.`);
+            }
+            // No se llama a addToCart aquí, solo se actualiza el input
         } else if (e.target.classList.contains('decrease-quantity')) {
-            const id = e.target.dataset.id;
-            const type = e.target.dataset.type;
-            addToCart(id, type, -1);
+            const quantityInput = e.target.parentNode.querySelector('.quantity-input');
+            let currentValue = parseInt(quantityInput.value);
+            if (isNaN(currentValue)) currentValue = 0; // Manejar caso de input vacío/inválido
+
+            if (currentValue > 1) { // No permitir que baje de 1
+                quantityInput.value = currentValue - 1;
+            } else {
+                showMessageModal('Cantidad Mínima', 'La cantidad mínima a añadir es 1.');
+            }
+            // No se llama a addToCart aquí, solo se actualiza el input
         } else if (e.target.classList.contains('eliminar-item')) {
             const id = e.target.dataset.id;
             removeFromCart(id);
         } else if (e.target.classList.contains('increase-cart-quantity')) {
             const id = e.target.dataset.id;
             const type = e.target.dataset.type;
-            addToCart(id, type, 1);
+            addToCart(id, type, 1, false); // Pasa 'false' para NO mostrar la notificación
         } else if (e.target.classList.contains('decrease-cart-quantity')) {
             const id = e.target.dataset.id;
             const type = e.target.dataset.type;
-            addToCart(id, type, -1);
+            addToCart(id, type, -1, false); // Pasa 'false' para NO mostrar la notificación
         }
     });
 
-    // Delegated event listener for quantity input changes
+    // Delegated event listener for quantity input changes (manual typing)
     document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('quantity-input') || e.target.classList.contains('quantity-input-cart')) {
+        if (e.target.classList.contains('quantity-input')) {
             const id = e.target.dataset.id;
             const type = e.target.dataset.type;
             let newQuantity = parseInt(e.target.value);
 
             let item = null;
             let currentStock = 0;
+            let itemName = ''; 
 
             if (type === 'card') {
                 item = allCards.find(c => c.id === id);
                 currentStock = item ? item.stock : 0;
+                itemName = item ? item.nombre : 'Artículo';
             } else if (type === 'sealed') {
                 item = allSealedProducts.find(p => p.id_producto === id);
                 currentStock = item ? item.stock : 0;
+                itemName = item ? item.producto : 'Artículo';
+            }
+
+            if (!item) {
+                showMessageModal('Error', 'Producto no encontrado.');
+                e.target.value = 1; // Reset to 1 if item not found
+                return;
+            }
+
+            if (isNaN(newQuantity) || newQuantity < 1) { // Mínimo 1 para añadir
+                newQuantity = 1;
+                showMessageModal('Cantidad Inválida', 'La cantidad debe ser al menos 1.');
+            }
+            if (newQuantity > currentStock) {
+                newQuantity = currentStock; // Ajusta la cantidad al stock máximo
+                showMessageModal('Stock Máximo', `Solo puedes añadir hasta ${currentStock} unidades de "${itemName}".`);
+            }
+
+            e.target.value = newQuantity; // Update input value to corrected quantity
+            // No se llama a addToCart aquí, solo se valida y ajusta el input
+        } else if (e.target.classList.contains('quantity-input-cart')) {
+            // Lógica para inputs en el carrito (mantener el comportamiento actual de actualizar el carrito)
+            const id = e.target.dataset.id;
+            const type = e.target.dataset.type;
+            let newQuantity = parseInt(e.target.value);
+
+            let item = null;
+            let currentStock = 0;
+            let itemName = ''; 
+
+            if (type === 'card') {
+                item = allCards.find(c => c.id === id);
+                currentStock = item ? item.stock : 0;
+                itemName = item ? item.nombre : 'Artículo';
+            } else if (type === 'sealed') {
+                item = allSealedProducts.find(p => p.id_producto === id);
+                currentStock = item ? item.stock : 0;
+                itemName = item ? item.producto : 'Artículo';
             }
 
             if (!item) {
@@ -832,7 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (newQuantity > currentStock) {
                 newQuantity = currentStock;
-                showMessageModal('Stock Insuficiente', `Solo hay ${currentStock} unidades de "${item.nombre || item.producto}" disponibles.`);
+                showMessageModal('Stock Insuficiente', `Solo hay ${currentStock} unidades de "${itemName}" disponibles.`);
             }
 
             e.target.value = newQuantity; // Update input value to corrected quantity

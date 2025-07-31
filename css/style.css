@@ -438,7 +438,7 @@ button:disabled {
 .quantity-controls {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* Alineación vertical */
     margin-bottom: 15px;
     gap: 5px;
 }
@@ -584,7 +584,7 @@ button:disabled {
 
 .cart-item {
     display: flex;
-    align-items: center;
+    align-items: center; /* Alinea verticalmente los elementos del carrito */
     gap: 15px;
     padding: 10px 0;
     border-bottom: 1px solid #eee;
@@ -597,7 +597,7 @@ button:disabled {
 .cart-item img {
     width: 70px;
     height: 70px;
-    object-fit: cover;
+    object-fit: contain; /* CAMBIO: Asegura que la imagen se vea completa */
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     margin: 0; /* Anula el margin auto global */
@@ -623,7 +623,7 @@ button:disabled {
 /* Controles de Cantidad en el Carrito (MODIFICADOS) */
 .quantity-controls-cart {
     display: flex;
-    align-items: center;
+    align-items: center; /* Alinea verticalmente los botones y el input */
     gap: 5px;
 }
 
@@ -803,7 +803,7 @@ button:disabled {
     padding: 10px 20px;
 }
 
-/* Footer */
+/* FOOTER */
 footer {
     background-color: #F8F8F8; /* Fondo blanco hueso opaco */
     color: #222222; /* Negro alternativo para el texto */
@@ -811,6 +811,31 @@ footer {
     padding: 20px 0;
     margin-top: auto; /* Empuja el footer hacia abajo */
     box-shadow: 0 -2px 8px rgba(0,0,0,0.1); /* Sombra más sutil */
+}
+
+/* NUEVO: Estilos para la notificación "Agregado al carrito" */
+.added-to-cart-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(40, 167, 69, 0.9); /* Verde con opacidad */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 0.9em;
+    z-index: 1001; /* Por encima de los modales */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    text-align: center;
+    white-space: nowrap; /* Evita que el texto se rompa */
+}
+
+.added-to-cart-notification.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Media Queries para Responsividad */
