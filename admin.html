@@ -16,7 +16,8 @@
         <aside class="sidebar" id="sidebar-menu">
             <div class="sidebar-header">
                 <h3>Admin DND TCG</h3>
-                <!-- El botón de cerrar no es necesario para un desplegable, se cierra al seleccionar o hacer clic fuera -->
+                <!-- Botón de cerrar añadido para la vista móvil -->
+                <button id="closeSidebarBtn" class="close-sidebar-btn">&times;</button>
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -24,7 +25,7 @@
                     <li><a href="#" id="nav-cards"><i class="fas fa-file-alt"></i>&nbsp;Gestión de Cartas</a></li>
                     <li><a href="#" id="nav-sealed-products"><i class="fas fa-box-open"></i>&nbsp;Gestión Productos Sellados</a></li>
                     <li><a href="#" id="nav-categories"><i class="fas fa-tags"></i>&nbsp;Gestión de Categorías</a></li>
-                    <li><a href="#" id="nav-orders"><i class="fas fa-shopping-cart"></i>&nbsp;Pedidos (Pronto)</a></li>
+                    <li><a href="#" id="nav-orders"><i class="fas fa-shopping-cart"></i>&nbsp;Pedidos</a></li>
                     <li><a href="#" id="nav-logout"><i class="fas fa-sign-out-alt"></i>&nbsp;Cerrar Sesión</a></li>
                 </ul>
             </nav>
@@ -171,6 +172,32 @@
                     </div>
                 </div>
             </section>
+            
+            <!-- NUEVA SECCIÓN: Gestión de Pedidos -->
+            <section id="orders-section" class="admin-section">
+                <h2>Gestión de Pedidos</h2>
+                <div class="order-list-container">
+                    <h3>Lista de Pedidos</h3>
+                    <div class="table-responsive">
+                        <table id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Las filas de los pedidos se cargarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
 
             <!-- Modal para Añadir/Editar Carta -->
             <div id="cardModal" class="admin-modal">
@@ -271,6 +298,28 @@
                     </form>
                 </div>
             </div>
+
+            <!-- NUEVO: Modal para Ver Detalles del Pedido -->
+            <div id="orderDetailsModal" class="admin-modal">
+                <div class="admin-modal-content">
+                    <span class="close-button" id="closeOrderDetailsModal">&times;</span>
+                    <h3>Detalles del Pedido</h3>
+                    <div id="orderDetailsContent">
+                        <!-- El contenido se llenará dinámicamente -->
+                    </div>
+                    <div class="order-actions">
+                        <h4>Cambiar Estado:</h4>
+                        <select id="orderStatusSelect">
+                            <option value="pending">Pendiente</option>
+                            <option value="shipped">Enviado</option>
+                            <option value="completed">Completado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                        <button id="updateOrderStatusBtn" class="confirm-button">Actualizar Estado</button>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- MODAL PARA MENSAJES (éxito/error) - AÑADIDO -->
             <div id="messageModal" class="admin-modal">

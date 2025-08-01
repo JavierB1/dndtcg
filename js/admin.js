@@ -8,7 +8,7 @@ import { initializeApp }
 from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
 from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc }
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, runTransaction, getDoc }
 from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
 // Your actual Firebase configuration for dndtcgadmin project
@@ -48,6 +48,7 @@ let currentAdminUser = null;
 let allCards = [];
 let allSealedProducts = [];
 let allCategories = [];
+let allOrders = []; // <-- Array para los pedidos
 
 // Configuración de paginación
 // Pagination configuration
@@ -64,6 +65,7 @@ let currentDeleteTarget = null;
 // DOM ELEMENT REFERENCES
 // ==========================================================================
 let sidebarToggleBtn;
+let closeSidebarBtn; // <-- Referencia para el nuevo botón
 let sidebarMenu;
 let sidebarOverlay;
 let mainHeader;
@@ -85,6 +87,7 @@ let dashboardSection;
 let cardsSection;
 let sealedProductsSection;
 let categoriesSection;
+let ordersSection; // <-- Referencia para la nueva sección
 
 let addCardBtn;
 let addSealedProductBtn;
@@ -127,6 +130,7 @@ let confirmDeleteBtn;
 let cardsTable;
 let sealedProductsTable;
 let categoriesTable;
+let ordersTable; // <-- Referencia para la nueva tabla
 
 let adminSearchInput;
 let adminCategoryFilter;
@@ -151,6 +155,13 @@ let messageModalTitle;
 let messageModalText;
 let okMessageModalBtn;
 
+// Referencias para el nuevo modal de detalles de pedido
+let orderDetailsModal;
+let closeOrderDetailsModalBtn;
+let orderDetailsContent;
+let orderStatusSelect;
+let updateOrderStatusBtn;
+
 
 // ==========================================================================
 // UTILITY FUNCTIONS
@@ -161,7 +172,7 @@ let okMessageModalBtn;
  * @param {HTMLElement} sectionToShow - El elemento DOM de la sección a mostrar.
  */
 function showSection(sectionToShow) {
-    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
+    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection, ordersSection];
     sections.forEach(section => {
         if (section) section.classList.remove('active');
     });
@@ -174,7 +185,7 @@ function showSection(sectionToShow) {
  * Oculta todas las secciones del panel de administración.
  */
 function hideAllSections() {
-    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection];
+    const sections = [dashboardSection, cardsSection, sealedProductsSection, categoriesSection, ordersSection];
     sections.forEach(section => {
         if (section) section.classList.remove('active');
     });
@@ -306,6 +317,28 @@ onAuthStateChanged(auth, (user) => {
 // ==========================================================================
 
 /**
+ * Carga todos los pedidos desde Firestore.
+ */
+async function loadOrdersData() {
+    if (!db) {
+        console.error("No se pudo cargar pedidos: la base de datos no está inicializada.");
+        return;
+    }
+    try {
+        const ordersCol = collection(db, `artifacts/${appId}/public/data/orders`);
+        const ordersSnapshot = await getDocs(ordersCol);
+        allOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Ordenar pedidos por fecha, del más reciente al más antiguo
+        allOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        renderOrdersTable();
+    } catch (error) {
+        console.error('Error al cargar pedidos:', error);
+        showMessageModal("Error de Carga", 'Error al cargar los pedidos. Consulta la consola para más detalles.');
+    }
+}
+
+
+/**
  * Carga todas las categorías desde Firestore.
  * Loads all categories from Firestore.
  */
@@ -396,6 +429,7 @@ async function loadAllData() {
     await loadCategories();
     await loadCardsData();
     await loadSealedProductsData();
+    await loadOrdersData(); // <-- Cargar también los pedidos
 }
 
 /**
@@ -445,6 +479,46 @@ function populateCategoryFiltersAndSelects() {
 // ==========================================================================
 // TABLE RENDERING FUNCTIONS
 // ==========================================================================
+
+/**
+ * Renderiza la tabla de pedidos.
+ */
+function renderOrdersTable() {
+    if (!ordersTable) {
+        console.warn("Elemento DOM para la tabla de pedidos no disponible.");
+        return;
+    }
+    const tbody = ordersTable.querySelector('tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = ''; // Limpiar la tabla antes de renderizar
+
+    if (allOrders.length === 0) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 6; // Ocupa todas las columnas
+        cell.textContent = 'No hay pedidos para mostrar.';
+        cell.style.textAlign = 'center';
+        return;
+    }
+
+    allOrders.forEach(order => {
+        const row = tbody.insertRow();
+        const orderDate = new Date(order.timestamp).toLocaleString('es-SV'); // Formato de fecha local
+
+        row.innerHTML = `
+            <td>${order.id}</td>
+            <td>${orderDate}</td>
+            <td>${order.customerName}</td>
+            <td>$${parseFloat(order.total).toFixed(2)}</td>
+            <td>${order.status}</td>
+            <td class="action-buttons">
+                <button class="edit-button view-order-details-btn" data-id="${order.id}">Ver Detalles</button>
+            </td>
+        `;
+    });
+}
+
 
 /**
  * Renderiza la tabla de cartas con filtrado y paginación.
@@ -598,6 +672,130 @@ function updateDashboardStats() {
 // ==========================================================================
 // CRUD OPERATIONS (All using Firestore now)
 // ==========================================================================
+
+/**
+ * Muestra los detalles de un pedido específico en un modal.
+ * @param {string} orderId - El ID del pedido a mostrar.
+ */
+function showOrderDetails(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) {
+        showMessageModal("Error", "No se pudo encontrar el pedido.");
+        return;
+    }
+
+    let itemsHtml = '';
+    const cart = JSON.parse(order.cart);
+    for (const itemId in cart) {
+        const item = cart[itemId];
+        let productData = null;
+        if (item.type === 'card') {
+            productData = allCards.find(c => c.id === itemId);
+        } else {
+            productData = allSealedProducts.find(p => p.id === itemId);
+        }
+
+        if (productData) {
+            itemsHtml += `
+                <div class="order-item">
+                    <img src="${productData.imagen_url}" alt="${productData.nombre}" onerror="this.src='https://placehold.co/50x50/2d3748/a0aec0?text=No+Img'">
+                    <div class="order-item-info">
+                        <strong>${productData.nombre}</strong><br>
+                        <span>Cantidad: ${item.quantity}</span> |
+                        <span>Precio Unitario: $${parseFloat(productData.precio).toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    orderDetailsContent.innerHTML = `
+        <div class="customer-details">
+            <h4>Datos del Cliente</h4>
+            <p><strong>Nombre:</strong> ${order.customerName}</p>
+            <p><strong>Teléfono:</strong> ${order.customerPhone}</p>
+            <p><strong>Dirección:</strong> ${order.customerAddress}</p>
+        </div>
+        <div class="order-items">
+            <h4>Productos</h4>
+            <div class="order-items-list">${itemsHtml}</div>
+        </div>
+        <div class="order-summary">
+            <h4>Resumen</h4>
+            <p><strong>Total del Pedido:</strong> $${parseFloat(order.total).toFixed(2)}</p>
+            <p><strong>Estado Actual:</strong> ${order.status}</p>
+        </div>
+    `;
+
+    // Selecciona el estado actual en el dropdown
+    orderStatusSelect.value = order.status;
+    // Guarda el ID del pedido en el botón para usarlo al actualizar
+    updateOrderStatusBtn.dataset.orderId = orderId;
+
+    openModal(orderDetailsModal);
+}
+
+/**
+ * Actualiza el estado de un pedido en Firestore y ajusta el inventario si es necesario.
+ */
+async function handleUpdateOrderStatus() {
+    const orderId = updateOrderStatusBtn.dataset.orderId;
+    const newStatus = orderStatusSelect.value;
+
+    if (!orderId) {
+        showMessageModal("Error", "No se ha seleccionado ningún pedido.");
+        return;
+    }
+
+    const orderToUpdate = allOrders.find(o => o.id === orderId);
+    if (!orderToUpdate) {
+        showMessageModal("Error", "Pedido no encontrado.");
+        return;
+    }
+
+    const oldStatus = orderToUpdate.status;
+
+    // Evitar acciones si el estado no cambia
+    if (oldStatus === newStatus) {
+        closeModal(orderDetailsModal);
+        return;
+    }
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const orderDocRef = doc(db, `artifacts/${appId}/public/data/orders`, orderId);
+
+            // Si el pedido se cancela Y NO estaba ya cancelado, devolver el stock
+            if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
+                const cart = JSON.parse(orderToUpdate.cart);
+                for (const itemId in cart) {
+                    const cartItem = cart[itemId];
+                    const collectionName = cartItem.type === 'card' ? 'cards' : 'sealed_products';
+                    const itemRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, itemId);
+                    
+                    const itemDoc = await transaction.get(itemRef);
+                    if (itemDoc.exists()) {
+                        const currentStock = itemDoc.data().stock;
+                        const newStock = currentStock + cartItem.quantity;
+                        transaction.update(itemRef, { stock: newStock });
+                    }
+                }
+            }
+            
+            // Actualizar el estado del pedido
+            transaction.update(orderDocRef, { status: newStatus });
+        });
+
+        showMessageModal("Éxito", "El estado del pedido ha sido actualizado.");
+        closeModal(orderDetailsModal);
+        await loadAllData(); // Recargar todos los datos para reflejar cambios en pedidos y stock
+
+    } catch (error) {
+        console.error("Error al actualizar el estado del pedido:", error);
+        showMessageModal("Error", "No se pudo actualizar el estado del pedido.");
+    }
+}
+
 
 /**
  * Maneja el envío del formulario para añadir/editar una carta.
@@ -754,6 +952,7 @@ async function handleDeleteConfirmed() {
 document.addEventListener('DOMContentLoaded', () => {
     // Asignación de elementos DOM
     sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    closeSidebarBtn = document.getElementById('closeSidebarBtn'); // <-- Asignación del nuevo botón
     sidebarMenu = document.getElementById('sidebar-menu');
     sidebarOverlay = document.getElementById('sidebar-overlay');
     mainHeader = document.querySelector('.main-header');
@@ -762,7 +961,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginMessage = document.getElementById('loginMessage');
     usernameInput = document.getElementById('username');
     passwordInput = document.getElementById('password');
-    togglePasswordVisibilityBtn = document.getElementById('togglePasswordVisibilityBtn'); // Referencia al botón
+    togglePasswordVisibilityBtn = document.getElementById('togglePasswordVisibilityBtn');
 
     navDashboard = document.getElementById('nav-dashboard');
     navCards = document.getElementById('nav-cards');
@@ -775,6 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cardsSection = document.getElementById('cards-section');
     sealedProductsSection = document.getElementById('sealed-products-section');
     categoriesSection = document.getElementById('categories-section');
+    ordersSection = document.getElementById('orders-section'); // <-- Asignación de la nueva sección
 
     addCardBtn = document.getElementById('addCardBtn');
     addSealedProductBtn = document.getElementById('addSealedProductBtn');
@@ -817,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cardsTable = document.getElementById('cardsTable');
     sealedProductsTable = document.getElementById('sealedProductsTable');
     categoriesTable = document.getElementById('categoriesTable');
+    ordersTable = document.getElementById('ordersTable'); // <-- Asignación de la nueva tabla
 
     adminSearchInput = document.getElementById('adminSearchInput');
     adminCategoryFilter = document.getElementById('adminCategoryFilter');
@@ -841,6 +1042,13 @@ document.addEventListener('DOMContentLoaded', () => {
     messageModalText = document.getElementById('messageModalText');
     okMessageModalBtn = document.getElementById('okMessageModal');
 
+    // Asignación para el nuevo modal de detalles de pedido
+    orderDetailsModal = document.getElementById('orderDetailsModal');
+    closeOrderDetailsModalBtn = document.getElementById('closeOrderDetailsModal');
+    orderDetailsContent = document.getElementById('orderDetailsContent');
+    orderStatusSelect = document.getElementById('orderStatusSelect');
+    updateOrderStatusBtn = document.getElementById('updateOrderStatusBtn');
+
     // ------------------- Initial Load Control -------------------
     // Inicia la aplicación con el modal de login abierto y sin secciones activas.
     // Esto asegura que el usuario siempre vea la pantalla de login primero.
@@ -850,17 +1058,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------- Navigation -------------------
     if (sidebarToggleBtn) {
         sidebarToggleBtn.addEventListener('click', () => {
-            if (sidebarMenu) {
-                sidebarMenu.classList.toggle('active');
-            }
+            if (sidebarMenu) sidebarMenu.classList.add('active');
+            if (sidebarOverlay) sidebarOverlay.classList.add('active');
+        });
+    }
+
+    // NUEVO: Event listener para el botón de cerrar el sidebar
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', () => {
+            if (sidebarMenu) sidebarMenu.classList.remove('active');
+            if (sidebarOverlay) sidebarOverlay.classList.remove('active');
         });
     }
 
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
-            if (sidebarMenu) {
-                sidebarMenu.classList.remove('active');
-            }
+            if (sidebarMenu) sidebarMenu.classList.remove('active');
+            if (sidebarOverlay) sidebarOverlay.classList.remove('active');
         });
     }
 
@@ -871,7 +1085,9 @@ document.addEventListener('DOMContentLoaded', () => {
         navCards.classList.remove('active');
         navSealedProducts.classList.remove('active');
         navCategories.classList.remove('active');
+        navOrders.classList.remove('active');
         if (sidebarMenu) sidebarMenu.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
     });
 
     if (navCards) navCards.addEventListener('click', (e) => {
@@ -881,7 +1097,9 @@ document.addEventListener('DOMContentLoaded', () => {
         navDashboard.classList.remove('active');
         navSealedProducts.classList.remove('active');
         navCategories.classList.remove('active');
+        navOrders.classList.remove('active');
         if (sidebarMenu) sidebarMenu.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
     });
 
     if (navSealedProducts) navSealedProducts.addEventListener('click', (e) => {
@@ -891,7 +1109,9 @@ document.addEventListener('DOMContentLoaded', () => {
         navDashboard.classList.remove('active');
         navCards.classList.remove('active');
         navCategories.classList.remove('active');
+        navOrders.classList.remove('active');
         if (sidebarMenu) sidebarMenu.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
     });
 
     if (navCategories) navCategories.addEventListener('click', (e) => {
@@ -901,8 +1121,24 @@ document.addEventListener('DOMContentLoaded', () => {
         navDashboard.classList.remove('active');
         navCards.classList.remove('active');
         navSealedProducts.classList.remove('active');
+        navOrders.classList.remove('active');
         if (sidebarMenu) sidebarMenu.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
     });
+    
+    // Event listener para la nueva sección de pedidos
+    if (navOrders) navOrders.addEventListener('click', (e) => {
+        e.preventDefault();
+        showSection(ordersSection);
+        navOrders.classList.add('active');
+        navDashboard.classList.remove('active');
+        navCards.classList.remove('active');
+        navSealedProducts.classList.remove('active');
+        navCategories.classList.remove('active');
+        if (sidebarMenu) sidebarMenu.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    });
+
 
     if (navLogout) navLogout.addEventListener('click', (e) => {
         e.preventDefault();
@@ -918,6 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal(confirmModal);
             closeModal(loginModal);
             closeModal(messageModal);
+            closeModal(orderDetailsModal); // <-- Cerrar también el modal de detalles
         });
     });
 
@@ -927,6 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.target == sealedProductModal) closeModal(sealedProductModal);
             if (event.target == categoryModal) closeModal(categoryModal);
             if (event.target == confirmModal) closeModal(confirmModal);
+            if (event.target == orderDetailsModal) closeModal(orderDetailsModal);
             // El modal de login no se debe cerrar al hacer clic fuera
             if (event.target == messageModal) closeModal(messageModal);
         };
@@ -1070,6 +1308,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (categoryForm) categoryForm.addEventListener('submit', handleSaveCategory);
 
+    // ------------------- Order Management -------------------
+    if (ordersTable) {
+        ordersTable.addEventListener('click', (e) => {
+            if (e.target.classList.contains('view-order-details-btn')) {
+                const orderId = e.target.dataset.id;
+                showOrderDetails(orderId);
+            }
+        });
+    }
+    
+    // Event listener para el botón de actualizar estado del pedido
+    if (updateOrderStatusBtn) {
+        updateOrderStatusBtn.addEventListener('click', handleUpdateOrderStatus);
+    }
+
+
     // ------------------- Confirmation Modal -------------------
     if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', () => closeModal(confirmModal));
     if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', handleDeleteConfirmed);
@@ -1090,7 +1344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.addEventListener('submit', handleLogin);
     }
     
-    // ------------------- Toggle password visibility (LÓGICA AÑADIDA AQUÍ) -------------------
+    // ------------------- Toggle password visibility -------------------
     if (togglePasswordVisibilityBtn && passwordInput) {
         togglePasswordVisibilityBtn.addEventListener('click', function() {
             // Alternar el tipo de input entre 'password' y 'text'

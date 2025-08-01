@@ -76,10 +76,14 @@ body {
     transition: transform 0.3s ease-in-out;
 }
 
+.sidebar-header {
+    margin-bottom: 30px;
+    position: relative; /* Para posicionar el botón de cerrar */
+}
+
 .sidebar-header h3 {
     text-align: center;
     color: #fff;
-    margin-bottom: 30px;
 }
 
 .sidebar-nav ul {
@@ -526,6 +530,65 @@ table img {
 }
 
 /* ==========================================================================
+   NUEVO: Estilos para el Modal de Detalles del Pedido
+   ========================================================================== */
+#orderDetailsModal .admin-modal-content {
+    max-width: 700px; /* Un poco más ancho para los detalles */
+}
+
+#orderDetailsContent {
+    text-align: left;
+}
+
+.customer-details, .order-items, .order-summary {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#orderDetailsContent h4 {
+    color: #2d3748;
+    margin-bottom: 10px;
+}
+
+#orderDetailsContent p {
+    margin: 5px 0;
+}
+
+.order-items-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px; /* Espacio para la barra de scroll */
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.order-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.order-item-info {
+    flex-grow: 1;
+}
+
+.order-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.order-actions select {
+    margin-bottom: 10px;
+}
+
+/* ==========================================================================
    Responsive Design
    ========================================================================== */
 .sidebar-toggle-btn {
@@ -548,6 +611,26 @@ table img {
     z-index: 999;
 }
 
+/* NUEVO: Estilos para el botón de cerrar el sidebar */
+.close-sidebar-btn {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #a0aec0;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-sidebar-btn:hover {
+    color: #fff;
+}
+
+
 @media (max-width: 768px) {
     .admin-container {
         flex-direction: column;
@@ -561,7 +644,7 @@ table img {
         transform: translateX(-100%);
         z-index: 1000;
         width: 250px;
-        padding-top: 80px;
+        padding-top: 20px; /* Reducido para dar espacio al botón de cerrar */
     }
 
     .sidebar.active {
@@ -570,6 +653,10 @@ table img {
 
     .sidebar-toggle-btn {
         display: block;
+    }
+    
+    .close-sidebar-btn {
+        display: block; /* Mostrar el botón de cerrar en móvil */
     }
 
     .sidebar-overlay.active {

@@ -5,7 +5,7 @@
 // Firebase and Firestore SDK imports
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, addDoc } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs, doc, addDoc, runTransaction, getDoc } from 'https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -517,56 +517,90 @@ async function confirmOrder() {
     confirmOrderBtn.disabled = true;
     checkoutLoadingSpinner.style.display = 'inline-block';
 
-    let orderDetails = '¡Nuevo pedido de DND TCG!\n\n';
-    orderDetails += `Cliente: ${customerName}\n`;
-    orderDetails += `Teléfono: ${customerPhone}\n`;
-    orderDetails += `Dirección: ${customerAddress}\n\n`;
-    orderDetails += 'Detalles del Pedido:\n';
-
-    let totalOrderPrice = 0;
-
-    for (const id in cart) {
-        const item = cart[id];
-        let productInfo = null;
-        if (item.type === 'card') {
-            productInfo = allCards.find(c => c.id === id);
-        } else if (item.type === 'sealed') {
-            productInfo = allSealedProducts.find(p => p.id === id);
-        }
-        if (productInfo) {
-            const subtotal = item.quantity * productInfo.precio;
-            orderDetails += `- ${item.quantity}x ${productInfo.nombre} ($${productInfo.precio.toFixed(2)} c/u) - Subtotal: $${subtotal.toFixed(2)}\n`;
-            totalOrderPrice += subtotal;
-        }
-    }
-
-    orderDetails += `\nTotal del Pedido: $${totalOrderPrice.toFixed(2)}\n\n`;
-    orderDetails += '¡Gracias por tu compra!';
-
-    const whatsappMessage = encodeURIComponent(orderDetails);
-    const whatsappUrl = `https://wa.me/50377478050?text=${whatsappMessage}`;
-
     try {
-        if (!db) throw new Error('Firestore is not initialized.');
-        await addDoc(collection(db, `artifacts/${appId}/public/data/orders`), {
-            customerName,
-            customerPhone,
-            customerAddress,
-            cart: JSON.stringify(cart),
-            total: totalOrderPrice,
-            timestamp: new Date().toISOString(),
-            status: 'pending'
+        if (!db) throw new Error('Firestore no está inicializado.');
+
+        // Iniciar una transacción de Firestore
+        await runTransaction(db, async (transaction) => {
+            const itemsToUpdate = [];
+            let totalOrderPrice = 0;
+            let outOfStockItem = null;
+
+            // 1. Verificar el stock de todos los productos en el carrito
+            for (const itemId in cart) {
+                const cartItem = cart[itemId];
+                const collectionName = cartItem.type === 'card' ? 'cards' : 'sealed_products';
+                const itemRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, itemId);
+                
+                const itemDoc = await transaction.get(itemRef);
+                if (!itemDoc.exists()) {
+                    throw new Error(`El producto con ID ${itemId} ya no existe.`);
+                }
+
+                const currentStock = itemDoc.data().stock;
+                if (currentStock < cartItem.quantity) {
+                    outOfStockItem = itemDoc.data().nombre;
+                    throw new Error(`Stock insuficiente para ${outOfStockItem}.`);
+                }
+
+                const newStock = currentStock - cartItem.quantity;
+                itemsToUpdate.push({ ref: itemRef, newStock: newStock });
+                totalOrderPrice += (itemDoc.data().precio * cartItem.quantity);
+            }
+
+            // 2. Si hay stock para todo, actualizar el stock y crear el pedido
+            itemsToUpdate.forEach(item => {
+                transaction.update(item.ref, { stock: item.newStock }); // <-- CORRECCIÓN AQUÍ
+            });
+
+            const ordersCol = collection(db, `artifacts/${appId}/public/data/orders`);
+            const newOrderRef = doc(ordersCol); // Crear una referencia para el nuevo pedido
+            transaction.set(newOrderRef, {
+                customerName,
+                customerPhone,
+                customerAddress,
+                cart: JSON.stringify(cart),
+                total: totalOrderPrice,
+                timestamp: new Date().toISOString(),
+                status: 'pending'
+            });
         });
 
+        // 3. Si la transacción fue exitosa, proceder con la notificación y limpieza
+        let orderDetails = 'Pedido de Deck and Drift\n\n';
+        orderDetails += `Cliente: ${customerName}\n`;
+        orderDetails += `Teléfono: ${customerPhone}\n`;
+        orderDetails += `Dirección: ${customerAddress}\n\n`;
+        orderDetails += 'Detalles del Pedido:\n';
+        let finalTotal = 0;
+        for (const id in cart) {
+            const item = cart[id];
+            let productInfo = item.type === 'card' ? allCards.find(c => c.id === id) : allSealedProducts.find(p => p.id === id);
+            if (productInfo) {
+                const subtotal = item.quantity * productInfo.precio;
+                orderDetails += `- ${item.quantity}x ${productInfo.nombre} ($${productInfo.precio.toFixed(2)} c/u) - Subtotal: $${subtotal.toFixed(2)}\n`;
+                finalTotal += subtotal;
+            }
+        }
+        orderDetails += `\nTotal del Pedido: $${finalTotal.toFixed(2)}\n\n¡Gracias por tu compra!`;
+        const whatsappMessage = encodeURIComponent(orderDetails);
+        const whatsappUrl = `https://wa.me/50374785424?text=${whatsappMessage}`;
+        
         window.open(whatsappUrl, '_blank');
         showMessageModal('Pedido Confirmado', 'Tu pedido ha sido enviado. ¡Gracias por tu compra!');
         clearCart();
         closeModal(checkoutModal);
         checkoutForm.reset();
+        await loadCardsData();
+        await loadSealedProductsData();
 
     } catch (error) {
         console.error('Error al confirmar el pedido:', error);
-        showMessageModal('Error al Confirmar', `Hubo un problema al procesar tu pedido: ${error.message}.`);
+        if (error.message.includes("Stock insuficiente")) {
+            showMessageModal('Stock Agotado', `Lo sentimos, uno de los productos de tu carrito se agotó mientras finalizabas la compra. Por favor, revisa tu carrito.`);
+        } else {
+            showMessageModal('Error al Confirmar', `Hubo un problema al procesar tu pedido: ${error.message}.`);
+        }
     } finally {
         confirmOrderBtn.disabled = false;
         checkoutLoadingSpinner.style.display = 'none';
