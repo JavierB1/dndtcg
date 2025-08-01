@@ -755,7 +755,6 @@ async function handleUpdateOrderStatus() {
 
     const oldStatus = orderToUpdate.status;
 
-    // Evitar acciones si el estado no cambia
     if (oldStatus === newStatus) {
         closeModal(orderDetailsModal);
         return;
@@ -765,30 +764,42 @@ async function handleUpdateOrderStatus() {
         await runTransaction(db, async (transaction) => {
             const orderDocRef = doc(db, `artifacts/${appId}/public/data/orders`, orderId);
 
-            // Si el pedido se cancela Y NO estaba ya cancelado, devolver el stock
             if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
                 const cart = JSON.parse(orderToUpdate.cart);
+                const stockUpdatePromises = [];
+                const itemsToUpdate = [];
+
+                // Fase 1: Recopilar todas las lecturas
                 for (const itemId in cart) {
                     const cartItem = cart[itemId];
                     const collectionName = cartItem.type === 'card' ? 'cards' : 'sealed_products';
                     const itemRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, itemId);
-                    
-                    const itemDoc = await transaction.get(itemRef);
+                    stockUpdatePromises.push(transaction.get(itemRef).then(itemDoc => ({ itemDoc, cartItem })));
+                }
+                
+                const results = await Promise.all(stockUpdatePromises);
+
+                // Fase 2: Preparar las escrituras
+                for (const { itemDoc, cartItem } of results) {
                     if (itemDoc.exists()) {
                         const currentStock = itemDoc.data().stock;
                         const newStock = currentStock + cartItem.quantity;
-                        transaction.update(itemRef, { stock: newStock });
+                        itemsToUpdate.push({ ref: itemDoc.ref, newStock });
                     }
                 }
+
+                // Fase 3: Ejecutar todas las escrituras
+                itemsToUpdate.forEach(update => {
+                    transaction.update(update.ref, { stock: update.newStock });
+                });
             }
             
-            // Actualizar el estado del pedido
             transaction.update(orderDocRef, { status: newStatus });
         });
 
         showMessageModal("Éxito", "El estado del pedido ha sido actualizado.");
         closeModal(orderDetailsModal);
-        await loadAllData(); // Recargar todos los datos para reflejar cambios en pedidos y stock
+        await loadAllData();
 
     } catch (error) {
         console.error("Error al actualizar el estado del pedido:", error);

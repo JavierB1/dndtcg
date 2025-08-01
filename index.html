@@ -15,7 +15,7 @@
     <div class="name">Deck & Drift TCG</div>
     <ul>
         <li><a href="#" id="abrirModalProductos">Productos</a></li>
-        <li><a href="#" id="abrirCarrito"><i class="fas fa-shopping-cart"></i> Carrito</a></li>
+        <li><a href="#" id="abrirCarrito"><i class="fas fa-shopping-cart"></i> Carrito <span id="cartCounter" class="cart-counter">0</span></a></li>
     </ul>
     </div>
 </nav>
@@ -24,7 +24,6 @@
 <div class="main-content-wrapper">
     <h1>Bienvenido a DND TCG</h1>
     <p>¡Empieza tu aventura!</p>
-    <!-- Se ha eliminado la imagen del logo aquí -->
 </div>
 
 <!-- CONTENEDOR PARA LAS TARJETAS DE SECCIÓN (CARTAS Y REDES SOCIALES) -->
@@ -63,7 +62,7 @@
 </div>
 
 
-<!-- NUEVO: Modal de Selección de Productos (Cartas o Sellados) -->
+<!-- MODAL DE SELECCIÓN DE PRODUCTOS -->
 <div id="productSelectionModal" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <span class="close" id="closeProductSelectionModal">&times;</span>
@@ -75,21 +74,15 @@
     </div>
 </div>
 
-<!-- MODAL DE CARTAS (Existente, para cartas individuales) -->
+<!-- MODAL DE CARTAS -->
 <div id="cardsModal" class="modal">
     <div class="modal-content">
     <span class="close" id="closeCardsModal">&times;</span>
     <h2>Cartas Disponibles</h2>
     <input type="text" id="searchInput" placeholder="Buscar carta..." />
-    
-    <select id="categoryFilter" style="width: 100%; max-width: 300px; display: block; margin: 0 auto 20px auto; padding: 12px 15px; padding-right: 55px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1em; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 30px; cursor: pointer;">
-        <option value="">Todas las categorías</option>
-        <!-- Las opciones se cargarán dinámicamente con JavaScript -->
-    </select>
-
+    <select id="categoryFilter"></select>
     <div id="cardsContainer"></div>
-    <!-- Controles de paginación -->
-    <div id="paginationControls" style="text-align: center; margin-top: 20px;">
+    <div id="paginationControls">
         <button id="prevPageBtn">-</button>
         <span id="pageInfo">Página 1 de 1</span>
         <button id="nextPageBtn">+</button>
@@ -97,18 +90,15 @@
     </div>
 </div>
 
-<!-- NUEVO: Modal de Productos Sellados (para el cliente) -->
+<!-- MODAL DE PRODUCTOS SELLADOS -->
 <div id="sealedProductsModal" class="modal">
     <div class="modal-content">
         <span class="close" id="closeSealedProductsModal">&times;</span>
         <h2>Productos Sellados Disponibles</h2>
         <input type="text" id="sealedSearchInput" placeholder="Buscar producto sellado..." />
-        <select id="sealedTypeFilter" style="width: 100%; max-width: 300px; display: block; margin: 0 auto 20px auto; padding: 12px 15px; padding-right: 55px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; font-size: 1em; box-shadow: inset 0 1px 3px rgba(0,0,0,0.08); transition: border-color 0 2s ease, box-shadow 0 2s ease; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg fill="#333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 30px; cursor: pointer;">
-            <option value="">Todos los tipos</option>
-            <!-- Las opciones de tipo se cargarán dinámicamente con JavaScript -->
-        </select>
+        <select id="sealedTypeFilter"></select>
         <div id="sealedProductsContainer"></div>
-        <div id="sealedPaginationControls" style="text-align: center; margin-top: 20px;">
+        <div id="sealedPaginationControls">
             <button id="sealedPrevPageBtn">-</button>
             <span id="sealedPageInfo">Página 1 de 1</span>
             <button id="sealedNextPageBtn">+</button>
@@ -116,36 +106,50 @@
     </div>
 </div>
 
-
 <!-- MODAL DEL CARRITO -->
 <div id="modalCarrito" class="modal">
     <div class="modal-content">
     <span class="close" id="cerrarCarrito">&times;</span>
     <h2>Tu carrito</h2>
     <div id="lista-carrito"></div>
-    <!-- Botones -->
     <div>
         <button id="vaciarCarrito">Vaciar carrito</button>
-        <button id="openCheckoutModalBtn">Proceder al Checkout</button> <!-- CAMBIADO: de enviarWhatsapp a openCheckoutModalBtn -->
+        <button id="openCheckoutModalBtn">Proceder al Checkout</button>
     </div>
     </div>
 </div>
 
-<!-- NUEVO: MODAL DE CHECKOUT (para que el cliente ingrese sus datos) -->
+<!-- NUEVO: MODAL DE SELECCIÓN DE MÉTODO DE ENTREGA -->
+<div id="deliveryMethodModal" class="modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <span class="close" id="closeDeliveryMethodModal">&times;</span>
+        <h2>Elige un método de entrega</h2>
+        <div class="selection-options">
+            <button id="deliveryOptionBtn" class="selection-button">Envío a Domicilio</button>
+            <button id="pickupOptionBtn" class="selection-button">Retiro en Tienda</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL DE CHECKOUT (AJUSTADO) -->
 <div id="checkoutModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
         <span class="close" id="closeCheckoutModal">&times;</span>
-        <h2>Confirmar Pedido</h2>
+        <h2 id="checkoutTitle">Confirmar Pedido</h2>
         <form id="checkoutForm">
-            <label for="customerName">Nombre Completo:</label>
-            <input type="text" id="customerName" required placeholder="Tu nombre completo">
-
-            <label for="customerPhone">Número de Teléfono (WhatsApp):</label>
-            <input type="tel" id="customerPhone" required placeholder="Ej: +5037xxxxxxx">
-
-            <label for="customerAddress">Dirección de Envío:</label>
-            <textarea id="customerAddress" required placeholder="Calle, número, colonia, ciudad, etc."></textarea>
-
+            <div class="form-group">
+                <label for="customerName">Nombre de quien recibe:</label>
+                <input type="text" id="customerName" required placeholder="Tu nombre completo">
+            </div>
+            <div class="form-group" id="phoneField">
+                <label for="customerPhone">Número de Teléfono (WhatsApp):</label>
+                <input type="tel" id="customerPhone" required placeholder="Ej: +5037xxxxxxx">
+            </div>
+            <div class="form-group" id="addressField">
+                <label for="customerAddress">Dirección de Envío:</label>
+                <textarea id="customerAddress" required placeholder="Calle, número, colonia, ciudad, etc."></textarea>
+            </div>
             <button type="button" id="confirmOrderBtn">
                 <span id="checkoutLoadingSpinner" class="spinner" style="display:none;"></span>
                 Confirmar Pedido
@@ -167,10 +171,8 @@
     </div>
 </div>
 
-<!-- NUEVO: Notificación pequeña "Agregado al carrito" -->
-<div id="addedToCartNotification" class="added-to-cart-notification">
-    Artículo agregado al carrito
-</div>
+<!-- Notificación "Agregado al carrito" -->
+<div id="addedToCartNotification" class="added-to-cart-notification"></div>
 
 <!-- FOOTER -->
 <footer>

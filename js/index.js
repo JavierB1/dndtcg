@@ -41,6 +41,7 @@ let allCards = [];
 let allSealedProducts = [];
 let allCategories = [];
 let cart = JSON.parse(localStorage.getItem('cart')) || {};
+let currentDeliveryMethod = 'delivery'; // 'delivery' or 'pickup'
 
 // Configuración de paginación
 let currentCardsPage = 1;
@@ -73,18 +74,28 @@ const sealedNextPageBtn = document.getElementById('sealedNextPageBtn');
 const sealedPageInfo = document.getElementById('sealedPageInfo');
 
 const abrirCarritoBtn = document.getElementById('abrirCarrito');
+const cartCounter = document.getElementById('cartCounter'); // <-- Referencia para el contador
 const modalCarrito = document.getElementById('modalCarrito');
 const cerrarCarritoBtn = document.getElementById('cerrarCarrito');
 const listaCarrito = document.getElementById('lista-carrito');
 const vaciarCarritoBtn = document.getElementById('vaciarCarrito');
 const openCheckoutModalBtn = document.getElementById('openCheckoutModalBtn');
 
+// Referencias para el nuevo modal de selección de entrega
+const deliveryMethodModal = document.getElementById('deliveryMethodModal');
+const closeDeliveryMethodModalBtn = document.getElementById('closeDeliveryMethodModal');
+const deliveryOptionBtn = document.getElementById('deliveryOptionBtn');
+const pickupOptionBtn = document.getElementById('pickupOptionBtn');
+
 const checkoutModal = document.getElementById('checkoutModal');
 const closeCheckoutModalBtn = document.getElementById('closeCheckoutModal');
+const checkoutTitle = document.getElementById('checkoutTitle');
 const checkoutForm = document.getElementById('checkoutForm');
 const customerNameInput = document.getElementById('customerName');
 const customerPhoneInput = document.getElementById('customerPhone');
 const customerAddressInput = document.getElementById('customerAddress');
+const phoneField = document.getElementById('phoneField');
+const addressField = document.getElementById('addressField');
 const confirmOrderBtn = document.getElementById('confirmOrderBtn');
 const checkoutLoadingSpinner = document.getElementById('checkoutLoadingSpinner');
 
@@ -141,15 +152,13 @@ function closeModal(modalElement) {
 
 function saveCart() {
     localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCounter(); // <-- Actualizar el contador cada vez que se guarda el carrito
 }
 
 // ==========================================================================
 // DATA LOADING FUNCTIONS (FROM FIREBASE)
 // ==========================================================================
 
-/**
- * Loads all categories from Firestore to populate filters.
- */
 async function loadCategories() {
     if (!db) return;
     try {
@@ -164,9 +173,6 @@ async function loadCategories() {
     }
 }
 
-/**
- * Loads all cards data from Firestore.
- */
 async function loadCardsData() {
     if (!db) return;
     try {
@@ -186,9 +192,6 @@ async function loadCardsData() {
     }
 }
 
-/**
- * Loads all sealed products data from Firestore.
- */
 async function loadSealedProductsData() {
     if (!db) return;
     try {
@@ -207,10 +210,6 @@ async function loadSealedProductsData() {
     }
 }
 
-
-/**
- * Populates the category filter dropdown for cards.
- */
 function populateCategoryFilter() {
     if (!categoryFilter) return;
     categoryFilter.innerHTML = '<option value="">Todas las categorías</option>';
@@ -222,9 +221,6 @@ function populateCategoryFilter() {
     });
 }
 
-/**
- * Populates the type filter dropdown for sealed products.
- */
 function populateSealedTypeFilter() {
     if (!sealedTypeFilter) return;
     sealedTypeFilter.innerHTML = '<option value="">Todos los tipos</option>';
@@ -240,46 +236,31 @@ function populateSealedTypeFilter() {
 // RENDERING FUNCTIONS
 // ==========================================================================
 
-/**
- * Renders the infinite scrolling card carousel on the homepage.
- */
 function renderFloatingCards() {
     if (!dynamicFloatingCardsContainer) return;
-
-    dynamicFloatingCardsContainer.innerHTML = ''; // Limpia el contenedor
-
-    // 1. Obtiene hasta 10 cartas para mostrar
+    dynamicFloatingCardsContainer.innerHTML = '';
     const cardsToDisplay = allCards
         .filter(card => card.imagen_url && typeof card.imagen_url === 'string' && card.imagen_url.startsWith('http'))
         .slice(0, 10);
-
     if (cardsToDisplay.length === 0) {
         dynamicFloatingCardsContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No hay cartas disponibles para mostrar.</p>';
         return;
     }
-
-    // 2. Crea los elementos de las cartas
     const cardElements = cardsToDisplay.map(card => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('floating-card');
         cardElement.innerHTML = `<img src="${card.imagen_url}" alt="${card.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/150x210/cccccc/333333?text=No+Image';" />`;
         return cardElement;
     });
-
-    // 3. Añade las cartas originales al contenedor
     cardElements.forEach(el => dynamicFloatingCardsContainer.appendChild(el));
-
-    // 4. Clona y añade las cartas de nuevo para crear el bucle infinito
-    if (cardsToDisplay.length > 1) { // Solo clona si hay más de una carta
+    if (cardsToDisplay.length > 1) {
         cardElements.forEach(el => {
             const clone = el.cloneNode(true);
             dynamicFloatingCardsContainer.appendChild(clone);
         });
     }
-
-    // 5. Establece la animación dinámicamente
     const numCards = cardsToDisplay.length;
-    const animationDuration = numCards * 4; // 4 segundos por carta (ajusta si es necesario)
+    const animationDuration = numCards * 4;
     dynamicFloatingCardsContainer.style.animation = `scroll ${animationDuration}s linear infinite`;
 }
 
@@ -288,24 +269,19 @@ function renderCards() {
     cardsContainer.innerHTML = '';
     const searchTerm = searchInput.value.toLowerCase();
     const selectedCategory = categoryFilter.value;
-
     let filteredCards = allCards.filter(card => {
         const matchesSearch = card.nombre.toLowerCase().includes(searchTerm);
         const matchesCategory = selectedCategory === '' || card.categoria === selectedCategory;
         return matchesSearch && matchesCategory;
     });
-
     filteredCards.sort((a, b) => a.nombre.localeCompare(b.nombre));
-
     const totalPages = Math.ceil(filteredCards.length / itemsPerPage);
     const startIndex = (currentCardsPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const cardsToDisplay = filteredCards.slice(startIndex, endIndex);
-
     if (cardsToDisplay.length === 0) {
         cardsContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No se encontraron cartas.</p>';
     }
-
     cardsToDisplay.forEach(card => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('carta');
@@ -325,7 +301,6 @@ function renderCards() {
         `;
         cardsContainer.appendChild(cardElement);
     });
-
     updatePaginationControls(currentCardsPage, totalPages, pageInfo, prevPageBtn, nextPageBtn, filteredCards.length);
 }
 
@@ -334,24 +309,19 @@ function renderSealedProducts() {
     sealedProductsContainer.innerHTML = '';
     const searchTerm = sealedSearchInput.value.toLowerCase();
     const selectedType = sealedTypeFilter.value;
-
     let filteredProducts = allSealedProducts.filter(product => {
         const matchesSearch = product.nombre.toLowerCase().includes(searchTerm);
         const matchesType = selectedType === '' || product.categoria === selectedType;
         return matchesSearch && matchesType;
     });
-
     filteredProducts.sort((a, b) => a.nombre.localeCompare(b.nombre));
-
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
     const startIndex = (currentSealedProductsPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const productsToDisplay = filteredProducts.slice(startIndex, endIndex);
-
     if (productsToDisplay.length === 0) {
         sealedProductsContainer.innerHTML = '<p style="text-align: center; color: #666; margin-top: 20px;">No se encontraron productos sellados.</p>';
     }
-
     productsToDisplay.forEach(product => {
         const productElement = document.createElement('div');
         productElement.classList.add('carta');
@@ -372,7 +342,6 @@ function renderSealedProducts() {
         `;
         sealedProductsContainer.appendChild(productElement);
     });
-
     updatePaginationControls(currentSealedProductsPage, totalPages, sealedPageInfo, sealedPrevPageBtn, sealedNextPageBtn, filteredProducts.length);
 }
 
@@ -387,7 +356,6 @@ function renderCart() {
     if (!listaCarrito) return;
     listaCarrito.innerHTML = '';
     let total = 0;
-
     if (Object.keys(cart).length === 0) {
         listaCarrito.innerHTML = '<p style="text-align: center; color: #666;">El carrito está vacío.</p>';
         vaciarCarritoBtn.disabled = true;
@@ -397,19 +365,16 @@ function renderCart() {
         vaciarCarritoBtn.disabled = false;
         openCheckoutModalBtn.disabled = false;
     }
-
     for (const id in cart) {
         const itemInCart = cart[id];
         const itemElement = document.createElement('div');
         itemElement.classList.add('cart-item');
-
         let productData = null;
         if (itemInCart.type === 'card') {
             productData = allCards.find(c => c.id === id);
         } else if (itemInCart.type === 'sealed') {
             productData = allSealedProducts.find(p => p.id === id);
         }
-
         if (productData) {
             itemElement.innerHTML = `
                 <img src="${productData.imagen_url}" alt="${productData.nombre}" onerror="this.onerror=null;this.src='https://placehold.co/70x70/cccccc/333333?text=No+Image';" />
@@ -429,7 +394,6 @@ function renderCart() {
             total += itemInCart.quantity * productData.precio;
         }
     }
-
     const totalElement = document.createElement('div');
     totalElement.classList.add('cart-total');
     totalElement.innerHTML = `<h3>Total: $${total.toFixed(2)}</h3>`;
@@ -440,6 +404,17 @@ function renderCart() {
 // CART MANAGEMENT FUNCTIONS
 // ==========================================================================
 
+function updateCartCounter() {
+    if (!cartCounter) return;
+    const itemCount = Object.keys(cart).length;
+    cartCounter.textContent = itemCount;
+    if (itemCount > 0) {
+        cartCounter.classList.add('active');
+    } else {
+        cartCounter.classList.remove('active');
+    }
+}
+
 function addToCart(id, type, quantityToAdd, showNotification = true) {
     let itemData = null;
     if (type === 'card') {
@@ -447,20 +422,16 @@ function addToCart(id, type, quantityToAdd, showNotification = true) {
     } else if (type === 'sealed') {
         itemData = allSealedProducts.find(p => p.id === id);
     }
-
     if (!itemData) {
         showMessageModal('Error', 'Producto no encontrado.');
         return;
     }
-
     const currentQuantityInCart = cart[id] ? cart[id].quantity : 0;
     const newQuantity = currentQuantityInCart + quantityToAdd;
-
     if (newQuantity > itemData.stock) {
         showMessageModal('Stock Insuficiente', `Solo hay ${itemData.stock} unidades de "${itemData.nombre}" disponibles.`);
         return;
     }
-
     if (newQuantity <= 0) {
         delete cart[id];
     } else {
@@ -474,7 +445,6 @@ function addToCart(id, type, quantityToAdd, showNotification = true) {
     renderCart();
     renderCards();
     renderSealedProducts();
-
     if (showNotification && quantityToAdd > 0) {
         showAddedToCartNotification(itemData.nombre);
     }
@@ -502,11 +472,11 @@ function clearCart() {
 
 async function confirmOrder() {
     const customerName = customerNameInput.value.trim();
-    const customerPhone = customerPhoneInput.value.trim();
-    const customerAddress = customerAddressInput.value.trim();
+    const customerPhone = (currentDeliveryMethod === 'delivery') ? customerPhoneInput.value.trim() : '';
+    const customerAddress = (currentDeliveryMethod === 'delivery') ? customerAddressInput.value.trim() : 'Retiro en Tienda';
 
-    if (!customerName || !customerPhone || !customerAddress) {
-        showMessageModal('Error', 'Por favor, completa todos los campos del formulario.');
+    if (!customerName || (currentDeliveryMethod === 'delivery' && (!customerPhone || !customerAddress))) {
+        showMessageModal('Error', 'Por favor, completa todos los campos requeridos.');
         return;
     }
     if (Object.keys(cart).length === 0) {
@@ -519,42 +489,24 @@ async function confirmOrder() {
 
     try {
         if (!db) throw new Error('Firestore no está inicializado.');
-
-        // Iniciar una transacción de Firestore
         await runTransaction(db, async (transaction) => {
             const itemsToUpdate = [];
             let totalOrderPrice = 0;
-            let outOfStockItem = null;
-
-            // 1. Verificar el stock de todos los productos en el carrito
             for (const itemId in cart) {
                 const cartItem = cart[itemId];
                 const collectionName = cartItem.type === 'card' ? 'cards' : 'sealed_products';
                 const itemRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, itemId);
-                
                 const itemDoc = await transaction.get(itemRef);
-                if (!itemDoc.exists()) {
-                    throw new Error(`El producto con ID ${itemId} ya no existe.`);
-                }
-
+                if (!itemDoc.exists()) throw new Error(`El producto con ID ${itemId} ya no existe.`);
                 const currentStock = itemDoc.data().stock;
-                if (currentStock < cartItem.quantity) {
-                    outOfStockItem = itemDoc.data().nombre;
-                    throw new Error(`Stock insuficiente para ${outOfStockItem}.`);
-                }
-
+                if (currentStock < cartItem.quantity) throw new Error(`Stock insuficiente para ${itemDoc.data().nombre}.`);
                 const newStock = currentStock - cartItem.quantity;
-                itemsToUpdate.push({ ref: itemRef, newStock: newStock });
+                itemsToUpdate.push({ ref: itemRef, newStock });
                 totalOrderPrice += (itemDoc.data().precio * cartItem.quantity);
             }
-
-            // 2. Si hay stock para todo, actualizar el stock y crear el pedido
-            itemsToUpdate.forEach(item => {
-                transaction.update(item.ref, { stock: item.newStock }); // <-- CORRECCIÓN AQUÍ
-            });
-
+            itemsToUpdate.forEach(item => transaction.update(item.ref, { stock: item.newStock }));
             const ordersCol = collection(db, `artifacts/${appId}/public/data/orders`);
-            const newOrderRef = doc(ordersCol); // Crear una referencia para el nuevo pedido
+            const newOrderRef = doc(ordersCol);
             transaction.set(newOrderRef, {
                 customerName,
                 customerPhone,
@@ -562,16 +514,18 @@ async function confirmOrder() {
                 cart: JSON.stringify(cart),
                 total: totalOrderPrice,
                 timestamp: new Date().toISOString(),
-                status: 'pending'
+                status: 'pending',
+                deliveryMethod: currentDeliveryMethod
             });
         });
 
-        // 3. Si la transacción fue exitosa, proceder con la notificación y limpieza
         let orderDetails = 'Pedido de Deck and Drift\n\n';
-        orderDetails += `Cliente: ${customerName}\n`;
-        orderDetails += `Teléfono: ${customerPhone}\n`;
-        orderDetails += `Dirección: ${customerAddress}\n\n`;
-        orderDetails += 'Detalles del Pedido:\n';
+        orderDetails += `*Tipo de Pedido:* ${currentDeliveryMethod === 'delivery' ? 'Envío a Domicilio' : 'Retiro en Tienda'}\n`;
+        orderDetails += `*Cliente:* ${customerName}\n`;
+        if (currentDeliveryMethod === 'delivery') {
+            orderDetails += `*Dirección:* ${customerAddress}\n`;
+        }
+        orderDetails += '\n*Detalles del Pedido:*\n';
         let finalTotal = 0;
         for (const id in cart) {
             const item = cart[id];
@@ -582,7 +536,7 @@ async function confirmOrder() {
                 finalTotal += subtotal;
             }
         }
-        orderDetails += `\nTotal del Pedido: $${finalTotal.toFixed(2)}\n\n¡Gracias por tu compra!`;
+        orderDetails += `\n*Total del Pedido:* $${finalTotal.toFixed(2)}\n\n¡Gracias por tu compra!`;
         const whatsappMessage = encodeURIComponent(orderDetails);
         const whatsappUrl = `https://wa.me/50374785424?text=${whatsappMessage}`;
         
@@ -617,33 +571,29 @@ async function initializeAppAndData() {
         showMessageModal('Error Crítico', 'La autenticación no está disponible.');
         return;
     }
-    
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             userId = user.uid;
-            console.log('User is signed in:', userId);
         } else {
             try {
                 const userCredential = await signInAnonymously(auth);
                 userId = userCredential.user.uid;
-                console.log('Signed in anonymously with UID:', userId);
             } catch (error) {
                 console.error('Error signing in anonymously:', error);
                 showMessageModal('Error de Autenticación', 'No se pudo iniciar sesión anónimamente.');
-                return; // Stop execution if auth fails
+                return;
             }
         }
-        // Load all data after ensuring user is authenticated (anonymously or otherwise)
         await loadCategories();
         await loadCardsData();
         await loadSealedProductsData();
+        updateCartCounter(); // <-- Actualizar contador al cargar la página
     });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeAppAndData();
 
-    // Event listeners for modals
     if (abrirModalProductosBtn) abrirModalProductosBtn.addEventListener('click', () => openModal(productSelectionModal));
     if (closeProductSelectionModalBtn) closeProductSelectionModalBtn.addEventListener('click', () => closeModal(productSelectionModal));
     if (openCardsModalBtn) openCardsModalBtn.addEventListener('click', () => {
@@ -665,23 +615,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closeCardsModalBtn) closeCardsModalBtn.addEventListener('click', () => closeModal(cardsModal));
     if (closeSealedProductsModalBtn) closeSealedProductsModalBtn.addEventListener('click', () => closeModal(sealedProductsModal));
-
     if (abrirCarritoBtn) abrirCarritoBtn.addEventListener('click', () => {
         renderCart();
         openModal(modalCarrito);
     });
     if (cerrarCarritoBtn) cerrarCarritoBtn.addEventListener('click', () => closeModal(modalCarrito));
 
+    // Lógica de Checkout
     if (openCheckoutModalBtn) openCheckoutModalBtn.addEventListener('click', () => {
         closeModal(modalCarrito);
+        openModal(deliveryMethodModal);
+    });
+    if (closeDeliveryMethodModalBtn) closeDeliveryMethodModalBtn.addEventListener('click', () => closeModal(deliveryMethodModal));
+    
+    if (deliveryOptionBtn) deliveryOptionBtn.addEventListener('click', () => {
+        currentDeliveryMethod = 'delivery';
+        checkoutTitle.textContent = 'Datos para Envío a Domicilio';
+        phoneField.classList.remove('hidden');
+        addressField.classList.remove('hidden');
+        customerPhoneInput.required = true;
+        customerAddressInput.required = true;
+        closeModal(deliveryMethodModal);
         openModal(checkoutModal);
     });
-    if (closeCheckoutModalBtn) closeCheckoutModalBtn.addEventListener('click', () => closeModal(checkoutModal));
 
+    if (pickupOptionBtn) pickupOptionBtn.addEventListener('click', () => {
+        currentDeliveryMethod = 'pickup';
+        checkoutTitle.textContent = 'Datos para Retiro en Tienda';
+        phoneField.classList.add('hidden');
+        addressField.classList.add('hidden');
+        customerPhoneInput.required = false;
+        customerAddressInput.required = false;
+        closeModal(deliveryMethodModal);
+        openModal(checkoutModal);
+    });
+
+    if (closeCheckoutModalBtn) closeCheckoutModalBtn.addEventListener('click', () => closeModal(checkoutModal));
     if (okMessageModalBtn) okMessageModalBtn.addEventListener('click', closeMessageModal);
     if (closeMessageModalBtn) closeMessageModalBtn.addEventListener('click', closeMessageModal);
 
-    // Event listeners for card/product list interactions
     if (searchInput) searchInput.addEventListener('input', () => { currentCardsPage = 1; renderCards(); });
     if (categoryFilter) categoryFilter.addEventListener('change', () => { currentCardsPage = 1; renderCards(); });
     if (prevPageBtn) prevPageBtn.addEventListener('click', () => { if (currentCardsPage > 1) { currentCardsPage--; renderCards(); } });
@@ -698,7 +670,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentSealedProductsPage < Math.ceil(filtered.length / itemsPerPage)) { currentSealedProductsPage++; renderSealedProducts(); }
     });
 
-    // Delegated event listener for "Add to Cart" and quantity buttons
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('agregar-carrito')) {
             const id = e.target.dataset.id;
