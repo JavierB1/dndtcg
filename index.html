@@ -77,34 +77,49 @@
 <!-- MODAL DE CARTAS -->
 <div id="cardsModal" class="modal">
     <div class="modal-content">
-    <span class="close" id="closeCardsModal">&times;</span>
-    <h2>Cartas Disponibles</h2>
-    <input type="text" id="searchInput" placeholder="Buscar carta..." />
-    <select id="categoryFilter"></select>
-    <div id="cardsContainer"></div>
-    <div id="paginationControls">
-        <button id="prevPageBtn">-</button>
-        <span id="pageInfo">Página 1 de 1</span>
-        <button id="nextPageBtn">+</button>
-    </div>
+        <div class="modal-header">
+            <span class="close" id="closeCardsModal">&times;</span>
+            <h2>Cartas Disponibles</h2>
+            <input type="text" id="searchInput" placeholder="Buscar carta..." />
+            <select id="categoryFilter"></select>
+        </div>
+        <div id="cardsContainer" class="modal-body"></div>
+        <div id="paginationControls">
+            <button id="prevPageBtn">-</button>
+            <span id="pageInfo">Página 1 de 1</span>
+            <button id="nextPageBtn">+</button>
+        </div>
+        <!-- Botón de carrito flotante -->
+        <button class="modal-cart-btn">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-counter">0</span>
+        </button>
     </div>
 </div>
 
 <!-- MODAL DE PRODUCTOS SELLADOS -->
 <div id="sealedProductsModal" class="modal">
     <div class="modal-content">
-        <span class="close" id="closeSealedProductsModal">&times;</span>
-        <h2>Productos Sellados Disponibles</h2>
-        <input type="text" id="sealedSearchInput" placeholder="Buscar producto sellado..." />
-        <select id="sealedTypeFilter"></select>
-        <div id="sealedProductsContainer"></div>
+        <div class="modal-header">
+            <span class="close" id="closeSealedProductsModal">&times;</span>
+            <h2>Productos Sellados Disponibles</h2>
+            <input type="text" id="sealedSearchInput" placeholder="Buscar producto sellado..." />
+            <select id="sealedTypeFilter"></select>
+        </div>
+        <div id="sealedProductsContainer" class="modal-body"></div>
         <div id="sealedPaginationControls">
             <button id="sealedPrevPageBtn">-</button>
             <span id="sealedPageInfo">Página 1 de 1</span>
             <button id="sealedNextPageBtn">+</button>
         </div>
+        <!-- Botón de carrito flotante -->
+        <button class="modal-cart-btn">
+            <i class="fas fa-shopping-cart"></i>
+            <span class="cart-counter">0</span>
+        </button>
     </div>
 </div>
+
 
 <!-- MODAL DEL CARRITO -->
 <div id="modalCarrito" class="modal">

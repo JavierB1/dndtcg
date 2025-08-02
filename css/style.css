@@ -313,7 +313,19 @@ nav a:hover {
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     position: relative;
     animation: fadeInScale 0.3s ease-out;
+    /* NUEVO: Estilos para el encabezado fijo */
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Limita la altura del modal */
 }
+
+/* NUEVO: Estilos para el cuerpo del modal (la parte que se desliza) */
+.modal-body {
+    overflow-y: auto; /* Permite el scroll vertical */
+    flex-grow: 1; /* Ocupa el espacio restante */
+    padding: 15px;
+}
+
 
 @keyframes fadeInScale {
     from { opacity: 0; transform: scale(0.9); }
@@ -399,7 +411,6 @@ button:disabled {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* 2 columnas en móvil, más en escritorio */
     gap: 25px;
     margin-top: 20px;
-    padding: 15px;
     background-color: #fdfdfd;
     border-radius: 10px;
     box-shadow: inset 0 0 8px rgba(0,0,0,0.05);
@@ -858,6 +869,38 @@ footer {
     opacity: 1;
     visibility: visible;
 }
+
+/* NUEVO: Estilos para el botón de carrito flotante en modales */
+.modal-cart-btn {
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #28a745; /* Verde */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.6em;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 1001;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.modal-cart-btn:hover {
+    transform: scale(1.1);
+    background-color: #218838;
+}
+
+.modal-cart-btn .cart-counter {
+    top: -2px;
+    right: -2px;
+}
+
 
 /* Media Queries para Responsividad */
 @media (max-width: 768px) {

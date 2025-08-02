@@ -108,6 +108,7 @@ const okMessageModalBtn = document.getElementById('okMessageModal');
 const viewAllCardsBtn = document.getElementById('viewAllCardsBtn');
 const dynamicFloatingCardsContainer = document.getElementById('dynamicFloatingCardsContainer');
 const addedToCartNotification = document.getElementById('addedToCartNotification');
+const modalCartBtns = document.querySelectorAll('.modal-cart-btn'); // <-- Referencia para los botones flotantes
 
 
 // ==========================================================================
@@ -405,14 +406,18 @@ function renderCart() {
 // ==========================================================================
 
 function updateCartCounter() {
-    if (!cartCounter) return;
-    const itemCount = Object.keys(cart).length;
-    cartCounter.textContent = itemCount;
-    if (itemCount > 0) {
-        cartCounter.classList.add('active');
-    } else {
-        cartCounter.classList.remove('active');
-    }
+    // Calcula la cantidad total de artículos sumando las cantidades de cada item en el carrito
+    const totalQuantity = Object.values(cart).reduce((total, item) => total + item.quantity, 0);
+    
+    const counters = document.querySelectorAll('.cart-counter');
+    counters.forEach(counter => {
+        counter.textContent = totalQuantity;
+        if (totalQuantity > 0) {
+            counter.classList.add('active');
+        } else {
+            counter.classList.remove('active');
+        }
+    });
 }
 
 function addToCart(id, type, quantityToAdd, showNotification = true) {
@@ -703,5 +708,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchInput) searchInput.value = '';
         if (categoryFilter) categoryFilter.value = '';
         renderCards();
+    });
+
+    // Event listener para los botones de carrito flotantes
+    modalCartBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            closeModal(cardsModal);
+            closeModal(sealedProductsModal);
+            renderCart();
+            openModal(modalCarrito);
+        });
     });
 });
